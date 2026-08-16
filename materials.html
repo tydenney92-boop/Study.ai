@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Materials | Study AI</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/materials.css">
+
+</head>
+
+
+<body>
+
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar">
+
+    <div class="brand">
+
+        <div class="brand-icon">
+            S
+        </div>
+
+        <span>
+            Study AI
+        </span>
+
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a href="index.html" class="nav-item">
+            <span>⌂</span>
+            Dashboard
+        </a>
+
+        <a href="course.html" class="nav-item active">
+            <span>▣</span>
+            My Courses
+        </a>
+
+        <a href="progress.html" class="nav-item">
+            <span>◔</span>
+            Progress
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <a href="#" class="nav-item">
+            <span>⚙</span>
+            Settings
+        </a>
+
+
+        <div class="profile-card">
+
+            <div class="profile-avatar">
+                T
+            </div>
+
+            <div>
+
+                <strong>
+                    Tyler
+                </strong>
+
+                <small>
+                    Student
+                </small>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</aside>
+
+
+
+<!-- MAIN -->
+
+<main class="main-content">
+
+
+    <!-- HEADER -->
+
+    <header class="materials-header">
+
+        <div>
+
+            <a
+                href="course.html"
+                class="back-link"
+            >
+                ← ECON 110
+            </a>
+
+            <p class="eyebrow">
+                COURSE MATERIALS
+            </p>
+
+            <h1>
+                Materials
+            </h1>
+
+            <p class="subtitle">
+                Manage the notes and resources Study AI
+                uses to help you study.
+            </p>
+
+        </div>
+
+
+        <button
+            class="primary-button"
+            id="upload-button"
+        >
+            + Upload Material
+        </button>
+
+
+        <input
+            type="file"
+            id="file-input"
+            hidden
+            multiple
+        >
+        <select id="upload-unit" hidden>
+
+    <option value="unit1">
+        Unit 1
+    </option>
+
+    <option value="unit2">
+        Unit 2
+    </option>
+
+    <option value="unit3">
+        Unit 3
+    </option>
+
+    <option value="unit4">
+        Unit 4
+    </option>
+
+    <option value="unit5">
+        Unit 5
+    </option>
+
+</select>
+
+    </header>
+
+
+
+    <!-- SEARCH + FILTER -->
+
+    <section class="materials-controls">
+
+
+        <div class="search-box">
+
+            <span>
+                ⌕
+            </span>
+
+            <input
+                type="text"
+                id="material-search"
+                placeholder="Search your materials..."
+            >
+
+        </div>
+
+
+        <select id="unit-filter">
+
+            <option value="all">
+                All Units
+            </option>
+
+            <option value="unit1">
+                Unit 1
+            </option>
+
+            <option value="unit2">
+                Unit 2
+            </option>
+
+            <option value="unit3">
+                Unit 3
+            </option>
+
+        </select>
+
+
+        <select id="type-filter">
+
+            <option value="all">
+                All Types
+            </option>
+
+            <option value="pdf">
+                PDF
+            </option>
+
+            <option value="notes">
+                Notes
+            </option>
+
+            <option value="slides">
+                Slides
+            </option>
+
+        </select>
+
+
+    </section>
+
+
+
+    <!-- MATERIALS -->
+
+    <div id="materials-container">
+
+
+        <!-- UNIT 1 -->
+
+        <section
+            class="material-unit"
+            data-unit="unit1"
+        >
+
+            <div class="unit-header">
+
+                <div>
+
+                    <span class="unit-number">
+                        UNIT 1
+                    </span>
+
+                    <h2>
+                        Introduction to Economics
+                    </h2>
+
+                </div>
+
+
+                <span class="unit-count">
+                    3 materials
+                </span>
+
+            </div>
+
+
+            <div class="materials-grid">
+
+
+                <!-- MATERIAL -->
+
+                <article
+                    class="material-card"
+                    data-name="syllabus"
+                    data-type="pdf"
+                >
+
+                    <div class="material-icon pdf">
+                        PDF
+                    </div>
+
+
+                    <div class="material-info">
+
+                        <h3>
+                            ECON 110 Syllabus
+                        </h3>
+
+                        <p>
+                            Course syllabus and schedule
+                        </p>
+
+                        <span>
+                            PDF • 1.2 MB
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        class="material-menu"
+                        aria-label="Material options"
+                    >
+                        ⋮
+                    </button>
+
+                </article>
+
+
+
+                <article
+                    class="material-card"
+                    data-name="scarcity opportunity cost"
+                    data-type="notes"
+                >
+
+                    <div class="material-icon notes">
+                        TXT
+                    </div>
+
+
+                    <div class="material-info">
+
+                        <h3>
+                            Lecture 1 — Scarcity
+                        </h3>
+
+                        <p>
+                            Scarcity and opportunity cost
+                        </p>
+
+                        <span>
+                            Notes • 14 KB
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        class="material-menu"
+                        aria-label="Material options"
+                    >
+                        ⋮
+                    </button>
+
+                </article>
+
+
+
+                <article
+                    class="material-card"
+                    data-name="economic thinking"
+                    data-type="slides"
+                >
+
+                    <div class="material-icon slides">
+                        PPT
+                    </div>
+
+
+                    <div class="material-info">
+
+                        <h3>
+                            Lecture 2 — Economic Thinking
+                        </h3>
+
+                        <p>
+                            Incentives, tradeoffs, and models
+                        </p>
+
+                        <span>
+                            Slides • 2.4 MB
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        class="material-menu"
+                        aria-label="Material options"
+                    >
+                        ⋮
+                    </button>
+
+                </article>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- UNIT 2 -->
+
+        <section
+            class="material-unit"
+            data-unit="unit2"
+        >
+
+            <div class="unit-header">
+
+                <div>
+
+                    <span class="unit-number">
+                        UNIT 2
+                    </span>
+
+                    <h2>
+                        Supply & Demand
+                    </h2>
+
+                </div>
+
+
+                <span class="unit-count">
+                    4 materials
+                </span>
+
+            </div>
+
+
+            <div class="materials-grid">
+
+
+                <article
+                    class="material-card"
+                    data-name="supply demand notes"
+                    data-type="notes"
+                >
+
+                    <div class="material-icon notes">
+                        TXT
+                    </div>
+
+
+                    <div class="material-info">
+
+                        <h3>
+                            Supply & Demand Notes
+                        </h3>
+
+                        <p>
+                            Core concepts and diagrams
+                        </p>
+
+                        <span>
+                            Notes • 32 KB
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        class="material-menu"
+                        aria-label="Material options"
+                    >
+                        ⋮
+                    </button>
+
+                </article>
+
+
+
+                <article
+                    class="material-card"
+                    data-name="elasticity lecture"
+                    data-type="slides"
+                >
+
+                    <div class="material-icon slides">
+                        PPT
+                    </div>
+
+
+                    <div class="material-info">
+
+                        <h3>
+                            Elasticity Lecture
+                        </h3>
+
+                        <p>
+                            Price and income elasticity
+                        </p>
+
+                        <span>
+                            Slides • 3.1 MB
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        class="material-menu"
+                        aria-label="Material options"
+                    >
+                        ⋮
+                    </button>
+
+                </article>
+
+
+
+                <article
+                    class="material-card"
+                    data-name="unit 2 review"
+                    data-type="pdf"
+                >
+
+                    <div class="material-icon pdf">
+                        PDF
+                    </div>
+
+
+                    <div class="material-info">
+
+                        <h3>
+                            Unit 2 Review
+                        </h3>
+
+                        <p>
+                            Review sheet for exam preparation
+                        </p>
+
+                        <span>
+                            PDF • 840 KB
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        class="material-menu"
+                        aria-label="Material options"
+                    >
+                        ⋮
+                    </button>
+
+                </article>
+
+
+
+                <article
+                    class="material-card"
+                    data-name="market equilibrium"
+                    data-type="notes"
+                >
+
+                    <div class="material-icon notes">
+                        TXT
+                    </div>
+
+
+                    <div class="material-info">
+
+                        <h3>
+                            Market Equilibrium
+                        </h3>
+
+                        <p>
+                            Equilibrium price and quantity
+                        </p>
+
+                        <span>
+                            Notes • 19 KB
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        class="material-menu"
+                        aria-label="Material options"
+                    >
+                        ⋮
+                    </button>
+
+                </article>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- UNIT 3 -->
+
+        <section
+            class="material-unit"
+            data-unit="unit3"
+        >
+
+            <div class="unit-header">
+
+                <div>
+
+                    <span class="unit-number">
+                        UNIT 3
+                    </span>
+
+                    <h2>
+                        Macroeconomics
+                    </h2>
+
+                </div>
+
+
+                <span class="unit-count">
+                    2 materials
+                </span>
+
+            </div>
+
+
+            <div class="materials-grid">
+
+
+                <article
+                    class="material-card"
+                    data-name="gdp macroeconomics"
+                    data-type="notes"
+                >
+
+                    <div class="material-icon notes">
+                        TXT
+                    </div>
+
+
+                    <div class="material-info">
+
+                        <h3>
+                            GDP & Economic Growth
+                        </h3>
+
+                        <p>
+                            GDP, growth, and economic output
+                        </p>
+
+                        <span>
+                            Notes • 28 KB
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        class="material-menu"
+                        aria-label="Material options"
+                    >
+                        ⋮
+                    </button>
+
+                </article>
+
+
+
+                <article
+                    class="material-card"
+                    data-name="monetary fiscal policy"
+                    data-type="pdf"
+                >
+
+                    <div class="material-icon pdf">
+                        PDF
+                    </div>
+
+
+                    <div class="material-info">
+
+                        <h3>
+                            Monetary & Fiscal Policy
+                        </h3>
+
+                        <p>
+                            Government and central bank policy
+                        </p>
+
+                        <span>
+                            PDF • 1.7 MB
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        class="material-menu"
+                        aria-label="Material options"
+                    >
+                        ⋮
+                    </button>
+
+                </article>
+
+
+            </div>
+
+        </section>
+
+
+    </div>
+
+
+
+    <!-- EMPTY STATE -->
+
+    <div
+        class="empty-materials"
+        id="empty-materials"
+    >
+
+        <div>
+            ⌕
+        </div>
+
+        <h2>
+            No materials found
+        </h2>
+
+        <p>
+            Try a different search or filter.
+        </p>
+
+    </div>
+
+
+
+    <!-- UPLOAD AREA -->
+
+    <section class="upload-area">
+
+        <div class="upload-icon">
+            ↑
+        </div>
+
+        <div>
+
+            <h2>
+                Add course material
+            </h2>
+
+            <p>
+                Upload notes, PDFs, slides, or other
+                course resources.
+            </p>
+
+        </div>
+
+
+        <button
+            class="secondary-tool-button"
+            id="upload-button-bottom"
+        >
+            Choose Files
+        </button>
+
+    </section>
+
+
+</main>
+
+<!-- UPLOAD MODAL -->
+
+<div
+    class="upload-modal-overlay"
+    id="upload-modal"
+>
+
+    <div class="upload-modal">
+
+
+        <!-- HEADER -->
+
+        <div class="upload-modal-header">
+
+            <div>
+
+                <p class="eyebrow">
+                    COURSE MATERIAL
+                </p>
+
+                <h2>
+                    Upload Material
+                </h2>
+
+            </div>
+
+
+            <button
+                class="upload-modal-close"
+                id="close-upload-modal"
+                aria-label="Close"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+
+        <!-- DESCRIPTION -->
+
+        <p class="upload-modal-description">
+
+            Add notes, PDFs, slides, or other
+            resources to your ECON 110 course.
+
+        </p>
+
+
+
+        <!-- FILE -->
+
+        <div class="upload-form-group">
+
+            <label>
+                File
+            </label>
+
+
+            <div
+                class="file-drop-zone"
+                id="file-drop-zone"
+            >
+
+                <div class="upload-zone-icon">
+                    ↑
+                </div>
+
+
+                <strong>
+                    Choose a file
+                </strong>
+
+
+                <span>
+                    PDF, notes, or slides
+                </span>
+
+
+                <button
+                    type="button"
+                    class="secondary-tool-button"
+                    id="modal-file-button"
+                >
+                    Browse Files
+                </button>
+
+
+                <div
+                    class="selected-file"
+                    id="selected-file"
+                ></div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- UNIT -->
+
+        <div class="upload-form-group">
+
+            <label for="upload-unit-modal">
+                Unit
+            </label>
+
+
+            <select
+                id="upload-unit-modal"
+                class="upload-select"
+            >
+
+                <option value="unit1">
+                    Unit 1 — Introduction to Economics
+                </option>
+
+                <option value="unit2">
+                    Unit 2 — Supply & Demand
+                </option>
+
+                <option value="unit3">
+                    Unit 3 — Macroeconomics
+                </option>
+
+                <option value="unit4">
+                    Unit 4 — GDP & Economic Growth
+                </option>
+
+                <option value="unit5">
+                    Unit 5 — Fiscal & Monetary Policy
+                </option>
+
+            </select>
+
+        </div>
+
+
+
+        <!-- ACTIONS -->
+
+        <div class="upload-modal-actions">
+
+            <button
+                type="button"
+                class="secondary-tool-button"
+                id="cancel-upload"
+            >
+                Cancel
+            </button>
+
+
+            <button
+                type="button"
+                class="primary-button"
+                id="confirm-upload"
+            >
+                Upload Material
+            </button>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+<script src="js/materials.js"></script>
+
+</body>
+
+</html>

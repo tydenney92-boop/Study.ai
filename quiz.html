@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Practice Quiz | Study AI</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <link rel="stylesheet" href="css/quiz.css">
+
+</head>
+
+
+<body>
+
+
+<main class="quiz-page">
+
+
+    <!-- =========================================
+         QUIZ SETUP
+    ========================================= -->
+
+    <section
+        id="quiz-setup"
+        class="quiz-setup"
+    >
+
+        <a
+            href="course.html"
+            class="quiz-back"
+        >
+            ← Back to ECON 110
+        </a>
+
+
+        <div class="quiz-setup-content">
+
+            <div class="quiz-topic">
+                ECON 110
+            </div>
+
+
+            <h1>
+                Practice Quiz
+            </h1>
+
+
+            <p>
+                Test your understanding of the course material
+                with an AI-generated practice quiz.
+            </p>
+
+
+            <h3>
+                Choose Quiz Length
+            </h3>
+
+
+            <div class="quiz-length-options">
+
+
+                <button
+                    class="quiz-length-button"
+                    data-question-count="5"
+                >
+
+                    <strong>
+                        5
+                    </strong>
+
+                    <span>
+                        Questions
+                    </span>
+
+                </button>
+
+
+                <button
+                    class="quiz-length-button"
+                    data-question-count="10"
+                >
+
+                    <strong>
+                        10
+                    </strong>
+
+                    <span>
+                        Questions
+                    </span>
+
+                </button>
+
+
+                <button
+                    class="quiz-length-button"
+                    data-question-count="15"
+                >
+
+                    <strong>
+                        15
+                    </strong>
+
+                    <span>
+                        Questions
+                    </span>
+
+                </button>
+
+
+                <button
+                    class="quiz-length-button"
+                    data-question-count="20"
+                >
+
+                    <strong>
+                        20
+                    </strong>
+
+                    <span>
+                        Questions
+                    </span>
+
+                </button>
+
+
+            </div>
+
+
+            <p class="quiz-setup-hint">
+                Questions will be generated from your uploaded
+                course materials.
+            </p>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================================
+         QUIZ
+    ========================================= -->
+
+    <section
+        id="quiz-interface"
+        style="display:none;"
+    >
+
+
+        <header class="quiz-header">
+
+            <a
+                href="course.html"
+                class="quiz-back"
+            >
+                ← Back to ECON 110
+            </a>
+
+
+            <div class="quiz-title">
+
+                <span>
+                    ECON 110
+                </span>
+
+                <h1>
+                    Practice Quiz
+                </h1>
+
+            </div>
+
+
+            <div class="quiz-progress-text">
+
+                Question
+                <span id="current-question">
+                    1
+                </span>
+
+                of
+
+                <span id="total-questions">
+                    5
+                </span>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- PROGRESS -->
+
+        <div class="quiz-progress">
+
+            <div
+                id="quiz-progress-bar"
+                class="quiz-progress-fill"
+            ></div>
+
+        </div>
+
+
+
+        <!-- QUIZ -->
+
+        <section class="quiz-container">
+
+
+            <div class="quiz-topic">
+                SUPPLY & DEMAND
+            </div>
+
+
+            <h2 id="question">
+                Loading question...
+            </h2>
+
+
+            <div
+                id="answer-container"
+                class="answer-container"
+            >
+
+            </div>
+
+
+            <!-- FEEDBACK -->
+
+            <div
+                id="quiz-result"
+                class="quiz-feedback"
+            >
+
+                <div class="feedback-title">
+                    Correct!
+                </div>
+
+                <p>
+                    Explanation will appear here.
+                </p>
+
+            </div>
+
+
+            <div class="quiz-footer">
+
+                <span class="quiz-hint">
+                    Select an answer to continue
+                </span>
+
+
+                <button
+                    class="submit-answer"
+                    id="submit-answer"
+                >
+                    Submit Answer
+                </button>
+
+            </div>
+
+
+        </section>
+
+
+    </section>
+
+
+</main>
+
+
+<script src="js/quiz.js"></script>
+
+</body>
+
+</html>

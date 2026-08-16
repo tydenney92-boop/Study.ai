@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Ask My Notes | Study AI</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/study-tools.css">
+
+</head>
+
+
+<body>
+
+
+<aside class="sidebar">
+
+    <div class="brand">
+
+        <div class="brand-icon">
+            S
+        </div>
+
+        <span>
+            Study AI
+        </span>
+
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a href="index.html" class="nav-item">
+
+            <span>⌂</span>
+
+            Dashboard
+
+        </a>
+
+
+        <a href="course.html" class="nav-item active">
+
+            <span>▣</span>
+
+            My Courses
+
+        </a>
+
+
+        <a href="progress.html" class="nav-item">
+
+            <span>◔</span>
+
+            Progress
+
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <a href="#" class="nav-item">
+
+            <span>⚙</span>
+
+            Settings
+
+        </a>
+
+
+        <div class="profile-card">
+
+            <div class="profile-avatar">
+                T
+            </div>
+
+            <div>
+
+                <strong>
+                    Tyler
+                </strong>
+
+                <small>
+                    Student
+                </small>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</aside>
+
+
+
+<main class="main-content notes-page">
+
+
+    <header class="tool-page-header">
+
+        <div>
+
+            <a
+                href="course.html"
+                class="back-link"
+            >
+                ← ECON 110
+            </a>
+
+            <p class="eyebrow">
+                AI STUDY ASSISTANT
+            </p>
+
+            <h1>
+                Ask My Notes
+            </h1>
+
+            <p class="subtitle">
+                Ask questions about your course material.
+            </p>
+
+        </div>
+
+
+        <div class="notes-status">
+
+            <span class="status-dot"></span>
+
+            Notes connected
+
+        </div>
+
+    </header>
+
+
+
+    <section class="chat-container">
+
+
+        <!-- CHAT HEADER -->
+
+        <div class="chat-header">
+
+            <div class="chat-ai-avatar">
+                S
+            </div>
+
+            <div>
+
+                <strong>
+                    Study AI
+                </strong>
+
+                <span>
+                    ECON 110 Assistant
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- MESSAGES -->
+
+        <div
+            class="chat-messages"
+            id="chat-messages"
+        >
+
+
+            <div class="message assistant">
+
+                <div class="message-avatar">
+                    S
+                </div>
+
+                <div class="message-content">
+
+                    <p>
+                        Hi Tyler! I'm ready to help you
+                        study ECON 110.
+                    </p>
+
+                    <p>
+                        Ask me anything about your course
+                        notes, concepts, or upcoming exam.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="suggestion-row">
+
+                <button class="suggestion">
+                    Explain elasticity
+                </button>
+
+                <button class="suggestion">
+                    Quiz me on Unit 1
+                </button>
+
+                <button class="suggestion">
+                    Explain GDP
+                </button>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- INPUT -->
+
+        <div class="chat-input-area">
+
+            <textarea
+                id="chat-input"
+                placeholder="Ask a question about your notes..."
+                rows="1"
+            ></textarea>
+
+
+            <button
+                id="send-message"
+                class="send-button"
+            >
+                ↑
+            </button>
+
+        </div>
+
+
+        <div class="chat-disclaimer">
+
+            Study AI answers questions using the
+            materials associated with this course.
+
+        </div>
+
+
+    </section>
+
+
+</main>
+
+
+<script src="js/notes.js"></script>
+
+</body>
+
+</html>

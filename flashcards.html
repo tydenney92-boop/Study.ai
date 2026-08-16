@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Flashcards | Study AI</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/study-tools.css">
+
+</head>
+
+
+<body>
+
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar">
+
+    <div class="brand">
+
+        <div class="brand-icon">
+            S
+        </div>
+
+        <span>
+            Study AI
+        </span>
+
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a href="index.html" class="nav-item">
+
+            <span>⌂</span>
+
+            Dashboard
+
+        </a>
+
+
+        <a href="course.html" class="nav-item active">
+
+            <span>▣</span>
+
+            My Courses
+
+        </a>
+
+
+        <a href="progress.html" class="nav-item">
+
+            <span>◔</span>
+
+            Progress
+
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <a href="#" class="nav-item">
+
+            <span>⚙</span>
+
+            Settings
+
+        </a>
+
+
+        <div class="profile-card">
+
+            <div class="profile-avatar">
+                T
+            </div>
+
+            <div>
+
+                <strong>
+                    Tyler
+                </strong>
+
+                <small>
+                    Student
+                </small>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</aside>
+
+
+
+<!-- MAIN -->
+
+<main class="main-content">
+
+
+    <header class="tool-page-header">
+
+        <div>
+
+            <a
+                href="course.html"
+                class="back-link"
+            >
+                ← ECON 110
+            </a>
+
+            <p class="eyebrow">
+                STUDY TOOL
+            </p>
+
+            <h1>
+                Flashcards
+            </h1>
+
+            <p class="subtitle">
+                Review key concepts from your course material.
+            </p>
+
+        </div>
+
+
+        <div class="tool-header-stat">
+
+            <span>
+                CARDS
+            </span>
+
+            <strong id="card-count">
+                1 / 10
+            </strong>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- FLASHCARD -->
+
+    <section class="flashcard-section">
+
+
+        <div class="flashcard-instructions">
+
+            <span>
+                Click the card to reveal the answer
+            </span>
+
+        </div>
+
+
+        <div
+            class="flashcard"
+            id="flashcard"
+        >
+
+            <div class="flashcard-inner">
+
+
+                <!-- FRONT -->
+
+                <div class="flashcard-face flashcard-front">
+
+                    <span class="flashcard-label">
+                        QUESTION
+                    </span>
+
+                    <h2 id="flashcard-question">
+                        What is price elasticity of demand?
+                    </h2>
+
+                    <span class="flip-hint">
+                        Click to flip ↻
+                    </span>
+
+                </div>
+
+
+                <!-- BACK -->
+
+                <div class="flashcard-face flashcard-back">
+
+                    <span class="flashcard-label">
+                        ANSWER
+                    </span>
+
+                    <p id="flashcard-answer">
+                        Price elasticity of demand measures how
+                        responsive the quantity demanded of a good
+                        is to a change in its price.
+                    </p>
+
+                    <span class="flip-hint">
+                        Click to flip ↻
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+
+        <!-- CARD ACTIONS -->
+
+        <div class="flashcard-actions">
+
+            <button
+                class="secondary-tool-button"
+                id="previous-card"
+            >
+                ← Previous
+            </button>
+
+
+            <div class="known-actions">
+
+                <button
+                    class="review-button"
+                    id="still-learning"
+                >
+                    Still Learning
+                </button>
+
+
+                <button
+                    class="review-button known"
+                    id="know-card"
+                >
+                    I Know This ✓
+                </button>
+
+            </div>
+
+
+            <button
+                class="secondary-tool-button"
+                id="next-card"
+            >
+                Next →
+            </button>
+
+        </div>
+
+
+        <!-- PROGRESS -->
+
+        <div class="flashcard-progress">
+
+            <div class="progress-bar">
+
+                <div
+                    class="progress-fill blue-fill"
+                    id="flashcard-progress"
+                    style="width:10%"
+                ></div>
+
+            </div>
+
+        </div>
+
+
+    </section>
+
+
+</main>
+
+
+<script src="js/flashcards.js"></script>
+
+</body>
+
+</html>

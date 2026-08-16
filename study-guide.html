@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Study Guide | Study AI</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/study-tools.css">
+
+</head>
+
+
+<body>
+
+
+<aside class="sidebar">
+
+    <div class="brand">
+
+        <div class="brand-icon">
+            S
+        </div>
+
+        <span>
+            Study AI
+        </span>
+
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a href="index.html" class="nav-item">
+            <span>⌂</span>
+            Dashboard
+        </a>
+
+        <a href="course.html" class="nav-item active">
+            <span>▣</span>
+            My Courses
+        </a>
+
+        <a href="progress.html" class="nav-item">
+            <span>◔</span>
+            Progress
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <a href="#" class="nav-item">
+            <span>⚙</span>
+            Settings
+        </a>
+
+
+        <div class="profile-card">
+
+            <div class="profile-avatar">
+                T
+            </div>
+
+            <div>
+
+                <strong>
+                    Tyler
+                </strong>
+
+                <small>
+                    Student
+                </small>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</aside>
+
+
+
+<main class="main-content">
+
+
+    <!-- HEADER -->
+
+    <header class="tool-page-header">
+
+        <div>
+
+            <a
+                href="materials.html"
+                class="back-link"
+            >
+                ← Course Materials
+            </a>
+
+            <p class="eyebrow">
+                AI STUDY GUIDE
+            </p>
+
+            <h1 id="guide-page-title">
+                Study Guide
+            </h1>
+
+            <p
+                class="subtitle"
+                id="guide-page-subtitle"
+            >
+                AI-generated review material based on your course notes.
+            </p>
+
+        </div>
+
+
+        <button
+            class="primary-button"
+            id="generate-guide-button"
+        >
+            Generate Study Guide
+        </button>
+
+    </header>
+
+
+
+    <!-- LOADING -->
+
+    <div
+        id="guide-loading"
+        style="
+            display:none;
+            padding:30px;
+            background:white;
+            border:1px solid #e5e9ef;
+            border-radius:14px;
+            text-align:center;
+            margin-bottom:22px;
+        "
+    >
+
+        <div
+            style="
+                font-size:24px;
+                margin-bottom:10px;
+            "
+        >
+            ✦
+        </div>
+
+        <strong>
+            Generating your study guide...
+        </strong>
+
+        <p
+            style="
+                margin-top:6px;
+                color:#7b8495;
+                font-size:12px;
+            "
+        >
+            Study AI is analyzing your course material.
+        </p>
+
+    </div>
+
+
+
+    <div class="guide-layout">
+
+
+        <!-- CONTENT -->
+
+        <article class="study-guide">
+
+
+            <div class="guide-intro">
+
+                <div class="guide-ai-icon">
+                    ✦
+                </div>
+
+                <div>
+
+                    <span class="guide-label">
+                        AI GENERATED
+                    </span>
+
+                    <h2 id="guide-title">
+                        Study Guide
+                    </h2>
+
+                    <p id="guide-summary">
+                        Select a course material to generate a study guide.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- KEY CONCEPTS -->
+
+            <section class="guide-section">
+
+                <div class="guide-section-heading">
+
+                    <span>
+                        01
+                    </span>
+
+                    <h3>
+                        Key Concepts
+                    </h3>
+
+                </div>
+
+
+                <p>
+                    Important concepts identified from your
+                    uploaded course material.
+                </p>
+
+
+                <ul
+                    class="guide-list"
+                    id="key-concepts"
+                >
+
+                    <li>
+                        Your generated concepts will appear here.
+                    </li>
+
+                </ul>
+
+            </section>
+
+
+
+            <!-- IMPORTANT TOPICS -->
+
+            <section class="guide-section">
+
+                <div class="guide-section-heading">
+
+                    <span>
+                        02
+                    </span>
+
+                    <h3>
+                        Important Topics
+                    </h3>
+
+                </div>
+
+
+                <p>
+                    Topics you should understand before your exam.
+                </p>
+
+
+                <ul
+                    class="guide-list"
+                    id="important-topics"
+                >
+
+                    <li>
+                        Your important topics will appear here.
+                    </li>
+
+                </ul>
+
+            </section>
+
+
+
+            <!-- SOURCE MATERIAL -->
+
+            <section class="guide-section">
+
+                <div class="guide-section-heading">
+
+                    <span>
+                        03
+                    </span>
+
+                    <h3>
+                        Source Material
+                    </h3>
+
+                </div>
+
+
+                <p>
+                    This guide was generated using:
+                </p>
+
+
+                <div class="concept-box">
+
+                    <strong>
+                        COURSE MATERIAL
+                    </strong>
+
+                    <p id="source-material">
+                        No material selected.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- QUICK REVIEW -->
+
+            <section class="quick-review">
+
+                <span class="guide-label">
+                    QUICK REVIEW
+                </span>
+
+                <h3>
+                    What should you do next?
+                </h3>
+
+
+                <div class="review-question">
+
+                    <span>
+                        01
+                    </span>
+
+                    <p>
+                        Review the key concepts above.
+                    </p>
+
+                </div>
+
+
+                <div class="review-question">
+
+                    <span>
+                        02
+                    </span>
+
+                    <p>
+                        Make sure you understand the important topics.
+                    </p>
+
+                </div>
+
+
+                <div class="review-question">
+
+                    <span>
+                        03
+                    </span>
+
+                    <p>
+                        Test yourself with a practice quiz.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+        </article>
+
+
+
+        <!-- SIDE PANEL -->
+
+        <aside class="guide-sidebar">
+
+
+            <div class="dashboard-panel">
+
+                <h3>
+                    Guide Contents
+                </h3>
+
+
+                <div class="guide-nav">
+
+                    <a href="#key-concepts">
+                        Key Concepts
+                    </a>
+
+                    <a href="#important-topics">
+                        Important Topics
+                    </a>
+
+                    <a href="#source-material">
+                        Source Material
+                    </a>
+
+                    <a href="#quick-review">
+                        Quick Review
+                    </a>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="dashboard-panel">
+
+                <span class="eyebrow">
+                    STUDY RECOMMENDATION
+                </span>
+
+                <h3 style="
+                    margin-top:8px;
+                ">
+                    Test yourself next
+                </h3>
+
+                <p style="
+                    margin-top:7px;
+                    color:#7b8495;
+                    font-size:12px;
+                    line-height:1.5;
+                ">
+                    You've reviewed the material.
+                    See how well you can recall it.
+                </p>
+
+                <a
+                    href="quiz.html"
+                    class="primary-button"
+                    style="
+                        display:block;
+                        text-align:center;
+                        margin-top:15px;
+                    "
+                >
+                    Practice Quiz
+                </a>
+
+            </div>
+
+
+        </aside>
+
+
+    </div>
+
+
+</main>
+
+
+<script src="js/study-guide.js"></script>
+
+</body>
+
+</html>

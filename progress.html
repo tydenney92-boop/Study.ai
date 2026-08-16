@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Progress | Study AI</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/progress.css">
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================
+     SIDEBAR
+========================================= -->
+
+<aside class="sidebar">
+
+    <div class="brand">
+
+        <div class="brand-icon">
+            S
+        </div>
+
+        <span>
+            Study AI
+        </span>
+
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a
+            href="index.html"
+            class="nav-item"
+        >
+
+            <span>⌂</span>
+
+            Dashboard
+
+        </a>
+
+
+        <a
+            href="course.html"
+            class="nav-item"
+        >
+
+            <span>▣</span>
+
+            My Courses
+
+        </a>
+
+
+        <a
+            href="progress.html"
+            class="nav-item active"
+        >
+
+            <span>◔</span>
+
+            Progress
+
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <a
+            href="#"
+            class="nav-item"
+        >
+
+            <span>⚙</span>
+
+            Settings
+
+        </a>
+
+
+        <div class="profile-card">
+
+            <div class="profile-avatar">
+                T
+            </div>
+
+            <div>
+
+                <strong>
+                    Tyler
+                </strong>
+
+                <small>
+                    Student
+                </small>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</aside>
+
+
+
+<!-- =========================================
+     MAIN CONTENT
+========================================= -->
+
+<main class="main-content">
+
+
+    <!-- HEADER -->
+
+    <header class="progress-header">
+
+        <div>
+
+            <p class="eyebrow">
+                LEARNING ANALYTICS
+            </p>
+
+            <h1>
+                Your Progress
+            </h1>
+
+            <p class="subtitle">
+                Track your performance and identify
+                where to focus next.
+            </p>
+
+        </div>
+
+
+        <div class="course-selector">
+
+            <span>
+                COURSE
+            </span>
+
+            <select id="course-select">
+
+                <option>
+                    ECON 110
+                </option>
+
+                <option>
+                    STRAT 412
+                </option>
+
+                <option>
+                    Russian 201
+                </option>
+
+            </select>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =========================================
+         TOP STATS
+    ========================================= -->
+
+    <section class="progress-stat-grid">
+
+
+        <div class="progress-stat-card">
+
+            <div class="stat-card-top">
+
+                <span>
+                    OVERALL SCORE
+                </span>
+
+                <span class="stat-icon">
+                    %
+                </span>
+
+            </div>
+
+
+            <strong
+                class="big-stat"
+                id="overall-score"
+            >
+                78%
+            </strong>
+
+
+            <p class="positive">
+                ↑ 6% from last month
+            </p>
+
+        </div>
+
+
+
+        <div class="progress-stat-card">
+
+            <div class="stat-card-top">
+
+                <span>
+                    QUIZZES COMPLETED
+                </span>
+
+                <span class="stat-icon">
+                    ✓
+                </span>
+
+            </div>
+
+
+            <strong
+                class="big-stat"
+                id="quiz-count"
+            >
+                8
+            </strong>
+
+
+            <p>
+                2 this week
+            </p>
+
+        </div>
+
+
+
+        <div class="progress-stat-card">
+
+            <div class="stat-card-top">
+
+                <span>
+                    STUDY TIME
+                </span>
+
+                <span class="stat-icon">
+                    ◷
+                </span>
+
+            </div>
+
+
+            <strong class="big-stat">
+                14.5h
+            </strong>
+
+
+            <p class="positive">
+                ↑ 2.1h this week
+            </p>
+
+        </div>
+
+
+
+        <div class="progress-stat-card">
+
+            <div class="stat-card-top">
+
+                <span>
+                    TOPIC MASTERY
+                </span>
+
+                <span class="stat-icon">
+                    ★
+                </span>
+
+            </div>
+
+
+            <strong
+                class="big-stat"
+                id="mastery-score"
+            >
+                81%
+            </strong>
+
+
+            <p>
+                Good progress
+            </p>
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- =========================================
+         MAIN GRID
+    ========================================= -->
+
+    <section class="analytics-grid">
+
+
+        <!-- QUIZ PERFORMANCE -->
+
+        <div class="analytics-panel quiz-performance-panel">
+
+
+            <div class="panel-header">
+
+                <div>
+
+                    <span class="eyebrow">
+                        PERFORMANCE
+                    </span>
+
+                    <h2>
+                        Quiz Performance
+                    </h2>
+
+                </div>
+
+
+                <select id="time-range">
+
+                    <option>
+                        Last 30 days
+                    </option>
+
+                    <option>
+                        Last 3 months
+                    </option>
+
+                    <option>
+                        All time
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <div class="chart-container">
+
+                <div class="chart-y-axis">
+
+                    <span>
+                        100
+                    </span>
+
+                    <span>
+                        75
+                    </span>
+
+                    <span>
+                        50
+                    </span>
+
+                    <span>
+                        25
+                    </span>
+
+                    <span>
+                        0
+                    </span>
+
+                </div>
+
+
+                <div class="chart">
+
+                    <div class="chart-grid-line line-100"></div>
+                    <div class="chart-grid-line line-75"></div>
+                    <div class="chart-grid-line line-50"></div>
+                    <div class="chart-grid-line line-25"></div>
+                    <div class="chart-grid-line line-0"></div>
+
+
+                    <div
+                        class="chart-bar"
+                        style="height:82%"
+                    >
+
+                        <span>
+                            82%
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="chart-bar"
+                        style="height:91%"
+                    >
+
+                        <span>
+                            91%
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="chart-bar"
+                        style="height:74%"
+                    >
+
+                        <span>
+                            74%
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="chart-bar"
+                        style="height:86%"
+                    >
+
+                        <span>
+                            86%
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="chart-bar"
+                        style="height:89%"
+                    >
+
+                        <span>
+                            89%
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+
+
+            <div class="chart-labels">
+
+                <span>
+                    Quiz 1
+                </span>
+
+                <span>
+                    Quiz 2
+                </span>
+
+                <span>
+                    Quiz 3
+                </span>
+
+                <span>
+                    Quiz 4
+                </span>
+
+                <span>
+                    Quiz 5
+                </span>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- AI RECOMMENDATION -->
+
+        <div class="analytics-panel recommendation-panel">
+
+
+            <div class="recommendation-icon">
+                ✦
+            </div>
+
+
+            <span class="eyebrow">
+                AI RECOMMENDATION
+            </span>
+
+
+            <h2>
+                Focus on Fiscal Policy
+            </h2>
+
+
+            <p>
+                Your recent quiz results suggest that
+                Fiscal Policy is currently your weakest
+                topic.
+            </p>
+
+
+            <div class="recommendation-score">
+
+                <span>
+                    CURRENT MASTERY
+                </span>
+
+                <strong>
+                    54%
+                </strong>
+
+            </div>
+
+
+            <a
+                href="quiz.html"
+                class="primary-button"
+            >
+                Practice This Topic
+            </a>
+
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- =========================================
+         TOPIC MASTERY
+    ========================================= -->
+
+    <section class="analytics-panel mastery-panel">
+
+
+        <div class="panel-header">
+
+            <div>
+
+                <span class="eyebrow">
+                    KNOWLEDGE
+                </span>
+
+                <h2>
+                    Topic Mastery
+                </h2>
+
+            </div>
+
+
+            <span class="panel-description">
+                Based on recent quiz and flashcard activity
+            </span>
+
+        </div>
+
+
+
+        <div class="mastery-list">
+
+
+            <div class="mastery-row">
+
+                <div class="mastery-name">
+
+                    <strong>
+                        Supply & Demand
+                    </strong>
+
+                    <span>
+                        Excellent
+                    </span>
+
+                </div>
+
+
+                <div class="mastery-progress">
+
+                    <div class="mastery-track">
+
+                        <div
+                            class="mastery-fill"
+                            style="width:90%"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <strong class="mastery-percent">
+                    90%
+                </strong>
+
+            </div>
+
+
+
+            <div class="mastery-row">
+
+                <div class="mastery-name">
+
+                    <strong>
+                        Elasticity
+                    </strong>
+
+                    <span>
+                        Good
+                    </span>
+
+                </div>
+
+
+                <div class="mastery-progress">
+
+                    <div class="mastery-track">
+
+                        <div
+                            class="mastery-fill"
+                            style="width:72%"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <strong class="mastery-percent">
+                    72%
+                </strong>
+
+            </div>
+
+
+
+            <div class="mastery-row">
+
+                <div class="mastery-name">
+
+                    <strong>
+                        GDP
+                    </strong>
+
+                    <span>
+                        Good
+                    </span>
+
+                </div>
+
+
+                <div class="mastery-progress">
+
+                    <div class="mastery-track">
+
+                        <div
+                            class="mastery-fill"
+                            style="width:81%"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <strong class="mastery-percent">
+                    81%
+                </strong>
+
+            </div>
+
+
+
+            <div class="mastery-row">
+
+                <div class="mastery-name">
+
+                    <strong>
+                        Monetary Policy
+                    </strong>
+
+                    <span>
+                        Needs review
+                    </span>
+
+                </div>
+
+
+                <div class="mastery-progress">
+
+                    <div class="mastery-track">
+
+                        <div
+                            class="mastery-fill"
+                            style="width:64%"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <strong class="mastery-percent">
+                    64%
+                </strong>
+
+            </div>
+
+
+
+            <div class="mastery-row weak-topic">
+
+                <div class="mastery-name">
+
+                    <strong>
+                        Fiscal Policy
+                    </strong>
+
+                    <span>
+                        Needs attention
+                    </span>
+
+                </div>
+
+
+                <div class="mastery-progress">
+
+                    <div class="mastery-track">
+
+                        <div
+                            class="mastery-fill"
+                            style="width:54%"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <strong class="mastery-percent">
+                    54%
+                </strong>
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- =========================================
+         RECENT ACTIVITY
+    ========================================= -->
+
+    <section class="analytics-panel activity-panel">
+
+
+        <div class="panel-header">
+
+            <div>
+
+                <span class="eyebrow">
+                    ACTIVITY
+                </span>
+
+                <h2>
+                    Recent Study Activity
+                </h2>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="activity-list">
+
+
+            <div class="activity-item">
+
+                <div class="activity-icon quiz-icon">
+                    ✓
+                </div>
+
+                <div class="activity-info">
+
+                    <strong>
+                        Completed Practice Quiz
+                    </strong>
+
+                    <span>
+                        Supply & Demand • 5 minutes ago
+                    </span>
+
+                </div>
+
+                <strong class="activity-score">
+                    89%
+                </strong>
+
+            </div>
+
+
+
+            <div class="activity-item">
+
+                <div class="activity-icon card-icon">
+                    ◆
+                </div>
+
+                <div class="activity-info">
+
+                    <strong>
+                        Reviewed 24 Flashcards
+                    </strong>
+
+                    <span>
+                        Elasticity • Yesterday
+                    </span>
+
+                </div>
+
+                <span class="activity-result">
+                    21 known
+                </span>
+
+            </div>
+
+
+
+            <div class="activity-item">
+
+                <div class="activity-icon guide-icon">
+                    ✦
+                </div>
+
+                <div class="activity-info">
+
+                    <strong>
+                        Generated Study Guide
+                    </strong>
+
+                    <span>
+                        Supply & Demand • Yesterday
+                    </span>
+
+                </div>
+
+                <span class="activity-result">
+                    AI Guide
+                </span>
+
+            </div>
+
+
+
+            <div class="activity-item">
+
+                <div class="activity-icon quiz-icon">
+                    ✓
+                </div>
+
+                <div class="activity-info">
+
+                    <strong>
+                        Completed Practice Quiz
+                    </strong>
+
+                    <span>
+                        Fiscal Policy • 2 days ago
+                    </span>
+
+                </div>
+
+                <strong class="activity-score low">
+                    54%
+                </strong>
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+</main>
+
+
+<script src="js/progress.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,746 @@
+/* =========================================
+   HEADER
+========================================= */
+
+.materials-header {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: flex-end;
+
+    margin-bottom: 25px;
+}
+
+
+.back-link {
+    display: inline-block;
+
+    color: #7b8495;
+
+    font-size: 12px;
+
+    margin-bottom: 16px;
+}
+
+
+.back-link:hover {
+    color: #2563eb;
+}
+
+
+/* =========================================
+   CONTROLS
+========================================= */
+
+.materials-controls {
+    display: flex;
+
+    gap: 10px;
+
+    margin-bottom: 30px;
+}
+
+
+.search-box {
+    flex: 1;
+
+    max-width: 500px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    border: 1px solid #dfe4eb;
+
+    background: white;
+
+    border-radius: 8px;
+
+    padding: 0 12px;
+}
+
+
+.search-box span {
+    color: #8a93a3;
+
+    font-size: 17px;
+}
+
+
+.search-box input {
+    width: 100%;
+
+    border: none;
+
+    outline: none;
+
+    padding: 11px 0;
+
+    font-family: inherit;
+
+    font-size: 11px;
+}
+
+
+.materials-controls select {
+    border: 1px solid #dfe4eb;
+
+    background: white;
+
+    border-radius: 8px;
+
+    padding: 0 30px 0 11px;
+
+    color: #536074;
+
+    font-family: inherit;
+
+    font-size: 11px;
+
+    cursor: pointer;
+}
+
+
+/* =========================================
+   UNITS
+========================================= */
+
+.material-unit {
+    margin-bottom: 35px;
+}
+
+
+.unit-header {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: flex-end;
+
+    margin-bottom: 13px;
+}
+
+
+.unit-number {
+    color: #2563eb;
+
+    font-size: 9px;
+
+    font-weight: 700;
+
+    letter-spacing: 1px;
+}
+
+
+.unit-header h2 {
+    font-size: 17px;
+
+    margin-top: 4px;
+}
+
+
+.unit-count {
+    color: #8a93a3;
+
+    font-size: 10px;
+}
+
+
+/* =========================================
+   MATERIAL CARDS
+========================================= */
+
+.materials-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 10px;
+}
+
+
+.material-card {
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    min-height: 92px;
+
+    background: white;
+
+    border: 1px solid #e5e9ef;
+
+    border-radius: 10px;
+
+    padding: 14px;
+
+    transition:
+        transform .15s ease,
+        box-shadow .15s ease,
+        border-color .15s ease;
+}
+
+
+.material-card:hover {
+    transform: translateY(-2px);
+
+    border-color: #d5dce7;
+
+    box-shadow:
+        0 7px 20px rgba(30, 40, 60, .06);
+}
+
+
+.material-icon {
+    width: 42px;
+    height: 48px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 7px;
+
+    font-size: 9px;
+
+    font-weight: 800;
+}
+
+
+.material-icon.pdf {
+    background: #fff1f2;
+
+    color: #e11d48;
+}
+
+
+.material-icon.notes {
+    background: #eff6ff;
+
+    color: #2563eb;
+}
+
+
+.material-icon.slides {
+    background: #fff7ed;
+
+    color: #ea580c;
+}
+
+
+.material-info {
+    min-width: 0;
+
+    flex: 1;
+}
+
+
+.material-info h3 {
+    font-size: 12px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+
+.material-info p {
+    color: #697386;
+
+    font-size: 10px;
+
+    margin-top: 4px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+
+.material-info span {
+    display: block;
+
+    color: #a0a8b6;
+
+    font-size: 9px;
+
+    margin-top: 6px;
+}
+
+
+.material-menu {
+    align-self: flex-start;
+
+    border: none;
+
+    background: transparent;
+
+    color: #8a93a3;
+
+    font-size: 17px;
+
+    cursor: pointer;
+
+    padding: 0 2px;
+}
+
+
+.material-menu:hover {
+    color: #2563eb;
+}
+
+
+/* =========================================
+   UPLOAD AREA
+========================================= */
+
+.upload-area {
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 20px;
+
+    margin-top: 5px;
+
+    border: 1px dashed #cdd5e1;
+
+    border-radius: 11px;
+
+    background: #fafbfc;
+}
+
+
+.upload-icon {
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+
+    background: #eef4ff;
+
+    color: #2563eb;
+
+    font-size: 19px;
+}
+
+
+.upload-area h2 {
+    font-size: 13px;
+}
+
+
+.upload-area p {
+    color: #8a93a3;
+
+    font-size: 10px;
+
+    margin-top: 4px;
+}
+
+
+.upload-area button {
+    margin-left: auto;
+}
+
+
+/* =========================================
+   EMPTY STATE
+========================================= */
+
+.empty-materials {
+    display: none;
+
+    text-align: center;
+
+    padding: 70px 20px;
+}
+
+
+.empty-materials > div {
+    width: 45px;
+    height: 45px;
+
+    margin: 0 auto 12px;
+
+    border-radius: 10px;
+
+    background: #f1f5f9;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    color: #8a93a3;
+
+    font-size: 20px;
+}
+
+
+.empty-materials h2 {
+    font-size: 16px;
+}
+
+
+.empty-materials p {
+    color: #8a93a3;
+
+    font-size: 11px;
+
+    margin-top: 5px;
+}
+
+
+/* =========================================
+   UPLOADED FILE ANIMATION
+========================================= */
+
+.material-card.new-material {
+    animation:
+        materialAppear .3s ease;
+}
+
+
+@keyframes materialAppear {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 800px) {
+
+    .materials-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .materials-header {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 15px;
+    }
+
+
+    .materials-controls {
+        flex-direction: column;
+    }
+
+
+    .search-box {
+        max-width: none;
+    }
+
+
+    .materials-controls select {
+        min-height: 40px;
+    }
+
+
+    .upload-area {
+        flex-wrap: wrap;
+    }
+
+
+    .upload-area button {
+        margin-left: 0;
+
+        width: 100%;
+    }
+
+}
+/* =========================================
+   UPLOAD MODAL
+========================================= */
+
+.upload-modal-overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(15, 23, 42, 0.45);
+
+    display: none;
+
+    align-items: center;
+
+    justify-content: center;
+
+    z-index: 1000;
+
+    padding: 20px;
+
+}
+
+
+.upload-modal-overlay.active {
+
+    display: flex;
+
+}
+
+
+.upload-modal {
+
+    width: 100%;
+
+    max-width: 520px;
+
+    background: white;
+
+    border-radius: 16px;
+
+    padding: 28px;
+
+    box-shadow:
+        0 20px 60px rgba(
+            15,
+            23,
+            42,
+            0.18
+        );
+
+}
+
+
+.upload-modal-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-start;
+
+}
+
+
+.upload-modal-header h2 {
+
+    margin-top: 6px;
+
+    font-size: 24px;
+
+}
+
+
+.upload-modal-close {
+
+    border: none;
+
+    background: transparent;
+
+    font-size: 26px;
+
+    color: #7b8495;
+
+    cursor: pointer;
+
+}
+
+
+.upload-modal-description {
+
+    margin-top: 10px;
+
+    color: #7b8495;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+
+}
+
+
+.upload-form-group {
+
+    margin-top: 22px;
+
+}
+
+
+.upload-form-group label {
+
+    display: block;
+
+    margin-bottom: 8px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    color: #374151;
+
+}
+
+
+.file-drop-zone {
+
+    border: 1.5px dashed #d8dee8;
+
+    border-radius: 12px;
+
+    padding: 26px;
+
+    text-align: center;
+
+    background: #fafbfc;
+
+}
+
+
+.upload-zone-icon {
+
+    font-size: 28px;
+
+    margin-bottom: 8px;
+
+}
+
+
+.file-drop-zone strong {
+
+    display: block;
+
+    font-size: 14px;
+
+}
+
+
+.file-drop-zone span {
+
+    display: block;
+
+    margin-top: 4px;
+
+    margin-bottom: 14px;
+
+    color: #8a93a3;
+
+    font-size: 12px;
+
+}
+
+
+.selected-file {
+
+    margin-top: 12px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    color: #374151;
+
+}
+
+
+.upload-select {
+
+    width: 100%;
+
+    padding: 11px 12px;
+
+    border: 1px solid #d8dee8;
+
+    border-radius: 8px;
+
+    background: white;
+
+    font-size: 14px;
+
+    color: #374151;
+
+}
+
+
+.upload-modal-actions {
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    margin-top: 28px;
+
+}
+
+
+.file-drop-zone.dragging {
+
+    border-color: #6d8df5;
+
+    background: #f5f7ff;
+
+}
+/* =========================================
+   CLICKABLE MATERIAL CARDS
+========================================= */
+
+.material-card {
+    cursor: pointer;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.material-card:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 6px 18px rgba(
+            15,
+            23,
+            42,
+            0.08
+        );
+}
+
+
+.material-menu {
+    position: relative;
+    z-index: 2;
+}

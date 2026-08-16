@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Material | Study AI</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/material.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar">
+
+    <div class="brand">
+
+        <div class="brand-icon">
+            S
+        </div>
+
+        <span>
+            Study AI
+        </span>
+
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a
+            href="index.html"
+            class="nav-item"
+        >
+            <span>⌂</span>
+            Dashboard
+        </a>
+
+
+        <a
+            href="course.html"
+            class="nav-item active"
+        >
+            <span>▣</span>
+            My Courses
+        </a>
+
+
+        <a
+            href="progress.html"
+            class="nav-item"
+        >
+            <span>◔</span>
+            Progress
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <a
+            href="#"
+            class="nav-item"
+        >
+            <span>⚙</span>
+            Settings
+        </a>
+
+
+        <div class="profile-card">
+
+            <div class="profile-avatar">
+                T
+            </div>
+
+
+            <div>
+
+                <strong>
+                    Tyler
+                </strong>
+
+                <small>
+                    Student
+                </small>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</aside>
+
+
+
+<!-- MAIN CONTENT -->
+
+<main class="main-content">
+
+
+    <!-- HEADER -->
+
+    <header class="material-page-header">
+
+        <div>
+
+            <a
+                href="materials.html"
+                class="back-link"
+            >
+                ← Course Materials
+            </a>
+
+
+            <p class="eyebrow">
+                COURSE MATERIAL
+            </p>
+
+
+            <h1 id="material-title">
+                Loading material...
+            </h1>
+
+
+            <p
+                class="subtitle"
+                id="material-subtitle"
+            >
+                Loading...
+            </p>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- MATERIAL INFORMATION -->
+
+    <section class="material-meta-grid">
+
+
+        <div class="material-meta-card">
+
+            <span>
+                FILE TYPE
+            </span>
+
+            <strong id="material-type">
+                —
+            </strong>
+
+        </div>
+
+
+        <div class="material-meta-card">
+
+            <span>
+                COURSE UNIT
+            </span>
+
+            <strong id="material-unit">
+                —
+            </strong>
+
+        </div>
+
+
+        <div class="material-meta-card">
+
+            <span>
+                FILE SIZE
+            </span>
+
+            <strong id="material-size">
+                —
+            </strong>
+
+        </div>
+
+
+        <div class="material-meta-card">
+
+            <span>
+                UPLOADED
+            </span>
+
+            <strong id="material-date">
+                —
+            </strong>
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- STUDY ACTIONS -->
+
+    <section class="material-actions">
+
+
+        <div>
+
+            <p class="eyebrow">
+                STUDY TOOLS
+            </p>
+
+
+            <h2>
+                Study this material
+            </h2>
+
+
+            <p>
+                Use this material to create personalized
+                study resources.
+            </p>
+
+        </div>
+
+
+        <div class="material-action-buttons">
+
+
+            <a
+                href="quiz.html"
+                class="material-action-button primary"
+            >
+
+                <span>
+                    ✓
+                </span>
+
+                Practice Quiz
+
+            </a>
+
+
+            <a
+                href="study-guide.html"
+                class="material-action-button"
+            >
+
+                <span>
+                    ☰
+                </span>
+
+                Study Guide
+
+            </a>
+
+
+            <a
+                href="flashcards.html"
+                class="material-action-button"
+            >
+
+                <span>
+                    ◆
+                </span>
+
+                Flashcards
+
+            </a>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- EXTRACTED CONTENT -->
+
+    <section class="material-content-panel">
+
+
+        <div class="content-header">
+
+            <div>
+
+                <p class="eyebrow">
+                    EXTRACTED CONTENT
+                </p>
+
+
+                <h2>
+                    Material Text
+                </h2>
+
+            </div>
+
+
+            <span
+                id="content-status"
+                class="content-status"
+            >
+                Loading...
+            </span>
+
+        </div>
+
+
+        <div
+            id="material-content"
+            class="material-content"
+        >
+
+            <div class="loading-state">
+
+                Loading material content...
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ERROR -->
+
+    <section
+        id="material-error"
+        class="material-error"
+        style="display:none;"
+    >
+
+        <h2>
+            Unable to load material
+        </h2>
+
+
+        <p>
+            Something went wrong while loading this material.
+        </p>
+
+
+        <a
+            href="materials.html"
+            class="secondary-tool-button"
+        >
+            ← Back to Materials
+        </a>
+
+    </section>
+
+
+</main>
+
+
+<script src="js/material.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,14 @@
+.DS_Store
+
+# Node dependencies
+backend/node_modules/
+
+# Local database
+backend/*.db
+
+# Uploaded user files
+backend/uploads/
+
+# Environment variables / secrets
+.env
+backend/.env
