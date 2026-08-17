@@ -96,6 +96,22 @@ const flashcards = [
 ];
 
 
+const flashcardParams =
+    new URLSearchParams(window.location.search);
+
+const flashcardMaterialId =
+    flashcardParams.get("materialId");
+
+
+if (flashcardMaterialId) {
+
+    document.querySelector("#flashcards-back-link").href =
+        "material.html?id=" +
+        encodeURIComponent(flashcardMaterialId);
+
+}
+
+
 /* =========================================
    VARIABLES
 ========================================= */

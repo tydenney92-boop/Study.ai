@@ -73,6 +73,18 @@ const materialId =
         "materialId"
     );
 
+const quizBackLink =
+    document.querySelector("#quiz-back-link");
+
+
+if (materialId) {
+
+    quizBackLink.href =
+        "material.html?id=" +
+        encodeURIComponent(materialId);
+
+}
+
 
 /* =========================================
    QUIZ LENGTH SELECTION
@@ -151,8 +163,8 @@ async function startQuiz() {
 
 
         const response =
-            await fetch(
-                "http://localhost:3000/api/quiz",
+            await StudyAI.fetchWithTimeout(
+                StudyAI.apiUrl("/api/quiz"),
                 {
 
                     method: "POST",
@@ -176,12 +188,19 @@ async function startQuiz() {
 
                         })
 
-                }
+                },
+                120000
             );
 
 
         const result =
-            await response.json();
+            await response.json().catch(
+                function() {
+
+                    return {};
+
+                }
+            );
 
 
         if (!response.ok) {
@@ -242,17 +261,35 @@ async function startQuiz() {
             "Unable to generate quiz.";
 
 
-        answerContainer.innerHTML = `
+        answerContainer.innerHTML = "";
 
-            <p style="
-                color:#dc2626;
-                text-align:center;
-                padding:20px;
-            ">
-                ${error.message}
-            </p>
+        const errorMessage =
+            document.createElement("p");
 
-        `;
+        errorMessage.style.cssText =
+            "color:#dc2626;text-align:center;padding:20px;";
+
+        errorMessage.textContent =
+            error.name === "AbortError"
+                ? "The quiz took too long to generate. Please try again."
+                : error.message;
+
+        const retryButton =
+            document.createElement("button");
+
+        retryButton.className =
+            "primary-button";
+
+        retryButton.textContent =
+            "Try Again";
+
+        retryButton.addEventListener(
+            "click",
+            startQuiz
+        );
+
+        answerContainer.appendChild(errorMessage);
+        answerContainer.appendChild(retryButton);
 
 
         submitButton.style.display =
@@ -708,7 +745,7 @@ function finishQuiz() {
 
 
             <a
-                href="course.html"
+                href="material.html?id=${encodeURIComponent(materialId)}"
                 class="primary-button"
                 style="
                     display:inline-block;

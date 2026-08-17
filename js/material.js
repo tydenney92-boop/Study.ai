@@ -79,6 +79,22 @@ const errorBox =
     );
 
 
+const quizLink =
+    document.querySelector(
+        "#material-quiz-link"
+    );
+
+const studyGuideLink =
+    document.querySelector(
+        "#material-study-guide-link"
+    );
+
+const flashcardsLink =
+    document.querySelector(
+        "#material-flashcards-link"
+    );
+
+
 // =========================================
 // CHECK MATERIAL ID
 // =========================================
@@ -86,6 +102,23 @@ const errorBox =
 if (!materialId) {
 
     showError();
+
+}
+
+
+if (materialId) {
+
+    const selectedMaterial =
+        encodeURIComponent(materialId);
+
+    quizLink.href =
+        "quiz.html?materialId=" + selectedMaterial;
+
+    studyGuideLink.href =
+        "study-guide.html?materialId=" + selectedMaterial;
+
+    flashcardsLink.href =
+        "flashcards.html?materialId=" + selectedMaterial;
 
 }
 
@@ -99,8 +132,11 @@ async function loadMaterial() {
     try {
 
         const response =
-            await fetch(
-                `http://localhost:3000/api/materials/${materialId}`
+            await StudyAI.fetchWithTimeout(
+                StudyAI.apiUrl(
+                    "/api/materials/" +
+                    encodeURIComponent(materialId)
+                )
             );
 
 

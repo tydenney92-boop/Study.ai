@@ -47,6 +47,18 @@ const params =
 const materialId =
     params.get("materialId");
 
+const guideQuizLink =
+    document.querySelector("#guide-quiz-link");
+
+
+if (materialId) {
+
+    guideQuizLink.href =
+        "quiz.html?materialId=" +
+        encodeURIComponent(materialId);
+
+}
+
 
 /* =========================================
    GENERATE STUDY GUIDE
@@ -77,8 +89,8 @@ async function generateStudyGuide() {
     try {
 
         const response =
-            await fetch(
-                "http://localhost:3000/api/study-guide",
+            await StudyAI.fetchWithTimeout(
+                StudyAI.apiUrl("/api/study-guide"),
                 {
 
                     method: "POST",
@@ -99,12 +111,19 @@ async function generateStudyGuide() {
 
                         })
 
-                }
+                },
+                120000
             );
 
 
         const result =
-            await response.json();
+            await response.json().catch(
+                function() {
+
+                    return {};
+
+                }
+            );
 
 
         if (!response.ok) {
@@ -134,7 +153,9 @@ async function generateStudyGuide() {
             "There was a problem generating the study guide.";
 
         alert(
-            error.message
+            error.name === "AbortError"
+                ? "The study guide took too long to generate. Please try again."
+                : error.message
         );
 
     }

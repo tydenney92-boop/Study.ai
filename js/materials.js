@@ -89,8 +89,8 @@ async function loadMaterials() {
     try {
 
         const response =
-            await fetch(
-                "http://localhost:3000/api/materials"
+            await StudyAI.fetchWithTimeout(
+                StudyAI.apiUrl("/api/materials")
             );
 
 
@@ -621,12 +621,13 @@ async function uploadMaterial() {
     try {
 
         const response =
-            await fetch(
-                "http://localhost:3000/api/materials",
+            await StudyAI.fetchWithTimeout(
+                StudyAI.apiUrl("/api/materials"),
                 {
                     method: "POST",
                     body: formData
-                }
+                },
+                120000
             );
 
 
