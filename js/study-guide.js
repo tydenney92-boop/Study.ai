@@ -39,23 +39,29 @@ const loadingBox =
    GET MATERIAL ID FROM URL
 ========================================= */
 
-const params =
-    new URLSearchParams(
-        window.location.search
-    );
+const courseId =
+    StudyAI.courseContext.getCourseId();
 
 const materialId =
-    params.get("materialId");
+    StudyAI.courseContext.getMaterialId();
 
 const guideQuizLink =
     document.querySelector("#guide-quiz-link");
 
 
-if (materialId) {
+if (courseId && materialId) {
 
     guideQuizLink.href =
-        "quiz.html?materialId=" +
-        encodeURIComponent(materialId);
+        StudyAI.courseContext.url("quiz.html", {
+            courseId,
+            materialId
+        });
+
+    document.querySelector("#guide-back-link").href =
+        StudyAI.courseContext.url("material.html", {
+            courseId,
+            materialId
+        });
 
 }
 
@@ -66,7 +72,7 @@ if (materialId) {
 
 async function generateStudyGuide() {
 
-    if (!materialId) {
+    if (!courseId || !materialId) {
 
         guideSummary.textContent =
             "No course material has been selected.";
@@ -88,56 +94,16 @@ async function generateStudyGuide() {
 
     try {
 
-        const response =
-            await StudyAI.fetchWithTimeout(
-                StudyAI.apiUrl("/api/study-guide"),
-                {
-
-                    method: "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "application/json"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            materialIds: [
-                                Number(materialId)
-                            ]
-
-                        })
-
-                },
-                120000
-            );
-
-
         const result =
-            await response.json().catch(
-                function() {
-
-                    return {};
-
-                }
+            await StudyAI.api.post(
+                `/api/courses/${courseId}/study-guides`,
+                { materialIds: [Number(materialId)] },
+                { timeoutMs: 120000 }
             );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                result.error ||
-                "Could not generate study guide."
-            );
-
-        }
 
 
         displayStudyGuide(
-            result.studyGuide
+            result.generatedContent
         );
 
 
@@ -675,7 +641,7 @@ generateButton.addEventListener(
    START
 ========================================= */
 
-if (materialId) {
+if (courseId && materialId) {
 
     generateStudyGuide();
 

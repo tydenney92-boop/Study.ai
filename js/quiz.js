@@ -57,31 +57,35 @@ let score = 0;
 
 let selectedQuestionCount = 5;
 
+let generatedQuizId = null;
+
+let submittedAnswers = [];
+
 
 /* =========================================
    GET MATERIAL ID
 ========================================= */
 
-const params =
-    new URLSearchParams(
-        window.location.search
-    );
-
+const courseId =
+    StudyAI.courseContext.getCourseId();
 
 const materialId =
-    params.get(
-        "materialId"
-    );
+    StudyAI.courseContext.getMaterialId();
 
 const quizBackLink =
     document.querySelector("#quiz-back-link");
 
 
-if (materialId) {
+if (courseId && materialId) {
 
     quizBackLink.href =
-        "material.html?id=" +
-        encodeURIComponent(materialId);
+        StudyAI.courseContext.url("material.html", {
+            courseId,
+            materialId
+        });
+
+    document.querySelector("#quiz-interface-back-link").href =
+        quizBackLink.href;
 
 }
 
@@ -118,7 +122,7 @@ quizLengthButtons.forEach(
 
 async function startQuiz() {
 
-    if (!materialId) {
+    if (!courseId || !materialId) {
 
         alert(
             "No course material was selected."
@@ -162,59 +166,28 @@ async function startQuiz() {
         );
 
 
-        const response =
-            await StudyAI.fetchWithTimeout(
-                StudyAI.apiUrl("/api/quiz"),
-                {
-
-                    method: "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "application/json"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            materialIds: [
-                                Number(materialId)
-                            ],
-
-                            questionCount:
-                                selectedQuestionCount
-
-                        })
-
-                },
-                120000
-            );
-
-
         const result =
-            await response.json().catch(
-                function() {
-
-                    return {};
-
-                }
+            await StudyAI.api.post(
+                `/api/courses/${courseId}/quizzes`,
+                {
+                    materialIds: [Number(materialId)],
+                    questionCount: selectedQuestionCount
+                },
+                { timeoutMs: 180000 }
             );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                result.error ||
-                "Could not generate quiz."
-            );
-
-        }
 
 
         questions =
             result.quiz.questions;
+
+        generatedQuizId =
+            result.id;
+
+        submittedAnswers = [];
+
+        score = 0;
+
+        questionNumber = 1;
 
 
         if (
@@ -557,6 +530,13 @@ function submitQuestion() {
 
     }
 
+    submittedAnswers[questionNumber - 1] = {
+        questionNumber,
+        selectedAnswer,
+        correctAnswer: question.correctAnswer,
+        correct: isCorrect
+    };
+
 
     const feedbackTitle =
         resultBox.querySelector(
@@ -691,7 +671,7 @@ function finishQuiz() {
             ">
                 You completed the
                 ${questions.length}-question
-                ECON 110 practice quiz.
+                practice quiz.
             </p>
 
 
@@ -745,18 +725,33 @@ function finishQuiz() {
 
 
             <a
-                href="material.html?id=${encodeURIComponent(materialId)}"
+                href="${StudyAI.courseContext.url("material.html", {
+                    courseId,
+                    materialId
+                })}"
                 class="primary-button"
                 style="
                     display:inline-block;
                 "
             >
-                Back to Course
+                Back to Material
             </a>
 
         </div>
 
     `;
+
+    const saveStatus = document.createElement("p");
+    saveStatus.id = "attempt-save-status";
+    saveStatus.style.cssText = "margin-top:14px;color:#7b8495;font-size:12px;";
+    saveStatus.textContent = generatedQuizId
+        ? "Saving this attempt…"
+        : "This attempt could not be linked to a generated quiz.";
+    quizContainer.querySelector("div").appendChild(saveStatus);
+
+    if (generatedQuizId) {
+        saveQuizAttempt(percentage, saveStatus);
+    }
 
 
     const retakeButton =
@@ -775,3 +770,41 @@ function finishQuiz() {
     );
 
 }
+
+async function saveQuizAttempt(percentage, statusElement) {
+    try {
+        await StudyAI.api.post(
+            `/api/quizzes/${generatedQuizId}/attempts`,
+            {
+                score: percentage,
+                answers: submittedAnswers,
+                results: {
+                    correct: score,
+                    total: questions.length
+                }
+            }
+        );
+        statusElement.textContent = "Attempt saved to your course history.";
+        statusElement.style.color = "#15803d";
+    } catch (error) {
+        statusElement.textContent = `Attempt not saved: ${error.message}`;
+        statusElement.style.color = "#b42318";
+    }
+}
+
+async function loadQuizContext() {
+    if (!courseId) return;
+
+    try {
+        const course = await StudyAI.api.get(`/api/courses/${courseId}`);
+        document.querySelector("#quiz-course-topic").textContent = course.courseCode;
+        document.querySelector("#quiz-interface-course-topic").textContent = course.courseCode;
+        quizBackLink.textContent = `← Back to ${course.courseCode}`;
+        document.querySelector("#quiz-interface-back-link").textContent =
+            `← Back to ${course.courseCode}`;
+    } catch (error) {
+        console.error("Could not load quiz course context:", error);
+    }
+}
+
+loadQuizContext();

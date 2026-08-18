@@ -10,6 +10,21 @@ const chatMessages =
 const suggestions =
     document.querySelectorAll(".suggestion");
 
+const notesContext = window.StudyAI?.courseContext;
+const notesBackLink = document.querySelector("#notes-back-link");
+const notesCourseLabel = document.querySelector("#notes-course-label");
+
+if (notesContext?.courseId && notesBackLink) {
+    notesBackLink.href = notesContext.url("course.html");
+    StudyAI.api.get(`/api/courses/${notesContext.courseId}`)
+        .then(function(course) {
+            notesCourseLabel.textContent = `← ${course.courseCode || course.courseName}`;
+        })
+        .catch(function() {
+            notesCourseLabel.textContent = "← Course";
+        });
+}
+
 
 /* =========================================
    SEND MESSAGE
@@ -205,7 +220,7 @@ function generateDemoResponse(message) {
         <br><br>
 
         In the future, Study AI will search your
-        uploaded ECON 110 materials and generate
+        uploaded course materials and generate
         an answer specifically from your notes.
 
         <br><br>

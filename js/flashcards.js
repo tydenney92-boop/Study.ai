@@ -1,3 +1,11 @@
+const flashcardContext = window.StudyAI?.courseContext;
+const flashcardBackLink = document.querySelector("#flashcards-back-link");
+
+if (flashcardContext?.courseId && flashcardBackLink) {
+    flashcardBackLink.href = flashcardContext.url("course.html");
+    flashcardBackLink.textContent = "← Course";
+}
+
 /* =========================================
    FLASHCARD DATA
 ========================================= */

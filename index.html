@@ -3,492 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Study AI | Dashboard</title>
-
     <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body>
-
-    <!-- SIDEBAR -->
     <aside class="sidebar">
-
-        <div class="brand">
-            <div class="brand-icon">S</div>
-            <span>Study AI</span>
-        </div>
-
+        <div class="brand"><div class="brand-icon">S</div><span>Study AI</span></div>
         <nav class="sidebar-nav">
-
-            <a href="index.html" class="nav-item active">
-                <span>⌂</span>
-                Dashboard
-            </a>
-
-            <a href="course.html" class="nav-item">
-                <span>▣</span>
-                My Courses
-            </a>
-
-            <a href="progress.html" class="nav-item">
-                <span>◔</span>
-                Progress
-            </a>
-
+            <a href="index.html" class="nav-item active"><span>⌂</span>Dashboard</a>
+            <a href="index.html#courses" class="nav-item"><span>▣</span>My Courses</a>
+            <a href="progress.html" class="nav-item"><span>◔</span>Progress</a>
         </nav>
-
         <div class="sidebar-bottom">
-
-            <a href="#" class="nav-item">
-                <span>⚙</span>
-                Settings
-            </a>
-
+            <a href="#" class="nav-item"><span>⚙</span>Settings</a>
             <div class="profile-card">
-                <div class="profile-avatar">T</div>
-
-                <div>
-                    <strong>Tyler</strong>
-                    <small>Student</small>
-                </div>
+                <div class="profile-avatar">D</div>
+                <div><strong>Development User</strong><small>Student</small></div>
             </div>
-
         </div>
-
     </aside>
 
-
-    <!-- MAIN CONTENT -->
     <main class="main-content">
-
-        <!-- TOP BAR -->
         <header class="topbar">
-
             <div>
                 <p class="eyebrow">STUDENT DASHBOARD</p>
-                <h1>Good afternoon, Tyler.</h1>
-                <p class="subtitle">
-                    Here's an overview of your studying.
-                </p>
+                <h1>Welcome back.</h1>
+                <p class="subtitle">Choose a course or create a new one to start studying.</p>
             </div>
-
-            <button class="primary-button">
-                + Add Course
-            </button>
-
+            <button class="primary-button" id="add-course-button">+ Add Course</button>
         </header>
 
-
-        <!-- STAT CARDS -->
         <section class="stats-grid">
-
-            <div class="stat-card">
-
-                <div class="stat-icon blue">◔</div>
-
-                <div>
-                    <span class="stat-label">Study Progress</span>
-                    <strong>68%</strong>
-                </div>
-
-                <span class="stat-change positive">
-                    +8%
-                </span>
-
-            </div>
-
-
-            <div class="stat-card">
-
-                <div class="stat-icon purple">✓</div>
-
-                <div>
-                    <span class="stat-label">Questions Answered</span>
-                    <strong>124</strong>
-                </div>
-
-                <span class="stat-change">
-                    This week
-                </span>
-
-            </div>
-
-
-            <div class="stat-card">
-
-                <div class="stat-icon green">🔥</div>
-
-                <div>
-                    <span class="stat-label">Study Streak</span>
-                    <strong>7 days</strong>
-                </div>
-
-                <span class="stat-change positive">
-                    Best: 12
-                </span>
-
-            </div>
-
-
-            <div class="stat-card">
-
-                <div class="stat-icon orange">★</div>
-
-                <div>
-                    <span class="stat-label">Average Score</span>
-                    <strong>84%</strong>
-                </div>
-
-                <span class="stat-change positive">
-                    +4%
-                </span>
-
-            </div>
-
+            <div class="stat-card"><div class="stat-icon blue">▣</div><div><span class="stat-label">Courses</span><strong id="course-count">—</strong></div></div>
+            <div class="stat-card"><div class="stat-icon purple">☰</div><div><span class="stat-label">Units</span><strong id="unit-count">—</strong></div></div>
+            <div class="stat-card"><div class="stat-icon green">▤</div><div><span class="stat-label">Materials</span><strong id="material-count">—</strong></div></div>
+            <div class="stat-card"><div class="stat-icon orange">✓</div><div><span class="stat-label">Ready to Study</span><strong id="ready-count">—</strong></div></div>
         </section>
 
-
-        <!-- DASHBOARD GRID -->
-        <section class="dashboard-grid">
-
-            <!-- COURSES -->
+        <section class="dashboard-grid" id="courses">
             <div class="dashboard-panel courses-panel">
-
                 <div class="panel-header">
-
-                    <div>
-                        <h2>My Courses</h2>
-                        <p>Continue where you left off.</p>
-                    </div>
-
-                    <a href="course.html" class="text-link">
-                        View all →
-                    </a>
-
+                    <div><h2>My Courses</h2><p>Your courses from the Study AI backend.</p></div>
                 </div>
-
-
-                <div class="course-list">
-
-                    <a href="course.html" class="course-card">
-
-                        <div class="course-color blue"></div>
-
-                        <div class="course-info">
-
-                            <span class="course-code">
-                                ECON 110
-                            </span>
-
-                            <h3>Principles of Economics</h3>
-
-                            <div class="progress-row">
-
-                                <div class="progress-bar">
-                                    <div
-                                        class="progress-fill blue-fill"
-                                        style="width: 68%">
-                                    </div>
-                                </div>
-
-                                <span>68%</span>
-
-                            </div>
-
-                        </div>
-
-                        <span class="course-arrow">→</span>
-
-                    </a>
-
-
-                    <a href="#" class="course-card">
-
-                        <div class="course-color purple"></div>
-
-                        <div class="course-info">
-
-                            <span class="course-code">
-                                RUSSIAN 201
-                            </span>
-
-                            <h3>Intermediate Russian</h3>
-
-                            <div class="progress-row">
-
-                                <div class="progress-bar">
-                                    <div
-                                        class="progress-fill purple-fill"
-                                        style="width: 82%">
-                                    </div>
-                                </div>
-
-                                <span>82%</span>
-
-                            </div>
-
-                        </div>
-
-                        <span class="course-arrow">→</span>
-
-                    </a>
-
+                <div class="course-list" id="course-list">
+                    <div class="friendly-empty"><span>Loading courses…</span></div>
                 </div>
-
             </div>
 
-
-            <!-- QUICK ACTIONS -->
             <div class="dashboard-panel">
-
-                <div class="panel-header">
-
-                    <div>
-                        <h2>Study Tools</h2>
-                        <p>Jump right into studying.</p>
-                    </div>
-
-                </div>
-
-
+                <div class="panel-header"><div><h2>Study Tools</h2><p>Open a course and choose material to begin.</p></div></div>
                 <div class="tool-grid">
-
-                    <a href="quiz.html" class="tool-card">
-
-                        <div class="tool-icon blue">
-                            ✓
-                        </div>
-
-                        <div>
-                            <strong>Practice Quiz</strong>
-                            <span>Test your knowledge</span>
-                        </div>
-
-                    </a>
-
-
-                    <a href="flashcards.html" class="tool-card">
-
-                        <div class="tool-icon purple">
-                            ◆
-                        </div>
-
-                        <div>
-                            <strong>Flashcards</strong>
-                            <span>Review key concepts</span>
-                        </div>
-
-                    </a>
-
-
-                    <a href="study-guide.html" class="tool-card">
-
-                        <div class="tool-icon green">
-                            ☰
-                        </div>
-
-                        <div>
-                            <strong>Study Guide</strong>
-                            <span>Review your material</span>
-                        </div>
-
-                    </a>
-
-
-                    <a href="notes.html" class="tool-card">
-
-                        <div class="tool-icon orange">
-                            ✦
-                        </div>
-
-                        <div>
-                            <strong>Ask My Notes</strong>
-                            <span>Ask an AI question</span>
-                        </div>
-
-                    </a>
-
+                    <a href="#courses" class="tool-card"><div class="tool-icon blue">✓</div><div><strong>Practice Quiz</strong><span>Generate from a material</span></div></a>
+                    <a href="#courses" class="tool-card"><div class="tool-icon green">☰</div><div><strong>Study Guide</strong><span>Build a focused review</span></div></a>
+                    <a href="flashcards.html" class="tool-card"><div class="tool-icon purple">◆</div><div><strong>Flashcards</strong><span>Demo deck for now</span></div></a>
+                    <a href="notes.html" class="tool-card"><div class="tool-icon orange">✦</div><div><strong>Ask My Notes</strong><span>Demo assistant for now</span></div></a>
                 </div>
-
             </div>
-
         </section>
 
-
-        <!-- LOWER SECTION -->
         <section class="dashboard-grid lower-grid">
-
-            <!-- RECENT ACTIVITY -->
             <div class="dashboard-panel">
-
-                <div class="panel-header">
-
-                    <div>
-                        <h2>Recent Activity</h2>
-                        <p>Your latest study sessions.</p>
-                    </div>
-
-                </div>
-
-
+                <div class="panel-header"><div><h2>Getting Started</h2><p>A simple path from notes to practice.</p></div></div>
                 <div class="activity-list">
-
-                    <div class="activity-item">
-
-                        <div class="activity-icon blue">
-                            ✓
-                        </div>
-
-                        <div class="activity-content">
-
-                            <strong>
-                                ECON 110 Practice Quiz
-                            </strong>
-
-                            <span>
-                                Scored 86% · 15 questions
-                            </span>
-
-                        </div>
-
-                        <time>
-                            2h ago
-                        </time>
-
-                    </div>
-
-
-                    <div class="activity-item">
-
-                        <div class="activity-icon purple">
-                            ◆
-                        </div>
-
-                        <div class="activity-content">
-
-                            <strong>
-                                Elasticity Flashcards
-                            </strong>
-
-                            <span>
-                                Reviewed 24 cards
-                            </span>
-
-                        </div>
-
-                        <time>
-                            Yesterday
-                        </time>
-
-                    </div>
-
-
-                    <div class="activity-item">
-
-                        <div class="activity-icon green">
-                            ☰
-                        </div>
-
-                        <div class="activity-content">
-
-                            <strong>
-                                GDP Study Guide
-                            </strong>
-
-                            <span>
-                                Reviewed Unit 4
-                            </span>
-
-                        </div>
-
-                        <time>
-                            2 days ago
-                        </time>
-
-                    </div>
-
+                    <div class="activity-item"><div class="activity-icon blue">1</div><div class="activity-content"><strong>Create or open a course</strong><span>Keep each class and semester separate.</span></div></div>
+                    <div class="activity-item"><div class="activity-icon purple">2</div><div class="activity-content"><strong>Add units and materials</strong><span>Organize uploaded files by unit.</span></div></div>
+                    <div class="activity-item"><div class="activity-icon green">3</div><div class="activity-content"><strong>Generate and practice</strong><span>Create verified quizzes and study guides.</span></div></div>
                 </div>
-
             </div>
-
-
-            <!-- WEAK AREAS -->
             <div class="dashboard-panel">
-
-                <div class="panel-header">
-
-                    <div>
-                        <h2>Focus Areas</h2>
-                        <p>Topics worth reviewing.</p>
-                    </div>
-
-                    <a href="progress.html" class="text-link">
-                        View progress →
-                    </a>
-
-                </div>
-
-
-                <div class="focus-list">
-
-                    <div class="focus-item">
-
-                        <div class="focus-title">
-                            <strong>Fiscal Policy</strong>
-                            <span>47%</span>
-                        </div>
-
-                        <div class="progress-bar">
-                            <div
-                                class="progress-fill red-fill"
-                                style="width: 47%">
-                            </div>
-                        </div>
-
-                    </div>
-
-
-                    <div class="focus-item">
-
-                        <div class="focus-title">
-                            <strong>Monetary Policy</strong>
-                            <span>63%</span>
-                        </div>
-
-                        <div class="progress-bar">
-                            <div
-                                class="progress-fill orange-fill"
-                                style="width: 63%">
-                            </div>
-                        </div>
-
-                    </div>
-
-
-                    <div class="focus-item">
-
-                        <div class="focus-title">
-                            <strong>Elasticity</strong>
-                            <span>71%</span>
-                        </div>
-
-                        <div class="progress-bar">
-                            <div
-                                class="progress-fill yellow-fill"
-                                style="width: 71%">
-                            </div>
-                        </div>
-
-                    </div>
-
-                </div>
-
+                <div class="panel-header"><div><h2>Progress</h2><p>Completed quiz attempts are now saved.</p></div></div>
+                <div class="friendly-empty"><span>Course-wide progress summaries will be connected after generated-content listing APIs are available.</span><a class="text-link" href="progress.html">View temporary progress page →</a></div>
             </div>
-
         </section>
-
     </main>
 
+    <div class="app-modal-overlay" id="course-modal">
+        <div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="course-modal-title">
+            <div class="app-modal-header"><div><p class="eyebrow">NEW COURSE</p><h2 id="course-modal-title">Add a Course</h2></div><button class="icon-button" id="close-course-modal" aria-label="Close">×</button></div>
+            <form id="course-form" class="app-form">
+                <label>Course name<input id="course-name" maxlength="200" required placeholder="Introduction to Biology"></label>
+                <label>Course code<input id="course-code" maxlength="50" required placeholder="BIO 101"></label>
+                <label>Semester<input id="course-semester" maxlength="100" required placeholder="Fall 2026"></label>
+                <p class="form-error" id="course-form-error"></p>
+                <div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-course">Cancel</button><button type="submit" class="primary-button">Create Course</button></div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/course-context.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>

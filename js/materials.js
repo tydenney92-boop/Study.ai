@@ -1,934 +1,224 @@
-/* =========================================
-   MATERIALS PAGE
-========================================= */
+const courseId = StudyAI.courseContext.getCourseId();
+const initialUnitId = Number(new URLSearchParams(window.location.search).get("unitId")) || null;
+const container = document.querySelector("#materials-container");
+const emptyState = document.querySelector("#empty-materials");
+const searchInput = document.querySelector("#material-search");
+const unitFilter = document.querySelector("#unit-filter");
+const typeFilter = document.querySelector("#type-filter");
+const modal = document.querySelector("#upload-modal");
+const fileInput = document.querySelector("#file-input");
+const selectedFileLabel = document.querySelector("#selected-file");
+const uploadUnit = document.querySelector("#upload-unit-modal");
+const uploadError = document.querySelector("#upload-error");
+const confirmUpload = document.querySelector("#confirm-upload");
 
+let course = null;
+let units = [];
+let materials = [];
+let selectedFile = null;
 
-const materialsContainer =
-    document.querySelector("#materials-container");
+function formatSize(bytes) {
+    if (!bytes) return "—";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
-const emptyMaterials =
-    document.querySelector("#empty-materials");
+function materialCard(material) {
+    const card = document.createElement("article");
+    card.className = "material-card";
+    card.tabIndex = 0;
+    card.innerHTML = `
+        <div class="material-icon ${material.materialType}"></div>
+        <div class="material-info">
+            <h3></h3>
+            <p></p>
+            <span></span>
+        </div>
+        <span class="material-arrow">→</span>
+    `;
+    card.querySelector(".material-icon").textContent =
+        material.materialType === "pdf" ? "PDF" :
+            material.materialType === "slides" ? "PPT" : "TXT";
+    card.querySelector("h3").textContent = material.originalFilename;
+    card.querySelector("p").textContent = material.unitName || "No unit";
+    card.querySelector(".material-info span").textContent =
+        `${material.materialType.toUpperCase()} • ${formatSize(material.fileSize)}`;
 
-const searchInput =
-    document.querySelector("#material-search");
+    const openMaterial = () => {
+        window.location.href = StudyAI.courseContext.url("material.html", {
+            courseId,
+            materialId: material.id
+        });
+    };
+    card.addEventListener("click", openMaterial);
+    card.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") openMaterial();
+    });
+    return card;
+}
 
-const unitFilter =
-    document.querySelector("#unit-filter");
+function renderMaterials() {
+    const query = searchInput.value.trim().toLowerCase();
+    const selectedUnit = unitFilter.value;
+    const selectedType = typeFilter.value;
+    const filtered = materials.filter(material => {
+        const matchesSearch = material.originalFilename.toLowerCase().includes(query);
+        const matchesUnit = selectedUnit === "all" ||
+            (selectedUnit === "none" && material.unitId === null) ||
+            String(material.unitId) === selectedUnit;
+        const matchesType = selectedType === "all" || material.materialType === selectedType;
+        return matchesSearch && matchesUnit && matchesType;
+    });
 
-const typeFilter =
-    document.querySelector("#type-filter");
+    container.innerHTML = "";
+    emptyState.style.display = filtered.length ? "none" : "block";
 
+    const groups = new Map();
+    filtered.forEach(material => {
+        const key = material.unitId === null ? "none" : String(material.unitId);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(material);
+    });
 
-/* =========================================
-   UPLOAD ELEMENTS
-========================================= */
+    const orderedKeys = [
+        ...units.map(unit => String(unit.id)),
+        "none"
+    ].filter(key => groups.has(key));
 
-const uploadButton =
-    document.querySelector("#upload-button");
+    orderedKeys.forEach(key => {
+        const groupMaterials = groups.get(key);
+        const unit = units.find(value => String(value.id) === key);
+        const section = document.createElement("section");
+        section.className = "material-unit";
+        section.innerHTML = `
+            <div class="unit-header">
+                <div><span class="unit-number"></span><h2></h2></div>
+                <span class="unit-count"></span>
+            </div>
+            <div class="materials-grid"></div>
+        `;
+        section.querySelector(".unit-number").textContent = unit
+            ? `UNIT ${unit.unitNumber}`
+            : "UNASSIGNED";
+        section.querySelector("h2").textContent = unit ? unit.name : "Other Course Materials";
+        section.querySelector(".unit-count").textContent =
+            `${groupMaterials.length} material${groupMaterials.length === 1 ? "" : "s"}`;
+        const grid = section.querySelector(".materials-grid");
+        groupMaterials.forEach(material => grid.appendChild(materialCard(material)));
+        container.appendChild(section);
+    });
+}
 
-const uploadButtonBottom =
-    document.querySelector(
-        "#upload-button-bottom"
-    );
+function populateUnitSelects() {
+    unitFilter.innerHTML = '<option value="all">All Units</option>';
+    uploadUnit.innerHTML = '<option value="">No unit</option>';
+    units.forEach(unit => {
+        const filterOption = document.createElement("option");
+        filterOption.value = unit.id;
+        filterOption.textContent = `Unit ${unit.unitNumber} — ${unit.name}`;
+        unitFilter.appendChild(filterOption);
+        uploadUnit.appendChild(filterOption.cloneNode(true));
+    });
+    const noneOption = document.createElement("option");
+    noneOption.value = "none";
+    noneOption.textContent = "No Unit";
+    unitFilter.appendChild(noneOption);
+    if (initialUnitId && units.some(unit => unit.id === initialUnitId)) {
+        unitFilter.value = String(initialUnitId);
+        uploadUnit.value = String(initialUnitId);
+    }
+}
 
-const fileInput =
-    document.querySelector("#file-input");
-
-
-const uploadModal =
-    document.querySelector("#upload-modal");
-
-const closeUploadModal =
-    document.querySelector(
-        "#close-upload-modal"
-    );
-
-const cancelUpload =
-    document.querySelector(
-        "#cancel-upload"
-    );
-
-const modalFileButton =
-    document.querySelector(
-        "#modal-file-button"
-    );
-
-const modalFileInput =
-    document.querySelector(
-        "#file-input"
-    );
-
-const selectedFile =
-    document.querySelector(
-        "#selected-file"
-    );
-
-const uploadUnitModal =
-    document.querySelector(
-        "#upload-unit-modal"
-    );
-
-const confirmUpload =
-    document.querySelector(
-        "#confirm-upload"
-    );
-
-
-let allMaterials = [];
-
-let selectedUploadFile = null;
-
-
-
-/* =========================================
-   LOAD MATERIALS
-========================================= */
-
-async function loadMaterials() {
+async function loadPage() {
+    if (!courseId) {
+        container.innerHTML = '<div class="friendly-empty"><strong>No course selected</strong><a class="text-link" href="index.html#courses">Choose a course →</a></div>';
+        document.querySelector("#upload-button").disabled = true;
+        return;
+    }
 
     try {
-
-        const response =
-            await StudyAI.fetchWithTimeout(
-                StudyAI.apiUrl("/api/materials")
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Could not load materials."
-            );
-
-        }
-
-
-        allMaterials =
-            await response.json();
-
-
-        displayMaterials(
-            allMaterials
-        );
-
-
+        [course, units, materials] = await Promise.all([
+            StudyAI.api.get(`/api/courses/${courseId}`),
+            StudyAI.api.get(`/api/courses/${courseId}/units`),
+            StudyAI.api.get(`/api/courses/${courseId}/materials`)
+        ]);
+        document.title = `${course.courseCode} Materials | Study AI`;
+        document.querySelector("#materials-course-name").textContent =
+            `${course.courseCode} · ${course.courseName}`;
+        document.querySelector("#upload-course-description").textContent =
+            `Add a file to ${course.courseCode} — ${course.courseName}.`;
+        const courseLink = document.querySelector("#materials-course-link");
+        courseLink.textContent = `← ${course.courseCode}`;
+        courseLink.href = StudyAI.courseContext.url("course.html", { courseId });
+        populateUnitSelects();
+        renderMaterials();
     } catch (error) {
-
-        console.error(
-            "Error loading materials:",
-            error
-        );
-
+        container.innerHTML = '<div class="friendly-empty error-state"></div>';
+        container.querySelector("div").textContent = error.message;
     }
-
 }
 
-
-
-/* =========================================
-   DISPLAY MATERIALS
-========================================= */
-
-function displayMaterials(
-    materials
-) {
-
-    materialsContainer.innerHTML =
-        "";
-
-
-    if (materials.length === 0) {
-
-        emptyMaterials.style.display =
-            "block";
-
-        return;
-
-    }
-
-
-    emptyMaterials.style.display =
-        "none";
-
-
-    const units = {};
-
-
-    materials.forEach(
-        function(material) {
-
-            if (!units[material.unit]) {
-
-                units[material.unit] =
-                    [];
-
-            }
-
-
-            units[
-                material.unit
-            ].push(material);
-
-        }
-    );
-
-
-    Object.keys(units).forEach(
-        function(unit) {
-
-            const unitMaterials =
-                units[unit];
-
-
-            const section =
-                document.createElement(
-                    "section"
-                );
-
-            section.className =
-                "material-unit";
-
-
-            section.dataset.unit =
-                unit;
-
-
-
-            /* =================================
-               UNIT HEADER
-            ================================= */
-
-            const header =
-                document.createElement(
-                    "div"
-                );
-
-            header.className =
-                "unit-header";
-
-
-            const titleWrapper =
-                document.createElement(
-                    "div"
-                );
-
-
-            const number =
-                document.createElement(
-                    "span"
-                );
-
-            number.className =
-                "unit-number";
-
-            number.textContent =
-                unit.toUpperCase();
-
-
-            const heading =
-                document.createElement(
-                    "h2"
-                );
-
-            heading.textContent =
-                getUnitName(unit);
-
-
-            titleWrapper.appendChild(
-                number
-            );
-
-            titleWrapper.appendChild(
-                heading
-            );
-
-
-            const count =
-                document.createElement(
-                    "span"
-                );
-
-            count.className =
-                "unit-count";
-
-            count.textContent =
-                unitMaterials.length +
-                (
-                    unitMaterials.length === 1
-                        ? " material"
-                        : " materials"
-                );
-
-
-            header.appendChild(
-                titleWrapper
-            );
-
-            header.appendChild(
-                count
-            );
-
-
-
-            /* =================================
-               MATERIAL GRID
-            ================================= */
-
-            const grid =
-                document.createElement(
-                    "div"
-                );
-
-            grid.className =
-                "materials-grid";
-
-
-            unitMaterials.forEach(
-                function(material) {
-
-                    grid.appendChild(
-                        createMaterialCard(
-                            material
-                        )
-                    );
-
-                }
-            );
-
-
-            section.appendChild(
-                header
-            );
-
-            section.appendChild(
-                grid
-            );
-
-
-            materialsContainer.appendChild(
-                section
-            );
-
-        }
-    );
-
+function openModal() {
+    if (!courseId) return;
+    modal.classList.add("active");
+    uploadError.textContent = "";
 }
-
-
-
-/* =========================================
-   MATERIAL CARD
-========================================= */
-
-function createMaterialCard(
-    material
-) {
-
-    const card =
-        document.createElement(
-            "article"
-        );
-
-    card.className =
-        "material-card";
-
-
-    /*
-        Make the entire card clickable.
-
-        Example:
-
-        material.html?id=3
-    */
-
-    card.addEventListener(
-        "click",
-        function() {
-
-            window.location.href =
-                `material.html?id=${material.id}`;
-
-        }
-    );
-
-
-    /* =================================
-       ICON
-    ================================= */
-
-    const icon =
-        document.createElement(
-            "div"
-        );
-
-    icon.className =
-        "material-icon " +
-        material.type;
-
-    icon.textContent =
-        getMaterialLabel(
-            material.type
-        );
-
-
-
-    /* =================================
-       INFO
-    ================================= */
-
-    const info =
-        document.createElement(
-            "div"
-        );
-
-    info.className =
-        "material-info";
-
-
-    const title =
-        document.createElement(
-            "h3"
-        );
-
-    title.textContent =
-        material.name;
-
-
-    const description =
-        document.createElement(
-            "p"
-        );
-
-    description.textContent =
-        getMaterialDescription(
-            material
-        );
-
-
-    const details =
-        document.createElement(
-            "span"
-        );
-
-    details.textContent =
-        getMaterialTypeLabel(
-            material.type
-        );
-
-
-    info.appendChild(
-        title
-    );
-
-    info.appendChild(
-        description
-    );
-
-    info.appendChild(
-        details
-    );
-
-
-
-    /* =================================
-       MENU BUTTON
-    ================================= */
-
-    const menu =
-    document.createElement(
-        "button"
-    );
-
-    menu.className =
-        "material-menu";
-
-    menu.textContent =
-        "Study";
-
-    menu.setAttribute(
-        "aria-label",
-        "Material options"
-    );
-
-    menu.addEventListener(
-    "click",
-    function() {
-
-        window.location.href =
-            "study-guide.html?materialId=" +
-            material.id;
-
-    }
-    );
-
-
-    /*
-        Prevent clicking the menu from
-        opening the material viewer.
-    */
-
-    menu.addEventListener(
-        "click",
-        function(event) {
-
-            event.stopPropagation();
-
-        }
-    );
-
-
-    /* =================================
-       BUILD CARD
-    ================================= */
-
-    card.appendChild(
-        icon
-    );
-
-    card.appendChild(
-        info
-    );
-
-    card.appendChild(
-        menu
-    );
-
-
-    return card;
-
-}
-
-
-
-/* =========================================
-   OPEN UPLOAD MODAL
-========================================= */
-
-function openUploadModal() {
-
-    uploadModal.classList.add(
-        "active"
-    );
-
-}
-
-
-
-/* =========================================
-   CLOSE UPLOAD MODAL
-========================================= */
 
 function closeModal() {
-
-    uploadModal.classList.remove(
-        "active"
-    );
-
-
-    selectedUploadFile =
-        null;
-
-
-    selectedFile.textContent =
-        "";
-
-    modalFileInput.value =
-        "";
-
+    modal.classList.remove("active");
+    selectedFile = null;
+    selectedFileLabel.textContent = "";
+    fileInput.value = "";
+    uploadError.textContent = "";
 }
 
+document.querySelector("#upload-button").addEventListener("click", openModal);
+document.querySelector("#upload-button-bottom").addEventListener("click", openModal);
+document.querySelector("#close-upload-modal").addEventListener("click", closeModal);
+document.querySelector("#cancel-upload").addEventListener("click", closeModal);
+document.querySelector("#modal-file-button").addEventListener("click", () => fileInput.click());
+document.querySelector("#file-drop-zone").addEventListener("click", event => {
+    if (event.target.id !== "modal-file-button") fileInput.click();
+});
+fileInput.addEventListener("change", () => {
+    selectedFile = fileInput.files[0] || null;
+    selectedFileLabel.textContent = selectedFile
+        ? `${selectedFile.name} · ${formatSize(selectedFile.size)}`
+        : "";
+});
 
-
-/* =========================================
-   CHOOSE FILE
-========================================= */
-
-modalFileButton.addEventListener(
-    "click",
-    function() {
-
-        modalFileInput.click();
-
-    }
-);
-
-
-modalFileInput.addEventListener(
-    "change",
-    function() {
-
-        if (
-            modalFileInput.files.length === 0
-        ) {
-
-            return;
-
-        }
-
-
-        selectedUploadFile =
-            modalFileInput.files[0];
-
-
-        selectedFile.textContent =
-            selectedUploadFile.name;
-
-    }
-);
-
-
-
-/* =========================================
-   UPLOAD TO BACKEND
-========================================= */
-
-async function uploadMaterial() {
-
-    if (!selectedUploadFile) {
-
-        alert(
-            "Please choose a file first."
-        );
-
+confirmUpload.addEventListener("click", async () => {
+    if (!selectedFile) {
+        uploadError.textContent = "Choose a file first.";
         return;
-
     }
 
-
-    const formData =
-        new FormData();
-
-
-    formData.append(
-        "file",
-        selectedUploadFile
-    );
-
-
-    formData.append(
-        "unit",
-        uploadUnitModal.value
-    );
-
-
-    confirmUpload.disabled =
-        true;
-
-    confirmUpload.textContent =
-        "Uploading...";
-
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+    if (uploadUnit.value) formData.append("unitId", uploadUnit.value);
+    confirmUpload.disabled = true;
+    confirmUpload.textContent = "Uploading…";
+    uploadError.textContent = "";
 
     try {
-
-        const response =
-            await StudyAI.fetchWithTimeout(
-                StudyAI.apiUrl("/api/materials"),
-                {
-                    method: "POST",
-                    body: formData
-                },
-                120000
-            );
-
-
-        const result =
-            await response.json();
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                result.error ||
-                "Upload failed."
-            );
-
-        }
-
-
-        console.log(
-            "Upload successful:",
-            result
+        const material = await StudyAI.api.upload(
+            `/api/courses/${courseId}/materials`,
+            formData,
+            { timeoutMs: 120000 }
         );
-
-
-        closeModal();
-
-
-        await loadMaterials();
-
-
+        window.location.href = StudyAI.courseContext.url("material.html", {
+            courseId,
+            materialId: material.id
+        });
     } catch (error) {
-
-        console.error(
-            "Upload error:",
-            error
-        );
-
-
-        alert(
-            "There was a problem uploading the file."
-        );
-
+        uploadError.textContent = error.message;
+        confirmUpload.disabled = false;
+        confirmUpload.textContent = "Upload Material";
     }
-
-
-    confirmUpload.disabled =
-        false;
-
-    confirmUpload.textContent =
-        "Upload Material";
-
-}
-
-
-
-/* =========================================
-   MODAL BUTTONS
-========================================= */
-
-uploadButton.addEventListener(
-    "click",
-    openUploadModal
-);
-
-
-uploadButtonBottom.addEventListener(
-    "click",
-    openUploadModal
-);
-
-
-closeUploadModal.addEventListener(
-    "click",
-    closeModal
-);
-
-
-cancelUpload.addEventListener(
-    "click",
-    closeModal
-);
-
-
-confirmUpload.addEventListener(
-    "click",
-    uploadMaterial
-);
-
-
-
-/* =========================================
-   CLOSE MODAL OUTSIDE
-========================================= */
-
-uploadModal.addEventListener(
-    "click",
-    function(event) {
-
-        if (
-            event.target ===
-            uploadModal
-        ) {
-
-            closeModal();
-
-        }
-
-    }
-);
-
-
-
-/* =========================================
-   SEARCH + FILTER
-========================================= */
-
-function filterMaterials() {
-
-    const search =
-        searchInput.value
-            .toLowerCase()
-            .trim();
-
-
-    const unit =
-        unitFilter.value;
-
-
-    const type =
-        typeFilter.value;
-
-
-    const filtered =
-        allMaterials.filter(
-            function(material) {
-
-                const matchesSearch =
-                    material.name
-                        .toLowerCase()
-                        .includes(search);
-
-
-                const matchesUnit =
-                    unit === "all" ||
-                    material.unit === unit;
-
-
-                const matchesType =
-                    type === "all" ||
-                    material.type === type;
-
-
-                return (
-                    matchesSearch &&
-                    matchesUnit &&
-                    matchesType
-                );
-
-            }
-        );
-
-
-    displayMaterials(
-        filtered
-    );
-
-}
-
-
-searchInput.addEventListener(
-    "input",
-    filterMaterials
-);
-
-
-unitFilter.addEventListener(
-    "change",
-    filterMaterials
-);
-
-
-typeFilter.addEventListener(
-    "change",
-    filterMaterials
-);
-
-
-
-/* =========================================
-   HELPERS
-========================================= */
-
-function getUnitName(
-    unit
-) {
-
-    const names = {
-
-        unit1:
-            "Introduction to Economics",
-
-        unit2:
-            "Supply & Demand",
-
-        unit3:
-            "Macroeconomics",
-
-        unit4:
-            "GDP & Economic Growth",
-
-        unit5:
-            "Fiscal & Monetary Policy"
-
-    };
-
-
-    return names[unit] ||
-        "Course Materials";
-
-}
-
-
-
-function getMaterialLabel(
-    type
-) {
-
-    const labels = {
-
-        pdf:
-            "PDF",
-
-        notes:
-            "TXT",
-
-        slides:
-            "PPT"
-
-    };
-
-
-    return labels[type] ||
-        "FILE";
-
-}
-
-
-
-function getMaterialTypeLabel(
-    type
-) {
-
-    const labels = {
-
-        pdf:
-            "PDF",
-
-        notes:
-            "Notes",
-
-        slides:
-            "Slides"
-
-    };
-
-
-    return labels[type] ||
-        "File";
-
-}
-
-
-
-function getMaterialDescription(
-    material
-) {
-
-    const descriptions = {
-
-        "ECON 110 Syllabus":
-            "Course syllabus and schedule",
-
-        "Lecture 1 — Scarcity":
-            "Scarcity and opportunity cost",
-
-        "Elasticity Lecture":
-            "Price and income elasticity"
-
-    };
-
-
-    return descriptions[
-        material.name
-    ] ||
-        "Course material";
-
-}
-
-
-
-/* =========================================
-   START
-========================================= */
-
-loadMaterials();
+});
+
+searchInput.addEventListener("input", renderMaterials);
+unitFilter.addEventListener("change", renderMaterials);
+typeFilter.addEventListener("change", renderMaterials);
+loadPage();

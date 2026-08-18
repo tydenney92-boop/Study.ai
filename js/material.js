@@ -1,397 +1,85 @@
-// =========================================
-// MATERIAL VIEWER
-// =========================================
+const courseId = StudyAI.courseContext.getCourseId();
+const materialId = StudyAI.courseContext.getMaterialId();
+const title = document.querySelector("#material-title");
+const subtitle = document.querySelector("#material-subtitle");
+const content = document.querySelector("#material-content");
+const status = document.querySelector("#content-status");
+const errorBox = document.querySelector("#material-error");
 
-
-// Get the material ID from the URL.
-//
-// Example:
-//
-// material.html?id=3
-//
-// gives us:
-//
-// id = 3
-
-const urlParams =
-    new URLSearchParams(
-        window.location.search
-    );
-
-
-const materialId =
-    urlParams.get("id");
-
-
-// Get elements from the page
-
-const title =
-    document.querySelector(
-        "#material-title"
-    );
-
-
-const subtitle =
-    document.querySelector(
-        "#material-subtitle"
-    );
-
-
-const type =
-    document.querySelector(
-        "#material-type"
-    );
-
-
-const unit =
-    document.querySelector(
-        "#material-unit"
-    );
-
-
-const size =
-    document.querySelector(
-        "#material-size"
-    );
-
-
-const date =
-    document.querySelector(
-        "#material-date"
-    );
-
-
-const content =
-    document.querySelector(
-        "#material-content"
-    );
-
-
-const status =
-    document.querySelector(
-        "#content-status"
-    );
-
-
-const errorBox =
-    document.querySelector(
-        "#material-error"
-    );
-
-
-const quizLink =
-    document.querySelector(
-        "#material-quiz-link"
-    );
-
-const studyGuideLink =
-    document.querySelector(
-        "#material-study-guide-link"
-    );
-
-const flashcardsLink =
-    document.querySelector(
-        "#material-flashcards-link"
-    );
-
-
-// =========================================
-// CHECK MATERIAL ID
-// =========================================
-
-if (!materialId) {
-
-    showError();
-
+function formatFileSize(bytes) {
+    if (!bytes) return "—";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-
-if (materialId) {
-
-    const selectedMaterial =
-        encodeURIComponent(materialId);
-
-    quizLink.href =
-        "quiz.html?materialId=" + selectedMaterial;
-
-    studyGuideLink.href =
-        "study-guide.html?materialId=" + selectedMaterial;
-
-    flashcardsLink.href =
-        "flashcards.html?materialId=" + selectedMaterial;
-
+function formatDate(value) {
+    if (!value) return "—";
+    const normalized = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
+    return new Date(normalized).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+    });
 }
 
+function showError(message) {
+    errorBox.style.display = "block";
+    errorBox.querySelector("p").textContent = message;
+    document.querySelector(".material-content-panel").style.display = "none";
+}
 
-// =========================================
-// LOAD MATERIAL
-// =========================================
+function setLinks(course) {
+    const materialsUrl = StudyAI.courseContext.url("materials.html", { courseId });
+    const materialUrlValues = { courseId, materialId };
+    const backLink = document.querySelector("#material-back-link");
+    backLink.href = materialsUrl;
+    backLink.textContent = `← ${course.courseCode} Materials`;
+    document.querySelector("#material-error-back-link").href = materialsUrl;
+    document.querySelector("#material-quiz-link").href =
+        StudyAI.courseContext.url("quiz.html", materialUrlValues);
+    document.querySelector("#material-study-guide-link").href =
+        StudyAI.courseContext.url("study-guide.html", materialUrlValues);
+    document.querySelector("#material-flashcards-link").href =
+        StudyAI.courseContext.url("flashcards.html", materialUrlValues);
+}
 
 async function loadMaterial() {
+    if (!courseId || !materialId) {
+        showError("Choose a material from a course first.");
+        return;
+    }
 
     try {
+        const [course, material] = await Promise.all([
+            StudyAI.api.get(`/api/courses/${courseId}`),
+            StudyAI.api.get(`/api/courses/${courseId}/materials/${materialId}`)
+        ]);
+        setLinks(course);
+        document.title = `${material.originalFilename} | Study AI`;
+        title.textContent = material.originalFilename;
+        subtitle.textContent = `${course.courseCode} · ${material.unitName || "No unit"}`;
+        document.querySelector("#material-type").textContent =
+            material.materialType.toUpperCase();
+        document.querySelector("#material-unit").textContent = material.unitName || "—";
+        document.querySelector("#material-size").textContent = formatFileSize(material.fileSize);
+        document.querySelector("#material-date").textContent = formatDate(material.createdAt);
 
-        const response =
-            await StudyAI.fetchWithTimeout(
-                StudyAI.apiUrl(
-                    "/api/materials/" +
-                    encodeURIComponent(materialId)
-                )
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Could not load material."
-            );
-
-        }
-
-
-        const material =
-            await response.json();
-
-
-        displayMaterial(
-            material
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Error loading material:",
-            error
-        );
-
-
-        showError();
-
-    }
-
-}
-
-
-// =========================================
-// DISPLAY MATERIAL
-// =========================================
-
-function displayMaterial(
-    material
-) {
-
-    // Title
-
-    title.textContent =
-        material.name;
-
-
-    // Subtitle
-
-    subtitle.textContent =
-        `${material.original_name}`;
-
-
-    // Type
-
-    type.textContent =
-        material.type.toUpperCase();
-
-
-    // Unit
-
-    unit.textContent =
-        formatUnit(
-            material.unit
-        );
-
-
-    // File size
-
-    size.textContent =
-        formatFileSize(
-            material.file_size
-        );
-
-
-    // Date
-
-    date.textContent =
-        formatDate(
-            material.created_at
-        );
-
-
-    // Content
-
-    if (
-        material.text_content &&
-        material.text_content.trim() !== ""
-    ) {
-
-        content.textContent =
-            material.text_content;
-
-
-        status.textContent =
-            "Text extracted";
-
-
-    } else {
-
-        content.innerHTML = `
-
-            <div class="empty-content">
-
-                <div>
-                    —
+        if (material.extractedText && material.extractedText.trim()) {
+            content.textContent = material.extractedText;
+            status.textContent = "Text extracted";
+        } else {
+            content.innerHTML = `
+                <div class="empty-content">
+                    <div>—</div><h3>No extracted text</h3>
+                    <p>This file does not contain readable text yet.</p>
                 </div>
-
-                <h3>
-                    No extracted text
-                </h3>
-
-                <p>
-                    This material does not contain
-                    readable text yet.
-                </p>
-
-            </div>
-
-        `;
-
-
-        status.textContent =
-            "No text available";
-
-    }
-
-}
-
-
-// =========================================
-// FORMAT UNIT
-// =========================================
-
-function formatUnit(
-    unit
-) {
-
-    if (!unit) {
-
-        return "—";
-
-    }
-
-
-    return unit
-        .replace(
-            "unit",
-            "Unit "
-        );
-
-}
-
-
-// =========================================
-// FORMAT FILE SIZE
-// =========================================
-
-function formatFileSize(
-    bytes
-) {
-
-    if (!bytes) {
-
-        return "—";
-
-    }
-
-
-    if (bytes < 1024) {
-
-        return `${bytes} B`;
-
-    }
-
-
-    if (bytes < 1024 * 1024) {
-
-        return `${(
-            bytes / 1024
-        ).toFixed(1)} KB`;
-
-    }
-
-
-    return `${(
-        bytes /
-        (1024 * 1024)
-    ).toFixed(1)} MB`;
-
-}
-
-
-// =========================================
-// FORMAT DATE
-// =========================================
-
-function formatDate(
-    dateString
-) {
-
-    if (!dateString) {
-
-        return "—";
-
-    }
-
-
-    const date =
-        new Date(
-            dateString
-        );
-
-
-    return date.toLocaleDateString(
-        "en-US",
-        {
-            month: "short",
-            day: "numeric",
-            year: "numeric"
+            `;
+            status.textContent = "No text available";
         }
-    );
-
+    } catch (error) {
+        showError(error.message);
+    }
 }
 
-
-// =========================================
-// SHOW ERROR
-// =========================================
-
-function showError() {
-
-    errorBox.style.display =
-        "block";
-
-
-    document
-        .querySelector(
-            ".material-content-panel"
-        )
-        .style.display =
-            "none";
-
-}
-
-
-// =========================================
-// START
-// =========================================
-
-if (materialId) {
-
-    loadMaterial();
-
-}
+loadMaterial();

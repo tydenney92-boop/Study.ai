@@ -809,3 +809,168 @@ h1 {
     }
 
 }
+/* =========================================
+   DYNAMIC APP STATES + FORMS
+========================================= */
+
+.header-actions,
+.app-modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.course-meta-line {
+    margin-top: 9px;
+    color: #7b8495;
+    font-size: 12px;
+}
+
+.friendly-empty {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 26px;
+    color: #7b8495;
+    background: #f8fafc;
+    border: 1px dashed #dce2ea;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.friendly-empty strong {
+    color: #252b3a;
+    font-size: 15px;
+}
+
+.error-state,
+.form-error {
+    color: #b42318;
+}
+
+.form-error {
+    min-height: 18px;
+    margin: 0;
+    font-size: 12px;
+}
+
+.app-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(20, 27, 45, 0.48);
+}
+
+.app-modal-overlay.open {
+    display: flex;
+}
+
+.app-modal {
+    width: min(480px, 100%);
+    padding: 25px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 24px 70px rgba(25, 35, 55, 0.2);
+}
+
+.app-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 22px;
+}
+
+.app-modal-header h2 {
+    margin-top: 5px;
+}
+
+.icon-button,
+.text-button {
+    border: 0;
+    color: #667085;
+    background: transparent;
+    cursor: pointer;
+}
+
+.icon-button {
+    font-size: 25px;
+    line-height: 1;
+}
+
+.text-button {
+    color: #4f6bed;
+    font-weight: 600;
+}
+
+.app-form {
+    display: grid;
+    gap: 16px;
+}
+
+.app-form label {
+    display: grid;
+    gap: 7px;
+    color: #3c4352;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.app-form input {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #dce2ea;
+    border-radius: 9px;
+    color: #252b3a;
+    background: #fff;
+    font: inherit;
+}
+
+.app-form input:focus {
+    border-color: #6680ed;
+    outline: 3px solid rgba(79, 107, 237, 0.12);
+}
+
+.app-modal-actions {
+    justify-content: flex-end;
+}
+
+.course-tip {
+    margin-top: 25px;
+    padding: 18px;
+    border: 1px solid #edf0f4;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.course-tip h3 {
+    margin-top: 7px;
+    font-size: 15px;
+}
+
+.course-tip p {
+    margin-top: 6px;
+    color: #7b8495;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.optional-label {
+    color: #98a2b3;
+    font-weight: 400;
+}
+
+@media (max-width: 760px) {
+    .header-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .app-modal-actions {
+        flex-wrap: wrap;
+    }
+}
