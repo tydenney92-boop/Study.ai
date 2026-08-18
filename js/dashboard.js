@@ -89,6 +89,17 @@ function closeCourseModal() {
 }
 
 addCourseButton.addEventListener("click", openCourseModal);
+if (new URLSearchParams(window.location.search).get("newCourse") === "1") {
+    openCourseModal();
+}
+const dashboardNotice = sessionStorage.getItem("studyai:notice");
+if (dashboardNotice) {
+    sessionStorage.removeItem("studyai:notice");
+    const notice = document.createElement("div");
+    notice.className = "friendly-empty success-state";
+    notice.textContent = dashboardNotice;
+    courseList.parentElement.prepend(notice);
+}
 document.querySelector("#close-course-modal").addEventListener("click", closeCourseModal);
 document.querySelector("#cancel-course").addEventListener("click", closeCourseModal);
 courseModal.addEventListener("click", event => {

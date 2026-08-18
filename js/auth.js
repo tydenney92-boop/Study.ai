@@ -37,34 +37,42 @@
     const sidebarNavigation = document.querySelector(".sidebar-nav");
     const currentCourseId = new URLSearchParams(window.location.search).get("courseId");
 
-    if (sidebarNavigation && currentCourseId) {
-        const switcher = document.createElement("div");
-        switcher.className = "course-switcher";
-        switcher.innerHTML = `
-            <label for="course-switcher-select">Switch course</label>
-            <select id="course-switcher-select" aria-label="Switch course">
-                <option value="">Loading courses…</option>
-            </select>
+    async function loadSidebarCourses() {
+        if (!sidebarNavigation) return;
+        const courseNavigation = document.createElement("section");
+        courseNavigation.className = "sidebar-courses";
+        courseNavigation.innerHTML = `
+            <div class="sidebar-courses-heading"><span>Courses</span><a href="index.html?newCourse=1#courses" aria-label="Add course">＋</a></div>
+            <div class="sidebar-course-list"><span class="sidebar-course-status">Loading…</span></div>
+            <a class="sidebar-all-courses" href="index.html#courses">View all courses</a>
         `;
-        sidebarNavigation.insertAdjacentElement("afterend", switcher);
-        const select = switcher.querySelector("select");
-        StudyAI.api.get("/api/courses")
-            .then(courses => {
-                select.innerHTML = '<option value="">Choose a course…</option>';
-                courses.forEach(course => {
-                    const option = document.createElement("option");
-                    option.value = course.id;
-                    option.textContent = `${course.courseCode} · ${course.courseName}`;
-                    option.selected = String(course.id) === currentCourseId;
-                    select.appendChild(option);
-                });
-            })
-            .catch(() => switcher.remove());
-        select.addEventListener("change", () => {
-            if (select.value) {
-                window.location.href = `course.html?courseId=${encodeURIComponent(select.value)}`;
+        sidebarNavigation.insertAdjacentElement("afterend", courseNavigation);
+
+        try {
+            if (currentCourseId && /^\d+$/.test(currentCourseId)) {
+                await StudyAI.api.post(`/api/courses/${currentCourseId}/open`, {});
             }
-        });
+            const courses = await StudyAI.api.get("/api/courses");
+            const list = courseNavigation.querySelector(".sidebar-course-list");
+            list.innerHTML = "";
+            if (courses.length === 0) {
+                list.innerHTML = '<span class="sidebar-course-status">No courses yet</span>';
+                return;
+            }
+            courses.forEach(course => {
+                const link = document.createElement("a");
+                link.className = "sidebar-course-link";
+                if (String(course.id) === currentCourseId) link.classList.add("active");
+                link.href = `course.html?courseId=${encodeURIComponent(course.id)}`;
+                link.innerHTML = "<strong></strong><span></span>";
+                link.querySelector("strong").textContent = course.courseCode;
+                link.querySelector("span").textContent = course.courseName;
+                list.appendChild(link);
+            });
+        } catch (error) {
+            courseNavigation.querySelector(".sidebar-course-list").innerHTML =
+                '<span class="sidebar-course-status">Courses unavailable</span>';
+        }
     }
 
     if (sidebarBottom) {
@@ -78,4 +86,5 @@
 
     window.StudyAI.auth = { loadCurrentUser, logout };
     loadCurrentUser();
+    loadSidebarCourses();
 })();

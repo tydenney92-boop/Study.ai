@@ -5,6 +5,7 @@ const {
     requireAtLeastOne,
     stringField
 } = require("../utils/validation");
+const { asyncHandler } = require("../utils/async-handler");
 
 function courseInput(body, partial = false) {
     requestObject(body);
@@ -59,11 +60,16 @@ function createCoursesRouter({ coursesService }) {
         );
     });
 
-    router.delete("/:courseId", function(req, res) {
+    router.post("/:courseId/open", function(req, res) {
         const courseId = positiveInteger(req.params.courseId, "courseId");
-        coursesService.delete(courseId, req.user.id);
-        res.status(204).end();
+        res.json(coursesService.markOpened(courseId, req.user.id));
     });
+
+    router.delete("/:courseId", asyncHandler(async function(req, res) {
+        const courseId = positiveInteger(req.params.courseId, "courseId");
+        await coursesService.delete(courseId, req.user.id);
+        res.status(204).end();
+    }));
 
     return router;
 }

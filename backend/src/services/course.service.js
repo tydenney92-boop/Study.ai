@@ -12,7 +12,7 @@ function translateCourseConstraint(error) {
     throw error;
 }
 
-function createCourseService({ coursesRepository }) {
+function createCourseService({ coursesRepository, materialsRepository, fileStorage }) {
     function requireOwned(courseId, userId) {
         const course = coursesRepository.findOwned(courseId, userId);
 
@@ -52,18 +52,33 @@ function createCourseService({ coursesRepository }) {
             }
         },
 
-        delete(courseId, userId) {
+        markOpened(courseId, userId) {
             requireOwned(courseId, userId);
+            coursesRepository.markOpenedOwned(courseId, userId);
+            return coursesRepository.findOwned(courseId, userId);
+        },
 
-            if (coursesRepository.countMaterialsOwned(courseId, userId) > 0) {
+        async delete(courseId, userId) {
+            requireOwned(courseId, userId);
+            const storedFiles = materialsRepository.listStoredFilenamesOwned(
+                courseId,
+                userId
+            );
+            coursesRepository.deleteOwned(courseId, userId);
+
+            const results = await Promise.allSettled(
+                storedFiles.map(file => fileStorage.remove(file.storedFilename))
+            );
+            const failed = results.filter(result => result.status === "rejected");
+            if (failed.length > 0) {
                 throw new AppError({
-                    code: "COURSE_HAS_MATERIALS",
-                    message: "Remove the course materials before deleting this course.",
-                    status: 409
+                    code: "COURSE_STORAGE_CLEANUP_FAILED",
+                    message: "The course was deleted, but some uploaded files need cleanup.",
+                    status: 500,
+                    expose: false,
+                    details: { failedFiles: failed.length }
                 });
             }
-
-            coursesRepository.deleteOwned(courseId, userId);
         }
     };
 }

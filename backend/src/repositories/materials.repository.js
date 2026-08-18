@@ -27,6 +27,15 @@ function createMaterialsRepository(database) {
             `).all(courseId, userId);
         },
 
+        listStoredFilenamesOwned(courseId, userId) {
+            return database.prepare(`
+                SELECT materials.stored_filename AS storedFilename
+                FROM materials
+                JOIN courses ON courses.id = materials.course_id
+                WHERE materials.course_id = ? AND courses.user_id = ?
+            `).all(courseId, userId);
+        },
+
         findOwned(materialId, courseId, userId) {
             return database.prepare(`
                 SELECT ${listFields}, materials.extracted_text AS extractedText

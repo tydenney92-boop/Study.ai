@@ -94,7 +94,7 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
         createBackup: false
     });
 
-    assert.deepEqual(firstRun.applied, [1, 2]);
+    assert.deepEqual(firstRun.applied, [1, 2, 3]);
     assert.equal(tableExists(context.database, "sessions"), true);
     assert.equal(
         context.database.prepare("SELECT COUNT(*) AS count FROM users").get().count,
@@ -173,6 +173,10 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
     );
 
     assert.deepEqual(context.database.pragma("foreign_key_check"), []);
+    assert.ok(
+        context.database.prepare("PRAGMA table_info(courses)").all()
+            .some(column => column.name === "last_opened_at")
+    );
 
     const secondRun = runMigrations({
         database: context.database,

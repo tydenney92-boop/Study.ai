@@ -5,7 +5,8 @@ function createCoursesRepository(database) {
         course_name AS courseName,
         course_code AS courseCode,
         semester,
-        created_at AS createdAt
+        created_at AS createdAt,
+        last_opened_at AS lastOpenedAt
     `;
 
     return {
@@ -14,7 +15,7 @@ function createCoursesRepository(database) {
                 SELECT ${selectFields}
                 FROM courses
                 WHERE user_id = ?
-                ORDER BY created_at, id
+                ORDER BY COALESCE(last_opened_at, created_at) DESC, id DESC
             `).all(userId);
         },
 
@@ -68,6 +69,14 @@ function createCoursesRepository(database) {
             return this.findOwned(courseId, userId);
         },
 
+        markOpenedOwned(courseId, userId) {
+            return database.prepare(`
+                UPDATE courses
+                SET last_opened_at = strftime('%Y-%m-%d %H:%M:%f', 'now')
+                WHERE id = ? AND user_id = ?
+            `).run(courseId, userId).changes > 0;
+        },
+
         countMaterialsOwned(courseId, userId) {
             return database.prepare(`
                 SELECT COUNT(*) AS count
@@ -78,10 +87,11 @@ function createCoursesRepository(database) {
         },
 
         deleteOwned(courseId, userId) {
-            return database.prepare(`
+            const remove = database.transaction(() => database.prepare(`
                 DELETE FROM courses
                 WHERE id = ? AND user_id = ?
-            `).run(courseId, userId).changes > 0;
+            `).run(courseId, userId).changes > 0);
+            return remove();
         }
     };
 }

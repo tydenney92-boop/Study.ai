@@ -104,7 +104,9 @@ const repositories = {
 };
 
 const coursesService = createCourseService({
-    coursesRepository: repositories.courses
+    coursesRepository: repositories.courses,
+    materialsRepository: repositories.materials,
+    fileStorage
 });
 const unitsService = createUnitService({
     coursesService,

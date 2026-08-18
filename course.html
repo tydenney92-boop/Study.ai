@@ -39,12 +39,13 @@
                 <div class="panel-header"><div><h2>Study Tools</h2><p>Choose uploaded material before generating AI content.</p></div></div>
                 <div class="tool-grid">
                     <a href="materials.html" data-course-page="materials.html" class="tool-card"><div class="tool-icon blue">▤</div><div><strong>Course Materials</strong><span>View notes and files</span></div></a>
-                    <a href="materials.html" data-course-page="materials.html" class="tool-card"><div class="tool-icon blue">✓</div><div><strong>Practice Quiz</strong><span>Choose source material</span></div></a>
+                    <a href="quiz.html" data-course-page="quiz.html" class="tool-card"><div class="tool-icon blue">✓</div><div><strong>Practice Quiz</strong><span>Choose source material</span></div></a>
                     <a href="flashcards.html" data-course-page="flashcards.html" class="tool-card"><div class="tool-icon purple">◆</div><div><strong>Flashcards</strong><span>Demo deck for now</span></div></a>
-                    <a href="materials.html" data-course-page="materials.html" class="tool-card"><div class="tool-icon green">☰</div><div><strong>Study Guide</strong><span>Choose source material</span></div></a>
+                    <a href="study-guide.html" data-course-page="study-guide.html" class="tool-card"><div class="tool-icon green">☰</div><div><strong>Study Guide</strong><span>Choose source material</span></div></a>
                     <a href="notes.html" data-course-page="notes.html" class="tool-card"><div class="tool-icon orange">✦</div><div><strong>Ask My Notes</strong><span>Demo assistant for now</span></div></a>
                 </div>
                 <div class="course-tip"><span class="eyebrow">STUDY TIP</span><h3>Start with your own material</h3><p>Upload a readable PDF, open it, then choose a study guide or verified practice quiz.</p></div>
+                <div class="danger-zone"><span class="eyebrow">COURSE SETTINGS</span><h3>Remove this course</h3><p>This permanently removes its units, materials, generated guides, quizzes, attempts, flashcards, and uploaded files.</p><button class="danger-button" id="delete-course-button">Delete Course</button></div>
             </div>
         </section>
     </main>
@@ -58,6 +59,15 @@
                 <p class="form-error" id="unit-form-error"></p>
                 <div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-unit">Cancel</button><button type="submit" class="primary-button">Create Unit</button></div>
             </form>
+        </div>
+    </div>
+
+    <div class="app-modal-overlay" id="delete-course-modal">
+        <div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="delete-course-title">
+            <div class="app-modal-header"><div><p class="eyebrow">PERMANENT ACTION</p><h2 id="delete-course-title">Delete this course?</h2></div><button class="icon-button" id="close-delete-course-modal" aria-label="Close">×</button></div>
+            <p>This cannot be undone. All course materials and study activity will be removed.</p>
+            <p class="form-error" id="delete-course-error"></p>
+            <div class="app-modal-actions"><button class="secondary-tool-button" id="cancel-delete-course">Keep Course</button><button class="danger-button" id="confirm-delete-course">Yes, Delete Course</button></div>
         </div>
     </div>
 

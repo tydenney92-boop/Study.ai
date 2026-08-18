@@ -72,6 +72,8 @@ const courseId =
 const materialId =
     StudyAI.courseContext.getMaterialId();
 
+let selectedMaterialIds = materialId ? [Number(materialId)] : [];
+
 const quizBackLink =
     document.querySelector("#quiz-back-link");
 
@@ -87,6 +89,10 @@ if (courseId && materialId) {
     document.querySelector("#quiz-interface-back-link").href =
         quizBackLink.href;
 
+}
+else if (courseId) {
+    quizBackLink.href = StudyAI.courseContext.url("course.html", { courseId });
+    document.querySelector("#quiz-interface-back-link").href = quizBackLink.href;
 }
 
 
@@ -122,7 +128,7 @@ quizLengthButtons.forEach(
 
 async function startQuiz() {
 
-    if (!courseId || !materialId) {
+    if (!courseId || selectedMaterialIds.length === 0) {
 
         alert(
             "No course material was selected."
@@ -170,7 +176,7 @@ async function startQuiz() {
             await StudyAI.api.post(
                 `/api/courses/${courseId}/quizzes`,
                 {
-                    materialIds: [Number(materialId)],
+                    materialIds: selectedMaterialIds,
                     questionCount: selectedQuestionCount
                 },
                 { timeoutMs: 180000 }
@@ -808,3 +814,31 @@ async function loadQuizContext() {
 }
 
 loadQuizContext();
+
+async function initializeQuizMaterials() {
+    const container = document.querySelector("#quiz-material-selection");
+    if (materialId) {
+        document.querySelector("#quiz-material-selection-wrap").style.display = "none";
+        return;
+    }
+    quizLengthButtons.forEach(button => { button.disabled = true; });
+    try {
+        const selector = await StudyAI.materialSelection.mount({
+            container,
+            courseId,
+            initialMaterialIds: []
+        });
+        container.addEventListener("change", () => {
+            selectedMaterialIds = selector.getSelectedIds();
+            quizLengthButtons.forEach(button => {
+                button.disabled = selectedMaterialIds.length === 0;
+            });
+        });
+        selectedMaterialIds = selector.getSelectedIds();
+    } catch (error) {
+        container.innerHTML = '<div class="friendly-empty error-state"></div>';
+        container.firstElementChild.textContent = error.message;
+    }
+}
+
+initializeQuizMaterials();

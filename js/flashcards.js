@@ -1,9 +1,14 @@
 const flashcardContext = window.StudyAI?.courseContext;
 const flashcardBackLink = document.querySelector("#flashcards-back-link");
 
-if (flashcardContext?.courseId && flashcardBackLink) {
+const flashcardCourseId = flashcardContext?.getCourseId();
+
+if (flashcardCourseId && flashcardBackLink) {
     flashcardBackLink.href = flashcardContext.url("course.html");
     flashcardBackLink.textContent = "← Course";
+} else if (flashcardBackLink) {
+    flashcardBackLink.href = "index.html#courses";
+    flashcardBackLink.textContent = "← My Courses";
 }
 
 /* =========================================
@@ -102,22 +107,6 @@ const flashcards = [
     }
 
 ];
-
-
-const flashcardParams =
-    new URLSearchParams(window.location.search);
-
-const flashcardMaterialId =
-    flashcardParams.get("materialId");
-
-
-if (flashcardMaterialId) {
-
-    document.querySelector("#flashcards-back-link").href =
-        "material.html?id=" +
-        encodeURIComponent(flashcardMaterialId);
-
-}
 
 
 /* =========================================

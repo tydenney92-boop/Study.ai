@@ -45,6 +45,8 @@ const courseId =
 const materialId =
     StudyAI.courseContext.getMaterialId();
 
+let selectedMaterialIds = materialId ? [Number(materialId)] : [];
+
 const guideQuizLink =
     document.querySelector("#guide-quiz-link");
 
@@ -64,6 +66,10 @@ if (courseId && materialId) {
         });
 
 }
+else if (courseId) {
+    document.querySelector("#guide-back-link").href =
+        StudyAI.courseContext.url("course.html", { courseId });
+}
 
 
 /* =========================================
@@ -72,7 +78,7 @@ if (courseId && materialId) {
 
 async function generateStudyGuide() {
 
-    if (!courseId || !materialId) {
+    if (!courseId || selectedMaterialIds.length === 0) {
 
         guideSummary.textContent =
             "No course material has been selected.";
@@ -97,7 +103,7 @@ async function generateStudyGuide() {
         const result =
             await StudyAI.api.post(
                 `/api/courses/${courseId}/study-guides`,
-                { materialIds: [Number(materialId)] },
+                { materialIds: selectedMaterialIds },
                 { timeoutMs: 120000 }
             );
 
@@ -158,8 +164,9 @@ function displayStudyGuide(guide) {
     guideSummary.textContent =
         "Generated from your uploaded course material.";
 
-    sourceMaterial.textContent =
-        "Material #" + materialId;
+    sourceMaterial.textContent = selectedMaterialIds.length === 1
+        ? `Material #${selectedMaterialIds[0]}`
+        : `${selectedMaterialIds.length} selected materials`;
 
 
 
@@ -643,6 +650,21 @@ generateButton.addEventListener(
 
 if (courseId && materialId) {
 
+    document.querySelector("#guide-material-selection-wrap").style.display = "none";
     generateStudyGuide();
 
+}
+else {
+    generateButton.disabled = true;
+    StudyAI.materialSelection.mount({
+        container: document.querySelector("#guide-material-selection"),
+        courseId,
+        actionButton: generateButton
+    }).then(selector => {
+        document.querySelector("#guide-material-selection").addEventListener("change", () => {
+            selectedMaterialIds = selector.getSelectedIds();
+        });
+    }).catch(error => {
+        guideSummary.textContent = error.message;
+    });
 }

@@ -1,0 +1,55 @@
+(function() {
+    async function mount({ container, courseId, initialMaterialIds = [], actionButton }) {
+        const selected = new Set(initialMaterialIds.map(Number));
+        const updateAction = () => {
+            if (actionButton) actionButton.disabled = selected.size === 0;
+        };
+
+        if (!courseId) {
+            container.innerHTML = `
+                <div class="friendly-empty"><strong>No course selected</strong>
+                <a class="text-link" href="index.html#courses">Choose a course →</a></div>`;
+            updateAction();
+            return { getSelectedIds: () => [...selected] };
+        }
+
+        container.innerHTML = '<div class="friendly-empty"><span>Loading course materials…</span></div>';
+        const materials = await StudyAI.api.get(`/api/courses/${courseId}/materials`);
+        if (materials.length === 0) {
+            container.innerHTML = `
+                <div class="friendly-empty"><strong>No materials yet</strong>
+                <span>Upload a course material before generating study content.</span>
+                <a class="primary-button compact-action" href="materials.html?courseId=${encodeURIComponent(courseId)}">+ Add Materials</a></div>`;
+            selected.clear();
+            updateAction();
+            return { getSelectedIds: () => [] };
+        }
+
+        container.innerHTML = '<div class="material-choice-list"></div>';
+        const list = container.firstElementChild;
+        materials.forEach(material => {
+            const label = document.createElement("label");
+            label.className = "material-choice";
+            label.innerHTML = '<input type="checkbox"><span><strong></strong><small></small></span>';
+            const input = label.querySelector("input");
+            input.value = material.id;
+            input.checked = selected.has(material.id);
+            label.querySelector("strong").textContent = material.originalFilename;
+            label.querySelector("small").textContent = material.unitName
+                ? `Unit ${material.unitNumber}: ${material.unitName}`
+                : "No unit assigned";
+            input.addEventListener("change", () => {
+                if (input.checked) selected.add(material.id);
+                else selected.delete(material.id);
+                label.classList.toggle("selected", input.checked);
+                updateAction();
+            });
+            label.classList.toggle("selected", input.checked);
+            list.appendChild(label);
+        });
+        updateAction();
+        return { getSelectedIds: () => [...selected] };
+    }
+
+    window.StudyAI.materialSelection = { mount };
+})();

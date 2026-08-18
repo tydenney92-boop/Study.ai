@@ -3,6 +3,7 @@ const unitsList = document.querySelector("#course-units-list");
 const unitModal = document.querySelector("#unit-modal");
 const unitForm = document.querySelector("#unit-form");
 const unitFormError = document.querySelector("#unit-form-error");
+const deleteModal = document.querySelector("#delete-course-modal");
 
 function courseUrl(page, values = {}) {
     return StudyAI.courseContext.url(page, { courseId, ...values });
@@ -117,3 +118,28 @@ unitForm.addEventListener("submit", async event => {
 });
 
 loadCourse();
+
+document.querySelector("#delete-course-button").addEventListener("click", () => {
+    if (courseId) deleteModal.classList.add("open");
+});
+function closeDeleteModal() {
+    deleteModal.classList.remove("open");
+    document.querySelector("#delete-course-error").textContent = "";
+}
+document.querySelector("#close-delete-course-modal").addEventListener("click", closeDeleteModal);
+document.querySelector("#cancel-delete-course").addEventListener("click", closeDeleteModal);
+document.querySelector("#confirm-delete-course").addEventListener("click", async event => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    button.textContent = "Deleting…";
+    try {
+        await StudyAI.api.delete(`/api/courses/${courseId}`);
+        document.querySelector(`.sidebar-course-link[href$="courseId=${courseId}"]`)?.remove();
+        sessionStorage.setItem("studyai:notice", "Course deleted successfully.");
+        window.location.replace("index.html#courses");
+    } catch (error) {
+        document.querySelector("#delete-course-error").textContent = error.message;
+        button.disabled = false;
+        button.textContent = "Yes, Delete Course";
+    }
+});

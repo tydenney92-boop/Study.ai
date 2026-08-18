@@ -28,6 +28,12 @@ body {
     font-size: 13px;
 }
 
+.quiz-length-button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+}
+
 
 .quiz-title {
     text-align: center;
