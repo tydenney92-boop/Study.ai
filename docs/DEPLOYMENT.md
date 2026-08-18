@@ -16,7 +16,7 @@ expose paths, credentials, database errors, or AI URLs.
 
 Set `NODE_ENV=production`, `APP_ORIGIN=https://your-domain`, a random
 `SESSION_SECRET` of at least 32 characters, `DATABASE_DRIVER=sqlite`, an absolute
-`DATABASE_PATH`, `DATABASE_BACKUP_DIRECTORY`, `STORAGE_DRIVER`, `AI_PROVIDER=ollama`,
+`DATABASE_PATH`, `DATABASE_BACKUP_DIRECTORY`, `STORAGE_DRIVER`, `AI_PROVIDER`,
 and `SERVE_FRONTEND=true`. Keep `TRUST_PROXY_HOPS=1` and `SECURE_COOKIES=true`
 when the platform terminates HTTPS one hop in front of Express.
 
@@ -27,11 +27,21 @@ For local persistent uploads, set `STORAGE_DRIVER=local` and an absolute
 Credentials may be provided through the listed environment variables or the
 runtime's workload identity/default AWS credential chain.
 
-For AI, set `AI_ENABLED=true`, `OLLAMA_BASE_URL`, and `OLLAMA_MODEL`. The URL must
-point to an Ollama service reachable from the deployed container. Set
-`AI_ENABLED=false` if the rest of Study.ai should run before an Ollama service is
-available; generation endpoints then return a stable 503. No paid provider is
-configured.
+For production OpenAI generation, set `AI_ENABLED=true`, `AI_PROVIDER=openai`,
+`OPENAI_API_KEY` as a platform secret, and `OPENAI_MODEL` to the model selected
+for the deployment. The key is read only by the server. For Ollama, set
+`AI_PROVIDER=ollama`, `OLLAMA_BASE_URL`, and `OLLAMA_MODEL`; its URL must be
+reachable from the container. Set `AI_ENABLED=false` to boot without an AI
+provider; generation endpoints then return the stable `AI_DISABLED` 503.
+
+AI cost controls default to five generation workflows per authenticated user
+per ten minutes, two concurrent workflows across the process, 100,000 context
+characters, and 5–20 quiz questions using the existing 5/10/15/20 choices.
+Override these with `AI_RATE_LIMIT_WINDOW_MS`, `AI_RATE_LIMIT_MAX_REQUESTS`,
+`AI_MAX_CONCURRENT_REQUESTS`, `AI_MAX_CONTEXT_CHARACTERS`,
+`AI_QUIZ_MIN_QUESTIONS`, `AI_QUIZ_MAX_QUESTIONS`, and
+`AI_QUIZ_MAX_ATTEMPTS` (default 3). OpenAI SDK retries are disabled so a
+timed-out call is never automatically duplicated.
 
 ## SQLite constraints and data safety
 

@@ -2,7 +2,11 @@ const express = require("express");
 const { asyncHandler } = require("../utils/async-handler");
 const { positiveInteger, requestObject } = require("../utils/validation");
 
-function createCourseAiRouter({ studyGuideService, quizGenerationService }) {
+function createCourseAiRouter({
+    studyGuideService,
+    quizGenerationService,
+    aiUsageGuard
+}) {
     const router = express.Router({ mergeParams: true });
 
     router.use(function parseCourse(req, res, next) {
@@ -14,11 +18,13 @@ function createCourseAiRouter({ studyGuideService, quizGenerationService }) {
         "/study-guides",
         asyncHandler(async function(req, res) {
             requestObject(req.body);
-            const guide = await studyGuideService.generate({
-                courseId: req.courseId,
-                userId: req.user.id,
-                materialIds: req.body.materialIds
-            });
+            const guide = await aiUsageGuard.execute(req.user.id, () =>
+                studyGuideService.generate({
+                    courseId: req.courseId,
+                    userId: req.user.id,
+                    materialIds: req.body.materialIds
+                })
+            );
             res.status(201).json(guide);
         })
     );
@@ -27,12 +33,14 @@ function createCourseAiRouter({ studyGuideService, quizGenerationService }) {
         "/quizzes",
         asyncHandler(async function(req, res) {
             requestObject(req.body);
-            const quiz = await quizGenerationService.generate({
-                courseId: req.courseId,
-                userId: req.user.id,
-                materialIds: req.body.materialIds,
-                questionCount: req.body.questionCount
-            });
+            const quiz = await aiUsageGuard.execute(req.user.id, () =>
+                quizGenerationService.generate({
+                    courseId: req.courseId,
+                    userId: req.user.id,
+                    materialIds: req.body.materialIds,
+                    questionCount: req.body.questionCount
+                })
+            );
             res.status(201).json(quiz);
         })
     );
@@ -43,7 +51,8 @@ function createCourseAiRouter({ studyGuideService, quizGenerationService }) {
 function createLegacyAiRouter({
     materialService,
     studyGuideService,
-    quizGenerationService
+    quizGenerationService,
+    aiUsageGuard
 }) {
     const router = express.Router();
 
@@ -52,11 +61,13 @@ function createLegacyAiRouter({
         asyncHandler(async function(req, res) {
             requestObject(req.body);
             const course = materialService.legacyCourse(req.user.id);
-            const guide = await studyGuideService.generate({
-                courseId: course.id,
-                userId: req.user.id,
-                materialIds: req.body.materialIds
-            });
+            const guide = await aiUsageGuard.execute(req.user.id, () =>
+                studyGuideService.generate({
+                    courseId: course.id,
+                    userId: req.user.id,
+                    materialIds: req.body.materialIds
+                })
+            );
             res.json({
                 success: true,
                 studyGuide: guide.generatedContent,
@@ -70,12 +81,14 @@ function createLegacyAiRouter({
         asyncHandler(async function(req, res) {
             requestObject(req.body);
             const course = materialService.legacyCourse(req.user.id);
-            const generated = await quizGenerationService.generate({
-                courseId: course.id,
-                userId: req.user.id,
-                materialIds: req.body.materialIds,
-                questionCount: req.body.questionCount
-            });
+            const generated = await aiUsageGuard.execute(req.user.id, () =>
+                quizGenerationService.generate({
+                    courseId: course.id,
+                    userId: req.user.id,
+                    materialIds: req.body.materialIds,
+                    questionCount: req.body.questionCount
+                })
+            );
             res.json({
                 success: true,
                 quiz: generated.quiz,

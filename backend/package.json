@@ -24,6 +24,7 @@
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "multer": "^2.2.0",
+    "openai": "^7.5.0",
     "pdf-parse": "^2.4.5"
   },
   "devDependencies": {

@@ -24,6 +24,7 @@ function createTestApp(options = {}) {
         extendRepositories: options.extendRepositories,
         fileStorage: options.fileStorage,
         textExtractionService: options.textExtractionService,
+        aiUsageGuard: options.aiUsageGuard,
         aiClient: options.aiClient || {
             async generate() {
                 throw new Error("Unexpected AI request in test.");

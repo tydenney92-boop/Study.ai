@@ -24,6 +24,7 @@ const { SqliteSessionStore } = require("./services/sqlite-session-store");
 const { createTextExtractionService } = require("./services/text-extraction.service");
 const { createConfiguredStorage } = require("./services/storage-factory");
 const { createConfiguredAiClient } = require("./services/ai-client-factory");
+const { createAiUsageGuard } = require("./services/ai-usage-guard");
 const { ALLOWED_EXTENSIONS } = require("./services/material-type");
 const { createRequireAuthentication } = require("./middleware/require-authentication");
 const { registerHealthRoutes } = require("./routes/health.routes");
@@ -79,6 +80,11 @@ const upload =
 const aiClient =
     options.aiClient ||
     createConfiguredAiClient(config);
+const aiUsageGuard = options.aiUsageGuard || createAiUsageGuard({
+    windowMs: config.aiRateLimitWindowMs,
+    maxRequests: config.aiRateLimitMaxRequests,
+    maxConcurrentRequests: config.aiMaxConcurrentRequests
+});
 
 app.locals.database = db;
 app.locals.fileStorage = fileStorage;
@@ -125,7 +131,8 @@ const materialService = createMaterialService({
 });
 const materialContextService = createMaterialContextService({
     coursesService,
-    materialsRepository: repositories.materials
+    materialsRepository: repositories.materials,
+    maxContextCharacters: config.aiMaxContextCharacters
 });
 const studyGuideService = createStudyGuideService({
     aiClient,
@@ -135,7 +142,10 @@ const studyGuideService = createStudyGuideService({
 const quizGenerationService = createQuizGenerationService({
     aiClient,
     materialContextService,
-    quizzesRepository: repositories.quizzes
+    quizzesRepository: repositories.quizzes,
+    maxAttempts: config.aiQuizMaxAttempts,
+    minQuestionCount: config.aiQuizMinQuestions,
+    maxQuestionCount: config.aiQuizMaxQuestions
 });
 const quizAttemptService = createQuizAttemptService({
     quizzesRepository: repositories.quizzes,
@@ -224,7 +234,11 @@ app.use(
 );
 app.use(
     "/api/courses/:courseId",
-    createCourseAiRouter({ studyGuideService, quizGenerationService })
+    createCourseAiRouter({
+        studyGuideService,
+        quizGenerationService,
+        aiUsageGuard
+    })
 );
 app.use(
     "/api/courses",
@@ -243,7 +257,8 @@ app.use(
     createLegacyAiRouter({
         materialService,
         studyGuideService,
-        quizGenerationService
+        quizGenerationService,
+        aiUsageGuard
     })
 );
 

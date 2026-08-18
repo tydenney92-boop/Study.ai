@@ -12,6 +12,11 @@ function booleanEnvironment(name, defaultValue) {
     return process.env[name] === "1" || process.env[name] === "true";
 }
 
+function numberEnvironment(name, defaultValue) {
+    if (process.env[name] === undefined) return defaultValue;
+    return Number(process.env[name]);
+}
+
 const config = {
     environment,
     isProduction,
@@ -64,9 +69,24 @@ const config = {
     ollamaModel:
         process.env.OLLAMA_MODEL ||
         (isProduction ? null : "llama3.2"),
+    openAiApiKey: process.env.OPENAI_API_KEY || null,
+    openAiModel: process.env.OPENAI_MODEL || null,
     aiTimeoutMs:
-        Number(process.env.AI_TIMEOUT_MS) ||
-        120000
+        numberEnvironment("AI_TIMEOUT_MS", 120000),
+    aiRateLimitWindowMs:
+        numberEnvironment("AI_RATE_LIMIT_WINDOW_MS", 10 * 60 * 1000),
+    aiRateLimitMaxRequests:
+        numberEnvironment("AI_RATE_LIMIT_MAX_REQUESTS", 5),
+    aiMaxConcurrentRequests:
+        numberEnvironment("AI_MAX_CONCURRENT_REQUESTS", 2),
+    aiMaxContextCharacters:
+        numberEnvironment("AI_MAX_CONTEXT_CHARACTERS", 100000),
+    aiQuizMinQuestions:
+        numberEnvironment("AI_QUIZ_MIN_QUESTIONS", 5),
+    aiQuizMaxQuestions:
+        numberEnvironment("AI_QUIZ_MAX_QUESTIONS", 20),
+    aiQuizMaxAttempts:
+        numberEnvironment("AI_QUIZ_MAX_ATTEMPTS", 3)
 };
 
 module.exports = isProduction ? validateProductionConfig(config) : config;

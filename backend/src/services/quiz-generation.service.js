@@ -17,16 +17,26 @@ function createQuizGenerationService({
     aiClient,
     materialContextService,
     quizzesRepository,
-    maxAttempts = 3
+    maxAttempts = 3,
+    minQuestionCount = 5,
+    maxQuestionCount = 20
 }) {
     return {
         async generate({ courseId, userId, materialIds, questionCount }) {
-            const normalizedCount = Number(questionCount) || 10;
+            const allowedCounts = ALLOWED_QUESTION_COUNTS.filter(count =>
+                count >= minQuestionCount && count <= maxQuestionCount
+            );
+            const normalizedCount = questionCount === undefined || questionCount === null
+                ? (allowedCounts.includes(10) ? 10 : allowedCounts[0])
+                : Number(questionCount);
 
-            if (!ALLOWED_QUESTION_COUNTS.includes(normalizedCount)) {
+            if (!allowedCounts.includes(normalizedCount)) {
                 throw validationError(
-                    "questionCount must be 5, 10, 15, or 20.",
-                    { field: "questionCount" }
+                    `questionCount must be one of: ${allowedCounts.join(", ")}.`,
+                    {
+                        field: "questionCount",
+                        allowedQuestionCounts: allowedCounts
+                    }
                 );
             }
 

@@ -367,3 +367,146 @@ test("legacy study-guide and quiz routes preserve responses and now persist", as
         1
     );
 });
+
+test("AI safeguards reject empty and oversized material context before provider calls", async t => {
+    let aiCalls = 0;
+    const context = createTestApp({
+        config: { aiMaxContextCharacters: 50 },
+        aiClient: {
+            async generate() {
+                aiCalls++;
+                return validStudyGuide;
+            }
+        }
+    });
+    t.after(context.cleanup);
+    const emptyId = insertMaterial(context.database, {
+        storedFilename: "empty.txt",
+        originalFilename: "Empty.txt",
+        extractedText: "   "
+    });
+    const largeId = insertMaterial(context.database, {
+        storedFilename: "large.txt",
+        originalFilename: "Large.txt",
+        extractedText: "x".repeat(100)
+    });
+
+    const empty = await request(context.app)
+        .post("/api/courses/1/study-guides")
+        .send({ materialIds: [emptyId] })
+        .expect(422);
+    assert.equal(empty.body.error.code, "MATERIAL_HAS_NO_TEXT");
+
+    const large = await request(context.app)
+        .post("/api/courses/1/quizzes")
+        .send({ materialIds: [largeId], questionCount: 5 })
+        .expect(413);
+    assert.equal(large.body.error.code, "AI_CONTEXT_TOO_LARGE");
+    assert.equal(aiCalls, 0);
+    assert.equal(
+        context.database.prepare(
+            "SELECT COUNT(*) AS count FROM generated_study_guides"
+        ).get().count,
+        0
+    );
+    assert.equal(
+        context.database.prepare(
+            "SELECT COUNT(*) AS count FROM generated_quizzes"
+        ).get().count,
+        0
+    );
+});
+
+test("configured quiz question limits reject requests before provider calls", async t => {
+    let aiCalls = 0;
+    const context = createTestApp({
+        config: {
+            aiQuizMinQuestions: 5,
+            aiQuizMaxQuestions: 10
+        },
+        aiClient: {
+            async generate() {
+                aiCalls++;
+                return "unexpected";
+            }
+        }
+    });
+    t.after(context.cleanup);
+    const materialId = insertMaterial(context.database);
+
+    const response = await request(context.app)
+        .post("/api/courses/1/quizzes")
+        .send({ materialIds: [materialId], questionCount: 15 })
+        .expect(400);
+
+    assert.equal(response.body.error.code, "VALIDATION_ERROR");
+    assert.deepEqual(response.body.error.details.allowedQuestionCounts, [5, 10]);
+    assert.equal(aiCalls, 0);
+});
+
+test("AI generation routes enforce the per-user workflow rate limit", async t => {
+    const context = createTestApp({
+        config: {
+            aiRateLimitWindowMs: 600000,
+            aiRateLimitMaxRequests: 1
+        },
+        aiClient: queuedAi([validStudyGuide])
+    });
+    t.after(context.cleanup);
+    const materialId = insertMaterial(context.database);
+
+    await request(context.app)
+        .post("/api/courses/1/study-guides")
+        .send({ materialIds: [materialId] })
+        .expect(201);
+
+    const limited = await request(context.app)
+        .post("/api/courses/1/study-guides")
+        .send({ materialIds: [materialId] })
+        .expect(429);
+    assert.equal(limited.body.error.code, "AI_RATE_LIMIT_EXCEEDED");
+    assert.ok(limited.body.error.details.retryAfterMs > 0);
+});
+
+test("quiz retries and verification retain one concurrency permit", async t => {
+    const quiz = validQuiz();
+    let activeProviderCalls = 0;
+    let maximumProviderCalls = 0;
+    const responses = [
+        JSON.stringify(quiz),
+        JSON.stringify({ valid: false, issues: ["retry"] }),
+        JSON.stringify(quiz),
+        JSON.stringify({ valid: true, issues: [] })
+    ];
+    let guardedWorkflows = 0;
+    const context = createTestApp({
+        config: { aiMaxConcurrentRequests: 1 },
+        aiUsageGuard: {
+            async execute(userId, operation) {
+                assert.equal(userId, 1);
+                guardedWorkflows++;
+                return operation();
+            }
+        },
+        aiClient: {
+            async generate() {
+                activeProviderCalls++;
+                maximumProviderCalls = Math.max(maximumProviderCalls, activeProviderCalls);
+                await new Promise(resolve => setImmediate(resolve));
+                activeProviderCalls--;
+                return responses.shift();
+            }
+        }
+    });
+    t.after(context.cleanup);
+    const materialId = insertMaterial(context.database);
+
+    await request(context.app)
+        .post("/api/courses/1/quizzes")
+        .send({ materialIds: [materialId], questionCount: 5 })
+        .expect(201);
+
+    assert.equal(maximumProviderCalls, 1);
+    assert.equal(guardedWorkflows, 1);
+    assert.equal(responses.length, 0);
+});

@@ -6,6 +6,12 @@ function required(value, name, errors) {
     }
 }
 
+function positiveInteger(value, name, errors) {
+    if (!Number.isInteger(value) || value < 1) {
+        errors.push(`${name} must be a positive integer.`);
+    }
+}
+
 function validateProductionConfig(config) {
     const errors = [];
     required(config.appOrigin, "APP_ORIGIN", errors);
@@ -55,12 +61,32 @@ function validateProductionConfig(config) {
     if (Boolean(config.objectStorageAccessKeyId) !== Boolean(config.objectStorageSecretAccessKey)) {
         errors.push("Object-storage access key and secret must be provided together.");
     }
-    if (config.aiProvider && config.aiProvider !== "ollama") {
-        errors.push("AI_PROVIDER currently supports only ollama.");
+    if (config.aiProvider && !["ollama", "openai"].includes(config.aiProvider)) {
+        errors.push("AI_PROVIDER must be ollama or openai.");
     }
     if (config.aiEnabled === true && config.aiProvider === "ollama") {
         required(config.ollamaBaseUrl, "OLLAMA_BASE_URL", errors);
         required(config.ollamaModel, "OLLAMA_MODEL", errors);
+    }
+    if (config.aiEnabled === true && config.aiProvider === "openai") {
+        required(config.openAiApiKey, "OPENAI_API_KEY", errors);
+        required(config.openAiModel, "OPENAI_MODEL", errors);
+    }
+    positiveInteger(config.aiTimeoutMs, "AI_TIMEOUT_MS", errors);
+    positiveInteger(config.aiRateLimitWindowMs, "AI_RATE_LIMIT_WINDOW_MS", errors);
+    positiveInteger(config.aiRateLimitMaxRequests, "AI_RATE_LIMIT_MAX_REQUESTS", errors);
+    positiveInteger(config.aiMaxConcurrentRequests, "AI_MAX_CONCURRENT_REQUESTS", errors);
+    positiveInteger(config.aiMaxContextCharacters, "AI_MAX_CONTEXT_CHARACTERS", errors);
+    positiveInteger(config.aiQuizMinQuestions, "AI_QUIZ_MIN_QUESTIONS", errors);
+    positiveInteger(config.aiQuizMaxQuestions, "AI_QUIZ_MAX_QUESTIONS", errors);
+    positiveInteger(config.aiQuizMaxAttempts, "AI_QUIZ_MAX_ATTEMPTS", errors);
+    if (config.aiQuizMinQuestions > config.aiQuizMaxQuestions) {
+        errors.push("AI_QUIZ_MIN_QUESTIONS cannot exceed AI_QUIZ_MAX_QUESTIONS.");
+    }
+    if (![5, 10, 15, 20].some(count =>
+        count >= config.aiQuizMinQuestions && count <= config.aiQuizMaxQuestions
+    )) {
+        errors.push("The configured quiz range must include 5, 10, 15, or 20 questions.");
     }
 
     if (errors.length > 0) {

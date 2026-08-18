@@ -27,6 +27,16 @@ function validProductionConfig() {
         aiEnabled: true,
         ollamaBaseUrl: "https://ollama.internal.example.com",
         ollamaModel: "llama3.2",
+        openAiApiKey: null,
+        openAiModel: null,
+        aiTimeoutMs: 120000,
+        aiRateLimitWindowMs: 600000,
+        aiRateLimitMaxRequests: 5,
+        aiMaxConcurrentRequests: 2,
+        aiMaxContextCharacters: 100000,
+        aiQuizMinQuestions: 5,
+        aiQuizMaxQuestions: 20,
+        aiQuizMaxAttempts: 3,
         secureCookies: true,
         trustProxyHops: 1,
         serveFrontend: true
@@ -44,6 +54,43 @@ test("production can disable AI without Ollama connection settings", () => {
         ollamaBaseUrl: null,
         ollamaModel: null
     }));
+});
+
+test("production accepts OpenAI only with its server-side key and model", () => {
+    assert.doesNotThrow(() => validateProductionConfig({
+        ...validProductionConfig(),
+        aiProvider: "openai",
+        ollamaBaseUrl: null,
+        ollamaModel: null,
+        openAiApiKey: "test-server-side-key",
+        openAiModel: "configured-test-model"
+    }));
+
+    assert.throws(
+        () => validateProductionConfig({
+            ...validProductionConfig(),
+            aiProvider: "openai",
+            ollamaBaseUrl: null,
+            ollamaModel: null,
+            openAiApiKey: null,
+            openAiModel: null
+        }),
+        error => error.message.includes("OPENAI_API_KEY") &&
+            error.message.includes("OPENAI_MODEL")
+    );
+});
+
+test("production validates all AI safeguard limits", () => {
+    assert.throws(
+        () => validateProductionConfig({
+            ...validProductionConfig(),
+            aiRateLimitMaxRequests: 0,
+            aiQuizMinQuestions: 20,
+            aiQuizMaxQuestions: 5
+        }),
+        error => error.message.includes("AI_RATE_LIMIT_MAX_REQUESTS") &&
+            error.message.includes("cannot exceed")
+    );
 });
 
 test("disabled AI retains the stable 503 AI_DISABLED response", async () => {
