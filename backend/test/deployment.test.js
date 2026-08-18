@@ -4,6 +4,7 @@ const path = require("path");
 const request = require("supertest");
 const { createTestApp } = require("./helpers/test-app");
 const { validateProductionConfig } = require("../src/config/validate-config");
+const { createConfiguredAiClient } = require("../src/services/ai-client-factory");
 
 function validProductionConfig() {
     return {
@@ -31,6 +32,42 @@ function validProductionConfig() {
 
 test("production configuration accepts the supported single-domain architecture", () => {
     assert.doesNotThrow(() => validateProductionConfig(validProductionConfig()));
+});
+
+test("production can disable AI without Ollama connection settings", () => {
+    assert.doesNotThrow(() => validateProductionConfig({
+        ...validProductionConfig(),
+        aiEnabled: false,
+        ollamaBaseUrl: null,
+        ollamaModel: null
+    }));
+});
+
+test("disabled AI retains the stable 503 AI_DISABLED response", async () => {
+    const client = createConfiguredAiClient({ aiEnabled: false });
+    await assert.rejects(
+        () => client.generate("prompt"),
+        error => error.code === "AI_DISABLED" && error.status === 503
+    );
+});
+
+test("production requires AI_ENABLED and enabled Ollama connection settings", () => {
+    assert.throws(
+        () => validateProductionConfig({
+            ...validProductionConfig(),
+            aiEnabled: null
+        }),
+        error => error.message.includes("AI_ENABLED")
+    );
+    assert.throws(
+        () => validateProductionConfig({
+            ...validProductionConfig(),
+            ollamaBaseUrl: null,
+            ollamaModel: null
+        }),
+        error => error.message.includes("OLLAMA_BASE_URL") &&
+            error.message.includes("OLLAMA_MODEL")
+    );
 });
 
 test("production configuration fails closed for missing secrets and unsafe infrastructure", () => {

@@ -55,7 +55,9 @@ const config = {
     trustProxyHops: Number(process.env.TRUST_PROXY_HOPS) || (isProduction ? 1 : 0),
     passwordRounds: Number(process.env.PASSWORD_ROUNDS) || 12,
     aiProvider: process.env.AI_PROVIDER || (isProduction ? null : "ollama"),
-    aiEnabled: booleanEnvironment("AI_ENABLED", true),
+    aiEnabled: isProduction && process.env.AI_ENABLED === undefined
+        ? null
+        : booleanEnvironment("AI_ENABLED", true),
     ollamaBaseUrl:
         process.env.OLLAMA_BASE_URL ||
         (isProduction ? null : "http://localhost:11434"),

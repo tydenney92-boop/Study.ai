@@ -15,6 +15,7 @@ function validateProductionConfig(config) {
     required(config.backupDirectory, "DATABASE_BACKUP_DIRECTORY", errors);
     required(config.storageDriver, "STORAGE_DRIVER", errors);
     required(config.aiProvider, "AI_PROVIDER", errors);
+    required(config.aiEnabled, "AI_ENABLED", errors);
 
     if (config.sessionSecret && config.sessionSecret.length < 32) {
         errors.push("SESSION_SECRET must contain at least 32 characters.");
@@ -57,7 +58,7 @@ function validateProductionConfig(config) {
     if (config.aiProvider && config.aiProvider !== "ollama") {
         errors.push("AI_PROVIDER currently supports only ollama.");
     }
-    if (config.aiEnabled) {
+    if (config.aiEnabled === true && config.aiProvider === "ollama") {
         required(config.ollamaBaseUrl, "OLLAMA_BASE_URL", errors);
         required(config.ollamaModel, "OLLAMA_MODEL", errors);
     }
