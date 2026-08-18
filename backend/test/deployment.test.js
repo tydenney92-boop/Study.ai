@@ -1,10 +1,13 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const path = require("path");
+const fs = require("fs");
+const os = require("os");
 const request = require("supertest");
 const { createTestApp } = require("./helpers/test-app");
 const { validateProductionConfig } = require("../src/config/validate-config");
 const { createConfiguredAiClient } = require("../src/services/ai-client-factory");
+const { createConfiguredDatabase } = require("../src/database/database-factory");
 
 function validProductionConfig() {
     return {
@@ -88,6 +91,28 @@ test("production configuration fails closed for missing secrets and unsafe infra
             error.message.includes("HTTPS") &&
             error.message.includes("DATABASE_PATH")
     );
+});
+
+test("SQLite startup creates missing production database, backup, and local upload directories", t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "study-ai-production-paths-"));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const databasePath = path.join(root, "database", "study.db");
+    const backupDirectory = path.join(root, "backups", "daily");
+    const uploadDirectory = path.join(root, "materials", "uploads");
+
+    const database = createConfiguredDatabase({
+        databaseDriver: "sqlite",
+        databasePath,
+        backupDirectory,
+        storageDriver: "local",
+        uploadDirectory
+    });
+    database.close();
+
+    assert.equal(fs.existsSync(path.dirname(databasePath)), true);
+    assert.equal(fs.existsSync(databasePath), true);
+    assert.equal(fs.existsSync(backupDirectory), true);
+    assert.equal(fs.existsSync(uploadDirectory), true);
 });
 
 test("production cookies are secure, HTTP-only, and same-site", async t => {
