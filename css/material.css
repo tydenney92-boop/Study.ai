@@ -10,6 +10,10 @@
     margin-bottom: 28px;
 }
 
+.material-delete-action {
+    margin-top: 14px;
+}
+
 
 .back-link {
     display: inline-block;

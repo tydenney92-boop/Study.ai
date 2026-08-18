@@ -17,6 +17,19 @@ let units = [];
 let materials = [];
 let selectedFile = null;
 
+if (!courseId) {
+    StudyAI.courseContext.goToMyCourses("Choose a course to view its materials.");
+}
+
+const materialsNotice = sessionStorage.getItem("studyai:notice");
+if (materialsNotice) {
+    sessionStorage.removeItem("studyai:notice");
+    const notice = document.createElement("div");
+    notice.className = "friendly-empty success-state";
+    notice.textContent = materialsNotice;
+    document.querySelector(".materials-header").insertAdjacentElement("afterend", notice);
+}
+
 function formatSize(bytes) {
     if (!bytes) return "—";
     if (bytes < 1024) return `${bytes} B`;
@@ -132,8 +145,6 @@ function populateUnitSelects() {
 
 async function loadPage() {
     if (!courseId) {
-        container.innerHTML = '<div class="friendly-empty"><strong>No course selected</strong><a class="text-link" href="index.html#courses">Choose a course →</a></div>';
-        document.querySelector("#upload-button").disabled = true;
         return;
     }
 
@@ -154,6 +165,10 @@ async function loadPage() {
         populateUnitSelects();
         renderMaterials();
     } catch (error) {
+        if (error.status === 404) {
+            StudyAI.courseContext.goToMyCourses("That course is unavailable.");
+            return;
+        }
         container.innerHTML = '<div class="friendly-empty error-state"></div>';
         container.querySelector("div").textContent = error.message;
     }

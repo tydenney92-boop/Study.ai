@@ -22,6 +22,7 @@ function createTestApp(options = {}) {
             ...(options.config || {})
         },
         extendRepositories: options.extendRepositories,
+        fileStorage: options.fileStorage,
         textExtractionService: options.textExtractionService,
         aiClient: options.aiClient || {
             async generate() {

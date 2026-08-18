@@ -96,6 +96,19 @@ function createMaterialsRepository(database) {
             );
 
             return Number(result.lastInsertRowid);
+        },
+
+        deleteOwned(materialId, courseId, userId) {
+            return database.prepare(`
+                DELETE FROM materials
+                WHERE id = ?
+                  AND course_id = ?
+                  AND EXISTS (
+                      SELECT 1 FROM courses
+                      WHERE courses.id = materials.course_id
+                        AND courses.user_id = ?
+                  )
+            `).run(materialId, courseId, userId).changes > 0;
         }
     };
 }

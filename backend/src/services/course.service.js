@@ -64,8 +64,6 @@ function createCourseService({ coursesRepository, materialsRepository, fileStora
                 courseId,
                 userId
             );
-            coursesRepository.deleteOwned(courseId, userId);
-
             const results = await Promise.allSettled(
                 storedFiles.map(file => fileStorage.remove(file.storedFilename))
             );
@@ -73,12 +71,14 @@ function createCourseService({ coursesRepository, materialsRepository, fileStora
             if (failed.length > 0) {
                 throw new AppError({
                     code: "COURSE_STORAGE_CLEANUP_FAILED",
-                    message: "The course was deleted, but some uploaded files need cleanup.",
-                    status: 500,
-                    expose: false,
+                    message: "Uploaded files could not be removed. The course was not deleted.",
+                    status: 503,
+                    expose: true,
                     details: { failedFiles: failed.length }
                 });
             }
+
+            coursesRepository.deleteOwned(courseId, userId);
         }
     };
 }

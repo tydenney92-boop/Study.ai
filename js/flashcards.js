@@ -3,12 +3,24 @@ const flashcardBackLink = document.querySelector("#flashcards-back-link");
 
 const flashcardCourseId = flashcardContext?.getCourseId();
 
+if (!flashcardCourseId) {
+    flashcardContext.goToMyCourses("Choose a course before opening flashcards.");
+}
+
 if (flashcardCourseId && flashcardBackLink) {
     flashcardBackLink.href = flashcardContext.url("course.html");
     flashcardBackLink.textContent = "← Course";
 } else if (flashcardBackLink) {
     flashcardBackLink.href = "index.html#courses";
     flashcardBackLink.textContent = "← My Courses";
+}
+
+if (flashcardCourseId) {
+    StudyAI.api.get(`/api/courses/${flashcardCourseId}`).catch(error => {
+        if (error.status === 404) {
+            flashcardContext.goToMyCourses("That course is unavailable.");
+        }
+    });
 }
 
 /* =========================================

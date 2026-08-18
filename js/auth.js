@@ -37,6 +37,22 @@
     const sidebarNavigation = document.querySelector(".sidebar-nav");
     const currentCourseId = new URLSearchParams(window.location.search).get("courseId");
 
+    function updatePrimaryNavigationState() {
+        if (!sidebarNavigation) return;
+        const page = window.location.pathname.split("/").pop() || "index.html";
+        const isDashboard = page === "index.html" && window.location.hash !== "#courses";
+        const isCourses = page === "index.html" && window.location.hash === "#courses";
+        const isProgress = page === "progress.html";
+        sidebarNavigation.querySelectorAll(".nav-item").forEach(link => {
+            const href = link.getAttribute("href") || "";
+            const active =
+                (href === "index.html" && isDashboard) ||
+                (href === "index.html#courses" && isCourses) ||
+                (href === "progress.html" && isProgress);
+            link.classList.toggle("active", active);
+        });
+    }
+
     async function loadSidebarCourses() {
         if (!sidebarNavigation) return;
         const courseNavigation = document.createElement("section");
@@ -50,7 +66,11 @@
 
         try {
             if (currentCourseId && /^\d+$/.test(currentCourseId)) {
-                await StudyAI.api.post(`/api/courses/${currentCourseId}/open`, {});
+                try {
+                    await StudyAI.api.post(`/api/courses/${currentCourseId}/open`, {});
+                } catch (error) {
+                    if (error.status !== 404) throw error;
+                }
             }
             const courses = await StudyAI.api.get("/api/courses");
             const list = courseNavigation.querySelector(".sidebar-course-list");
@@ -85,6 +105,8 @@
     }
 
     window.StudyAI.auth = { loadCurrentUser, logout };
+    updatePrimaryNavigationState();
+    window.addEventListener("hashchange", updatePrimaryNavigationState);
     loadCurrentUser();
     loadSidebarCourses();
 })();

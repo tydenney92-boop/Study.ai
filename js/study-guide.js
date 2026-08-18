@@ -47,6 +47,10 @@ const materialId =
 
 let selectedMaterialIds = materialId ? [Number(materialId)] : [];
 
+if (!courseId) {
+    StudyAI.courseContext.goToMyCourses("Choose a course before creating a study guide.");
+}
+
 const guideQuizLink =
     document.querySelector("#guide-quiz-link");
 
@@ -69,6 +73,10 @@ if (courseId && materialId) {
 else if (courseId) {
     document.querySelector("#guide-back-link").href =
         StudyAI.courseContext.url("course.html", { courseId });
+}
+
+if (courseId && !materialId) {
+    guideQuizLink.href = StudyAI.courseContext.url("quiz.html", { courseId });
 }
 
 
@@ -114,6 +122,11 @@ async function generateStudyGuide() {
 
 
     } catch (error) {
+
+        if (error.status === 404) {
+            StudyAI.courseContext.goToMyCourses("That course is unavailable.");
+            return;
+        }
 
         console.error(
             "Study guide error:",
@@ -654,7 +667,7 @@ if (courseId && materialId) {
     generateStudyGuide();
 
 }
-else {
+else if (courseId) {
     generateButton.disabled = true;
     StudyAI.materialSelection.mount({
         container: document.querySelector("#guide-material-selection"),
@@ -665,6 +678,10 @@ else {
             selectedMaterialIds = selector.getSelectedIds();
         });
     }).catch(error => {
+        if (error.status === 404) {
+            StudyAI.courseContext.goToMyCourses("That course is unavailable.");
+            return;
+        }
         guideSummary.textContent = error.message;
     });
 }

@@ -177,3 +177,35 @@ test("deleting a course cascades relational data and removes stored materials", 
         assert.equal(context.database.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get().count, 0);
     }
 });
+
+test("course deletion leaves database records intact when storage cleanup fails", async t => {
+    const context = createTestApp({
+        fileStorage: {
+            driver: "test",
+            ensureReady() {},
+            createUploadMiddleware() {
+                return { single() { return (req, res, next) => next(); } };
+            },
+            async remove() { throw new Error("Storage unavailable"); },
+            async healthCheck() { return true; }
+        }
+    });
+    t.after(context.cleanup);
+    context.database.prepare(`
+        INSERT INTO materials (
+            course_id, unit_id, original_filename, stored_filename,
+            material_type, extracted_text, upload_status
+        ) VALUES (1, 1, 'keep.txt', 'keep.txt', 'notes', '', 'ready')
+    `).run();
+
+    const response = await request(context.app).delete("/api/courses/1").expect(503);
+    assert.equal(response.body.error.code, "COURSE_STORAGE_CLEANUP_FAILED");
+    assert.equal(
+        context.database.prepare("SELECT COUNT(*) AS count FROM courses WHERE id = 1").get().count,
+        1
+    );
+    assert.equal(
+        context.database.prepare("SELECT COUNT(*) AS count FROM materials WHERE course_id = 1").get().count,
+        1
+    );
+});

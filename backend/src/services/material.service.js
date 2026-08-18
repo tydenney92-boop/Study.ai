@@ -131,6 +131,23 @@ function createMaterialService({
 
         createFromUpload,
 
+        async delete(materialId, courseId, userId) {
+            const material = this.get(materialId, courseId, userId);
+
+            try {
+                await fileStorage.remove(material.storedFilename);
+            } catch (error) {
+                throw new AppError({
+                    code: "MATERIAL_STORAGE_CLEANUP_FAILED",
+                    message: "The uploaded file could not be removed. The material was not deleted.",
+                    status: 503,
+                    expose: true
+                });
+            }
+
+            materialsRepository.deleteOwned(materialId, courseId, userId);
+        },
+
         legacyCourse(userId) {
             return requireLegacyCourse(userId);
         },

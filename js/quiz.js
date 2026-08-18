@@ -73,26 +73,21 @@ const materialId =
     StudyAI.courseContext.getMaterialId();
 
 let selectedMaterialIds = materialId ? [Number(materialId)] : [];
+const quizOrigin = StudyAI.courseContext.toolOrigin();
+
+if (!courseId) {
+    StudyAI.courseContext.goToMyCourses("Choose a course before starting a quiz.");
+}
 
 const quizBackLink =
     document.querySelector("#quiz-back-link");
 
 
-if (courseId && materialId) {
-
-    quizBackLink.href =
-        StudyAI.courseContext.url("material.html", {
-            courseId,
-            materialId
-        });
+if (courseId) {
+    quizBackLink.href = StudyAI.courseContext.toolBackUrl();
 
     document.querySelector("#quiz-interface-back-link").href =
         quizBackLink.href;
-
-}
-else if (courseId) {
-    quizBackLink.href = StudyAI.courseContext.url("course.html", { courseId });
-    document.querySelector("#quiz-interface-back-link").href = quizBackLink.href;
 }
 
 
@@ -731,16 +726,13 @@ function finishQuiz() {
 
 
             <a
-                href="${StudyAI.courseContext.url("material.html", {
-                    courseId,
-                    materialId
-                })}"
+                href="${StudyAI.courseContext.toolBackUrl()}"
                 class="primary-button"
                 style="
                     display:inline-block;
                 "
             >
-                Back to Material
+                ${quizOrigin === "material" ? "Back to Material" : "Back to Course"}
             </a>
 
         </div>
@@ -809,6 +801,10 @@ async function loadQuizContext() {
         document.querySelector("#quiz-interface-back-link").textContent =
             `← Back to ${course.courseCode}`;
     } catch (error) {
+        if (error.status === 404) {
+            StudyAI.courseContext.goToMyCourses("That course is unavailable.");
+            return;
+        }
         console.error("Could not load quiz course context:", error);
     }
 }
@@ -817,6 +813,7 @@ loadQuizContext();
 
 async function initializeQuizMaterials() {
     const container = document.querySelector("#quiz-material-selection");
+    if (!courseId) return;
     if (materialId) {
         document.querySelector("#quiz-material-selection-wrap").style.display = "none";
         return;
@@ -836,6 +833,10 @@ async function initializeQuizMaterials() {
         });
         selectedMaterialIds = selector.getSelectedIds();
     } catch (error) {
+        if (error.status === 404) {
+            StudyAI.courseContext.goToMyCourses("That course is unavailable.");
+            return;
+        }
         container.innerHTML = '<div class="friendly-empty error-state"></div>';
         container.firstElementChild.textContent = error.message;
     }

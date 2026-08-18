@@ -74,6 +74,12 @@ function createCourseMaterialsRouter({ materialService, upload }) {
         res.json(normalizedTextResponse(material));
     });
 
+    router.delete("/:materialId", asyncHandler(async function(req, res) {
+        const materialId = positiveInteger(req.params.materialId, "materialId");
+        await materialService.delete(materialId, req.courseId, req.user.id);
+        res.status(204).end();
+    }));
+
     return router;
 }
 

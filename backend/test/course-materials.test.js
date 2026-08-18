@@ -95,10 +95,24 @@ test("material access is rejected across courses and users", async t => {
         INSERT INTO courses (user_id, course_name, course_code, semester)
         VALUES (?, 'Private', 'PRIVATE', 'Fall 2026')
     `).run(otherUserId).lastInsertRowid);
+    const privateMaterialId = Number(context.database.prepare(`
+        INSERT INTO materials (
+            course_id, original_filename, stored_filename, material_type,
+            extracted_text, upload_status
+        ) VALUES (?, 'private.txt', 'private-owner.txt', 'notes', '', 'ready')
+    `).run(privateCourseId).lastInsertRowid);
 
     await request(context.app)
         .get(`/api/courses/${privateCourseId}/materials`)
         .expect(404);
+    await request(context.app)
+        .delete(`/api/courses/${privateCourseId}/materials/${privateMaterialId}`)
+        .expect(404);
+    assert.equal(
+        context.database.prepare("SELECT COUNT(*) AS count FROM materials WHERE id = ?")
+            .get(privateMaterialId).count,
+        1
+    );
 
     const filesBeforeRejectedUpload = uploadFiles(context);
 
@@ -108,6 +122,86 @@ test("material access is rejected across courses and users", async t => {
         .expect(404);
 
     assert.deepEqual(uploadFiles(context), filesBeforeRejectedUpload);
+});
+
+test("material deletion is ownership scoped and removes its stored file and relationships", async t => {
+    const context = createTestApp();
+    t.after(context.cleanup);
+    const ownerCourse = await createCourse(context.app, "DELETE 101");
+    const wrongCourse = await createCourse(context.app, "DELETE 102");
+    const uploaded = await request(context.app)
+        .post(`/api/courses/${ownerCourse.id}/materials`)
+        .attach("file", Buffer.from("delete me"), "delete-me.txt")
+        .expect(201);
+    const storedPath = path.join(
+        context.temporaryDirectory,
+        "uploads",
+        uploaded.body.storedFilename
+    );
+    assert.equal(fs.existsSync(storedPath), true);
+    const guideId = Number(context.database.prepare(`
+        INSERT INTO generated_study_guides (user_id, course_id, generated_content)
+        VALUES (1, ?, 'historical guide')
+    `).run(ownerCourse.id).lastInsertRowid);
+    context.database.prepare(`
+        INSERT INTO study_guide_materials (study_guide_id, material_id) VALUES (?, ?)
+    `).run(guideId, uploaded.body.id);
+
+    await request(context.app)
+        .delete(`/api/courses/${wrongCourse.id}/materials/${uploaded.body.id}`)
+        .expect(404);
+    assert.equal(fs.existsSync(storedPath), true);
+
+    await request(context.app)
+        .delete(`/api/courses/${ownerCourse.id}/materials/${uploaded.body.id}`)
+        .expect(204);
+    assert.equal(fs.existsSync(storedPath), false);
+    assert.equal(
+        context.database.prepare("SELECT COUNT(*) AS count FROM materials WHERE id = ?")
+            .get(uploaded.body.id).count,
+        0
+    );
+    assert.equal(
+        context.database.prepare("SELECT COUNT(*) AS count FROM study_guide_materials WHERE material_id = ?")
+            .get(uploaded.body.id).count,
+        0
+    );
+    assert.equal(
+        context.database.prepare("SELECT COUNT(*) AS count FROM generated_study_guides WHERE id = ?")
+            .get(guideId).count,
+        1
+    );
+});
+
+test("material deletion keeps its database row when stored-file cleanup fails", async t => {
+    const context = createTestApp({
+        fileStorage: {
+            driver: "test",
+            ensureReady() {},
+            createUploadMiddleware() {
+                return { single() { return (req, res, next) => next(); } };
+            },
+            async remove() { throw new Error("Storage unavailable"); },
+            async healthCheck() { return true; }
+        }
+    });
+    t.after(context.cleanup);
+    const materialId = Number(context.database.prepare(`
+        INSERT INTO materials (
+            course_id, unit_id, original_filename, stored_filename,
+            material_type, extracted_text, upload_status
+        ) VALUES (1, 1, 'keep.txt', 'keep.txt', 'notes', '', 'ready')
+    `).run().lastInsertRowid);
+
+    const response = await request(context.app)
+        .delete(`/api/courses/1/materials/${materialId}`)
+        .expect(503);
+    assert.equal(response.body.error.code, "MATERIAL_STORAGE_CLEANUP_FAILED");
+    assert.equal(
+        context.database.prepare("SELECT COUNT(*) AS count FROM materials WHERE id = ?")
+            .get(materialId).count,
+        1
+    );
 });
 
 test("a unit from another course is rejected and its upload is cleaned up", async t => {

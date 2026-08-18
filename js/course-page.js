@@ -5,6 +5,10 @@ const unitForm = document.querySelector("#unit-form");
 const unitFormError = document.querySelector("#unit-form-error");
 const deleteModal = document.querySelector("#delete-course-modal");
 
+if (!courseId) {
+    StudyAI.courseContext.goToMyCourses("Choose a course to continue.");
+}
+
 function courseUrl(page, values = {}) {
     return StudyAI.courseContext.url(page, { courseId, ...values });
 }
@@ -32,12 +36,6 @@ function renderUnit(unit, materialCount) {
 
 async function loadCourse() {
     if (!courseId) {
-        unitsList.innerHTML = `
-            <div class="friendly-empty">
-                <strong>No course selected</strong>
-                <a class="text-link" href="index.html#courses">Choose a course →</a>
-            </div>
-        `;
         return;
     }
 
@@ -58,6 +56,7 @@ async function loadCourse() {
             materials.filter(material => material.materialType === "pdf").length;
         document.querySelector("#course-other-count").textContent =
             materials.filter(material => material.materialType !== "pdf").length;
+        document.querySelector("#course-danger-zone").hidden = false;
 
         document.querySelectorAll("[data-course-page]").forEach(link => {
             link.href = courseUrl(link.dataset.coursePage);
@@ -78,6 +77,10 @@ async function loadCourse() {
             });
         }
     } catch (error) {
+        if (error.status === 404) {
+            StudyAI.courseContext.goToMyCourses("That course is unavailable.");
+            return;
+        }
         unitsList.innerHTML = `<div class="friendly-empty error-state"></div>`;
         unitsList.querySelector("div").textContent = error.message;
     }

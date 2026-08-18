@@ -5,6 +5,11 @@ const subtitle = document.querySelector("#material-subtitle");
 const content = document.querySelector("#material-content");
 const status = document.querySelector("#content-status");
 const errorBox = document.querySelector("#material-error");
+const deleteMaterialModal = document.querySelector("#delete-material-modal");
+
+if (!courseId || !materialId) {
+    StudyAI.courseContext.goToMyCourses("Choose a material from a course first.");
+}
 
 function formatFileSize(bytes) {
     if (!bytes) return "—";
@@ -46,7 +51,6 @@ function setLinks(course) {
 
 async function loadMaterial() {
     if (!courseId || !materialId) {
-        showError("Choose a material from a course first.");
         return;
     }
 
@@ -64,6 +68,7 @@ async function loadMaterial() {
         document.querySelector("#material-unit").textContent = material.unitName || "—";
         document.querySelector("#material-size").textContent = formatFileSize(material.fileSize);
         document.querySelector("#material-date").textContent = formatDate(material.createdAt);
+        document.querySelector("#delete-material-button").hidden = false;
 
         if (material.extractedText && material.extractedText.trim()) {
             content.textContent = material.extractedText;
@@ -78,8 +83,37 @@ async function loadMaterial() {
             status.textContent = "No text available";
         }
     } catch (error) {
+        if (error.code === "COURSE_NOT_FOUND") {
+            StudyAI.courseContext.goToMyCourses("That course is unavailable.");
+            return;
+        }
         showError(error.message);
     }
 }
 
 loadMaterial();
+
+function closeDeleteMaterialModal() {
+    deleteMaterialModal.classList.remove("open");
+    document.querySelector("#delete-material-error").textContent = "";
+}
+
+document.querySelector("#delete-material-button").addEventListener("click", () => {
+    deleteMaterialModal.classList.add("open");
+});
+document.querySelector("#close-delete-material-modal").addEventListener("click", closeDeleteMaterialModal);
+document.querySelector("#cancel-delete-material").addEventListener("click", closeDeleteMaterialModal);
+document.querySelector("#confirm-delete-material").addEventListener("click", async event => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    button.textContent = "Deleting…";
+    try {
+        await StudyAI.api.delete(`/api/courses/${courseId}/materials/${materialId}`);
+        StudyAI.courseContext.setNotice("Material deleted successfully.");
+        window.location.replace(StudyAI.courseContext.url("materials.html", { courseId }));
+    } catch (error) {
+        document.querySelector("#delete-material-error").textContent = error.message;
+        button.disabled = false;
+        button.textContent = "Yes, Delete Material";
+    }
+});

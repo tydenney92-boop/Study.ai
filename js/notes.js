@@ -13,14 +13,23 @@ const suggestions =
 const notesContext = window.StudyAI?.courseContext;
 const notesBackLink = document.querySelector("#notes-back-link");
 const notesCourseLabel = document.querySelector("#notes-course-label");
+const notesCourseId = notesContext?.getCourseId();
 
-if (notesContext?.courseId && notesBackLink) {
+if (!notesCourseId) {
+    notesContext.goToMyCourses("Choose a course before opening Ask My Notes.");
+}
+
+if (notesCourseId && notesBackLink) {
     notesBackLink.href = notesContext.url("course.html");
-    StudyAI.api.get(`/api/courses/${notesContext.courseId}`)
+    StudyAI.api.get(`/api/courses/${notesCourseId}`)
         .then(function(course) {
             notesCourseLabel.textContent = `← ${course.courseCode || course.courseName}`;
         })
-        .catch(function() {
+        .catch(function(error) {
+            if (error.status === 404) {
+                notesContext.goToMyCourses("That course is unavailable.");
+                return;
+            }
             notesCourseLabel.textContent = "← Course";
         });
 }

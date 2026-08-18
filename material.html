@@ -58,7 +58,7 @@
 
         <a
             href="index.html#courses"
-            class="nav-item active"
+            class="nav-item"
         >
             <span>▣</span>
             My Courses
@@ -126,7 +126,7 @@
         <div>
 
             <a
-                href="materials.html"
+                href="index.html#courses"
                 class="back-link"
                 id="material-back-link"
             >
@@ -143,13 +143,14 @@
                 Loading material...
             </h1>
 
-
             <p
                 class="subtitle"
                 id="material-subtitle"
             >
                 Loading...
             </p>
+
+            <button class="danger-button material-delete-action" id="delete-material-button" hidden>Delete Material</button>
 
         </div>
 
@@ -247,7 +248,7 @@
 
 
             <a
-                href="quiz.html"
+                href="index.html#courses"
                 id="material-quiz-link"
                 class="material-action-button primary"
             >
@@ -262,7 +263,7 @@
 
 
             <a
-                href="study-guide.html"
+                href="index.html#courses"
                 id="material-study-guide-link"
                 class="material-action-button"
             >
@@ -277,7 +278,7 @@
 
 
             <a
-                href="flashcards.html"
+                href="index.html#courses"
                 id="material-flashcards-link"
                 class="material-action-button"
             >
@@ -363,7 +364,7 @@
 
 
         <a
-            href="materials.html"
+            href="index.html#courses"
             class="secondary-tool-button"
             id="material-error-back-link"
         >
@@ -374,6 +375,15 @@
 
 
 </main>
+
+<div class="app-modal-overlay" id="delete-material-modal">
+    <div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="delete-material-title">
+        <div class="app-modal-header"><div><p class="eyebrow">PERMANENT ACTION</p><h2 id="delete-material-title">Delete this material?</h2></div><button class="icon-button" id="close-delete-material-modal" aria-label="Close">×</button></div>
+        <p>The uploaded file will be permanently removed from this course.</p>
+        <p class="form-error" id="delete-material-error"></p>
+        <div class="app-modal-actions"><button class="secondary-tool-button" id="cancel-delete-material">Keep Material</button><button class="danger-button" id="confirm-delete-material">Yes, Delete Material</button></div>
+    </div>
+</div>
 
 
 <script src="js/config.js"></script>

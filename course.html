@@ -11,7 +11,7 @@
         <div class="brand"><div class="brand-icon">S</div><span>Study AI</span></div>
         <nav class="sidebar-nav">
             <a href="index.html" class="nav-item"><span>⌂</span>Dashboard</a>
-            <a href="index.html#courses" class="nav-item active"><span>▣</span>My Courses</a>
+            <a href="index.html#courses" class="nav-item"><span>▣</span>My Courses</a>
             <a href="progress.html" class="nav-item"><span>◔</span>Progress</a>
         </nav>
         <div class="sidebar-bottom"><div class="profile-card"><div class="profile-avatar">D</div><div><strong>Development User</strong><small>Student</small></div></div></div>
@@ -19,8 +19,8 @@
 
     <main class="main-content">
         <header class="topbar">
-            <div><p class="eyebrow">MY COURSE · <span id="course-semester">Loading…</span></p><h1 id="course-code-title">Course</h1><p class="subtitle" id="course-name-subtitle">Loading course…</p></div>
-            <div class="header-actions"><button class="secondary-tool-button" id="add-unit-button">+ Add Unit</button><a href="materials.html" data-course-page="materials.html" class="primary-button">+ Add Materials</a></div>
+            <div><a class="back-link" href="index.html#courses">← My Courses</a><p class="eyebrow">MY COURSE · <span id="course-semester">Loading…</span></p><h1 id="course-code-title">Course</h1><p class="subtitle" id="course-name-subtitle">Loading course…</p></div>
+            <div class="header-actions"><button class="secondary-tool-button" id="add-unit-button">+ Add Unit</button><a href="index.html#courses" data-course-page="materials.html" class="primary-button">+ Add Materials</a></div>
         </header>
 
         <section class="stats-grid">
@@ -38,14 +38,14 @@
             <div class="dashboard-panel">
                 <div class="panel-header"><div><h2>Study Tools</h2><p>Choose uploaded material before generating AI content.</p></div></div>
                 <div class="tool-grid">
-                    <a href="materials.html" data-course-page="materials.html" class="tool-card"><div class="tool-icon blue">▤</div><div><strong>Course Materials</strong><span>View notes and files</span></div></a>
-                    <a href="quiz.html" data-course-page="quiz.html" class="tool-card"><div class="tool-icon blue">✓</div><div><strong>Practice Quiz</strong><span>Choose source material</span></div></a>
-                    <a href="flashcards.html" data-course-page="flashcards.html" class="tool-card"><div class="tool-icon purple">◆</div><div><strong>Flashcards</strong><span>Demo deck for now</span></div></a>
-                    <a href="study-guide.html" data-course-page="study-guide.html" class="tool-card"><div class="tool-icon green">☰</div><div><strong>Study Guide</strong><span>Choose source material</span></div></a>
-                    <a href="notes.html" data-course-page="notes.html" class="tool-card"><div class="tool-icon orange">✦</div><div><strong>Ask My Notes</strong><span>Demo assistant for now</span></div></a>
+                    <a href="index.html#courses" data-course-page="materials.html" class="tool-card"><div class="tool-icon blue">▤</div><div><strong>Course Materials</strong><span>View notes and files</span></div></a>
+                    <a href="index.html#courses" data-course-page="quiz.html" class="tool-card"><div class="tool-icon blue">✓</div><div><strong>Practice Quiz</strong><span>Choose source material</span></div></a>
+                    <a href="index.html#courses" data-course-page="flashcards.html" class="tool-card"><div class="tool-icon purple">◆</div><div><strong>Flashcards</strong><span>Demo deck for now</span></div></a>
+                    <a href="index.html#courses" data-course-page="study-guide.html" class="tool-card"><div class="tool-icon green">☰</div><div><strong>Study Guide</strong><span>Choose source material</span></div></a>
+                    <a href="index.html#courses" data-course-page="notes.html" class="tool-card"><div class="tool-icon orange">✦</div><div><strong>Ask My Notes</strong><span>Demo assistant for now</span></div></a>
                 </div>
                 <div class="course-tip"><span class="eyebrow">STUDY TIP</span><h3>Start with your own material</h3><p>Upload a readable PDF, open it, then choose a study guide or verified practice quiz.</p></div>
-                <div class="danger-zone"><span class="eyebrow">COURSE SETTINGS</span><h3>Remove this course</h3><p>This permanently removes its units, materials, generated guides, quizzes, attempts, flashcards, and uploaded files.</p><button class="danger-button" id="delete-course-button">Delete Course</button></div>
+                <div class="danger-zone" id="course-danger-zone" hidden><span class="eyebrow">COURSE SETTINGS</span><h3>Remove this course</h3><p>This permanently removes its units, materials, generated guides, quizzes, attempts, flashcards, and uploaded files.</p><button class="danger-button" id="delete-course-button">Delete Course</button></div>
             </div>
         </section>
     </main>

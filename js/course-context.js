@@ -1,5 +1,6 @@
 (function() {
     const params = new URLSearchParams(window.location.search);
+    const MY_COURSES_URL = "index.html#courses";
 
     function getCourseId() {
         const value = Number(params.get("courseId"));
@@ -39,10 +40,48 @@
         return courseId;
     }
 
+    function setNotice(message) {
+        if (message) sessionStorage.setItem("studyai:notice", message);
+    }
+
+    function goToMyCourses(message) {
+        setNotice(message);
+        window.location.replace(MY_COURSES_URL);
+    }
+
+    function requireContext({ material = false } = {}) {
+        const courseId = getCourseId();
+        const materialId = getMaterialId();
+        if (!courseId || (material && !materialId)) {
+            goToMyCourses("Choose a course to continue.");
+            return null;
+        }
+        return { courseId, materialId };
+    }
+
+    function toolOrigin() {
+        return getCourseId() && getMaterialId() ? "material" : "course";
+    }
+
+    function toolBackUrl() {
+        const courseId = getCourseId();
+        const materialId = getMaterialId();
+        if (!courseId) return MY_COURSES_URL;
+        return materialId
+            ? url("material.html", { courseId, materialId })
+            : url("course.html", { courseId });
+    }
+
     window.StudyAI.courseContext = {
         getCourseId,
         getMaterialId,
+        goToMyCourses,
+        MY_COURSES_URL,
         requireCourseId,
+        requireContext,
+        setNotice,
+        toolBackUrl,
+        toolOrigin,
         url
     };
 })();
