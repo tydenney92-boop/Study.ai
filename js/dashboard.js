@@ -4,7 +4,7 @@ const courseModal = document.querySelector("#course-modal");
 const courseForm = document.querySelector("#course-form");
 const courseFormError = document.querySelector("#course-form-error");
 
-function createCourseCard(course, index) {
+function createCourseCard(course, index, summary) {
     const link = document.createElement("a");
     link.className = "course-card";
     link.href = StudyAI.courseContext.url("course.html", {
@@ -19,6 +19,10 @@ function createCourseCard(course, index) {
             <span class="course-code"></span>
             <h3></h3>
             <div class="course-meta-line"></div>
+            <div class="course-card-stats">
+                <span class="unit-total"></span>
+                <span class="material-total"></span>
+            </div>
         </div>
         <span class="course-arrow">→</span>
     `;
@@ -26,26 +30,26 @@ function createCourseCard(course, index) {
     link.querySelector("h3").textContent = course.courseName;
     link.querySelector(".course-meta-line").textContent =
         course.semester || "Semester not specified";
+    link.querySelector(".unit-total").textContent =
+        `${summary.units.length} unit${summary.units.length === 1 ? "" : "s"}`;
+    link.querySelector(".material-total").textContent =
+        `${summary.materials.length} material${summary.materials.length === 1 ? "" : "s"}`;
     return link;
+}
+
+function createAddCourseCard() {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "add-course-card";
+    button.innerHTML = `<span class="add-course-icon">＋</span><strong>Add Course</strong><small>Create another course workspace</small>`;
+    button.addEventListener("click", openCourseModal);
+    return button;
 }
 
 async function loadDashboard() {
     try {
         const courses = await StudyAI.api.get("/api/courses");
         courseList.innerHTML = "";
-
-        if (courses.length === 0) {
-            courseList.innerHTML = `
-                <div class="friendly-empty">
-                    <strong>Create your first course</strong>
-                    <span>Add a course to begin organizing study materials.</span>
-                </div>
-            `;
-        } else {
-            courses.forEach((course, index) => {
-                courseList.appendChild(createCourseCard(course, index));
-            });
-        }
 
         const summaries = await Promise.all(courses.map(async course => {
             const [units, materials] = await Promise.all([
@@ -54,6 +58,11 @@ async function loadDashboard() {
             ]);
             return { units, materials };
         }));
+
+        courses.forEach((course, index) => {
+            courseList.appendChild(createCourseCard(course, index, summaries[index]));
+        });
+        courseList.appendChild(createAddCourseCard());
         const unitCount = summaries.reduce((sum, value) => sum + value.units.length, 0);
         const materials = summaries.flatMap(value => value.materials);
 

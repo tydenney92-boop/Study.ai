@@ -715,6 +715,34 @@
     background: #f5f7ff;
 
 }
+
+/* Polished control states */
+.materials-controls select {
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.materials-controls select:focus {
+    border-color: #7894e8;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
+}
+
+.file-drop-zone {
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.file-drop-zone:hover,
+.file-drop-zone:focus-visible {
+    border-color: #93a8d9;
+    background: #f7f9ff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.06);
+}
+
+.upload-select {
+    padding-right: 36px;
+    cursor: pointer;
+}
 /* =========================================
    CLICKABLE MATERIAL CARDS
 ========================================= */

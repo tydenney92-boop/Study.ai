@@ -34,6 +34,39 @@
     }
 
     const sidebarBottom = document.querySelector(".sidebar-bottom");
+    const sidebarNavigation = document.querySelector(".sidebar-nav");
+    const currentCourseId = new URLSearchParams(window.location.search).get("courseId");
+
+    if (sidebarNavigation && currentCourseId) {
+        const switcher = document.createElement("div");
+        switcher.className = "course-switcher";
+        switcher.innerHTML = `
+            <label for="course-switcher-select">Switch course</label>
+            <select id="course-switcher-select" aria-label="Switch course">
+                <option value="">Loading courses…</option>
+            </select>
+        `;
+        sidebarNavigation.insertAdjacentElement("afterend", switcher);
+        const select = switcher.querySelector("select");
+        StudyAI.api.get("/api/courses")
+            .then(courses => {
+                select.innerHTML = '<option value="">Choose a course…</option>';
+                courses.forEach(course => {
+                    const option = document.createElement("option");
+                    option.value = course.id;
+                    option.textContent = `${course.courseCode} · ${course.courseName}`;
+                    option.selected = String(course.id) === currentCourseId;
+                    select.appendChild(option);
+                });
+            })
+            .catch(() => switcher.remove());
+        select.addEventListener("change", () => {
+            if (select.value) {
+                window.location.href = `course.html?courseId=${encodeURIComponent(select.value)}`;
+            }
+        });
+    }
+
     if (sidebarBottom) {
         const button = document.createElement("button");
         button.type = "button";

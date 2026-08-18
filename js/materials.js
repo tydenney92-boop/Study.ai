@@ -188,6 +188,32 @@ fileInput.addEventListener("change", () => {
         : "";
 });
 
+const fileDropZone = document.querySelector("#file-drop-zone");
+fileDropZone.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        fileInput.click();
+    }
+});
+["dragenter", "dragover"].forEach(eventName => {
+    fileDropZone.addEventListener(eventName, event => {
+        event.preventDefault();
+        fileDropZone.classList.add("dragging");
+    });
+});
+["dragleave", "drop"].forEach(eventName => {
+    fileDropZone.addEventListener(eventName, event => {
+        event.preventDefault();
+        fileDropZone.classList.remove("dragging");
+    });
+});
+fileDropZone.addEventListener("drop", event => {
+    selectedFile = event.dataTransfer.files[0] || null;
+    selectedFileLabel.textContent = selectedFile
+        ? `${selectedFile.name} · ${formatSize(selectedFile.size)}`
+        : "";
+});
+
 confirmUpload.addEventListener("click", async () => {
     if (!selectedFile) {
         uploadError.textContent = "Choose a file first.";

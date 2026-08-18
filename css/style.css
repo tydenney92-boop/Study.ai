@@ -29,6 +29,21 @@ button {
     font-family: inherit;
 }
 
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.2);
+    outline-offset: 2px;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none !important;
+}
+
 
 /* =========================================
    SIDEBAR
@@ -809,6 +824,38 @@ h1 {
     }
 
 }
+
+.secondary-tool-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #d7deea;
+    background: #ffffff;
+    color: #4f5d73;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(23, 32, 51, 0.04);
+    transition: border-color 0.2s, background 0.2s, color 0.2s, transform 0.2s;
+}
+
+.secondary-tool-button:hover {
+    border-color: #bfc9da;
+    background: #f8fafc;
+    color: #27364d;
+    transform: translateY(-1px);
+}
+
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='m3 4.5 3 3 3-3' fill='none' stroke='%23697686' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
 /* =========================================
    DYNAMIC APP STATES + FORMS
 ========================================= */
@@ -980,3 +1027,105 @@ h1 {
     font: inherit; font-size: 13px;
 }
 .logout-button:hover { background: #f3f5fa; color: #26324d; }
+
+/* =========================================
+   POLISHED SHARED CONTROLS + COURSE NAV
+========================================= */
+
+#courses.dashboard-grid { grid-template-columns: 1fr; }
+
+.course-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+    gap: 12px;
+}
+
+.course-card {
+    min-height: 112px;
+    padding: 17px;
+    border-radius: 11px;
+    background: #ffffff;
+}
+
+.course-card:hover {
+    border-color: #bfcbe0;
+    box-shadow: 0 8px 22px rgba(31, 48, 78, 0.08);
+    transform: translateY(-2px);
+}
+
+.course-card-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 11px;
+}
+
+.course-card-stats span {
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: #f2f5fa;
+    color: #667085;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.add-course-card {
+    min-height: 112px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 5px;
+    padding: 17px;
+    border: 1px dashed #bdc9dd;
+    border-radius: 11px;
+    background: #f9fbff;
+    color: #52617a;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.2s;
+}
+
+.add-course-card:hover {
+    border-color: #7894e8;
+    background: #f3f6ff;
+    transform: translateY(-2px);
+}
+
+.add-course-icon { color: #2563eb; font-size: 21px; line-height: 1; }
+.add-course-card strong { font-size: 13px; }
+.add-course-card small { color: #8490a3; font-size: 11px; }
+
+.course-switcher {
+    margin: 24px 6px 0;
+    padding-top: 18px;
+    border-top: 1px solid #edf0f4;
+}
+
+.course-switcher label {
+    display: block;
+    margin: 0 7px 7px;
+    color: #98a2b3;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.course-switcher select {
+    width: 100%;
+    min-width: 0;
+    padding: 9px 30px 9px 10px;
+    border: 1px solid #dfe4eb;
+    border-radius: 8px;
+    color: #4f5d73;
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+@media (max-width: 750px) {
+    .course-switcher { display: none; }
+    .course-list { grid-template-columns: 1fr; }
+    .primary-button, .secondary-tool-button { min-height: 42px; }
+}
