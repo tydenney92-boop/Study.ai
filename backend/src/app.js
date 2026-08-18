@@ -4,6 +4,7 @@ const path = require("path");
 const { PDFParse } = require("pdf-parse");
 const defaultConfig = require("./config");
 const { createDatabase } = require("./database/connection");
+const { runMigrations } = require("./database/migration-runner");
 const { createLocalFileStorage } = require("./services/local-file-storage");
 const { createOllamaClient } = require("./services/ollama-client");
 const { registerHealthRoutes } = require("./routes/health.routes");
@@ -20,6 +21,13 @@ const config = {
 const app = express();
 
 const db = options.database || createDatabase(config.databasePath);
+
+const migrationResult = runMigrations({
+    database: db,
+    databasePath: config.databasePath,
+    backupDirectory: config.backupDirectory,
+    createBackup: config.migrationBackup
+});
 
 const fileStorage =
     options.fileStorage ||
@@ -42,6 +50,28 @@ const aiClient =
 
 app.locals.database = db;
 app.locals.fileStorage = fileStorage;
+app.locals.migrations = migrationResult;
+
+const legacyCourse = db.prepare(`
+    SELECT courses.id
+    FROM courses
+    JOIN users ON users.id = courses.user_id
+    WHERE users.email = 'development@study.ai'
+      AND courses.course_code = 'ECON 110'
+      AND courses.semester = 'Legacy Prototype'
+`).get();
+
+function getLegacyUnitId(unitValue) {
+    const match = /^unit(\d+)$/i.exec(unitValue || "unit1");
+    const unitNumber = match ? Number(match[1]) : 1;
+    const unit = db.prepare(`
+        SELECT id
+        FROM units
+        WHERE course_id = ? AND unit_number = ?
+    `).get(legacyCourse.id, unitNumber);
+
+    return unit ? unit.id : null;
+}
 
 
 // =========================================
@@ -56,37 +86,6 @@ app.use(express.json());
 console.log(
     "Database connected."
 );
-
-
-// =========================================
-// CREATE MATERIALS TABLE
-// =========================================
-
-db.exec(`
-    CREATE TABLE IF NOT EXISTS materials (
-
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-        name TEXT NOT NULL,
-
-        type TEXT NOT NULL,
-
-        unit TEXT NOT NULL,
-
-        filename TEXT NOT NULL,
-
-        original_name TEXT NOT NULL,
-
-        file_size INTEGER,
-
-        mime_type TEXT,
-
-        text_content TEXT,
-
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-
-    )
-`);
 
 
 console.log(
@@ -114,18 +113,23 @@ app.get(
             const materials =
                 db.prepare(`
                     SELECT
-                        id,
-                        name,
-                        type,
-                        unit,
-                        filename,
-                        original_name,
-                        file_size,
-                        mime_type,
-                        created_at
+                        materials.id,
+                        materials.original_filename AS name,
+                        materials.material_type AS type,
+                        CASE
+                            WHEN units.unit_number IS NULL THEN NULL
+                            ELSE 'unit' || units.unit_number
+                        END AS unit,
+                        materials.stored_filename AS filename,
+                        materials.original_filename AS original_name,
+                        materials.file_size,
+                        materials.mime_type,
+                        materials.created_at
                     FROM materials
-                    ORDER BY created_at DESC
-                `).all();
+                    LEFT JOIN units ON units.id = materials.unit_id
+                    WHERE materials.course_id = ?
+                    ORDER BY materials.created_at DESC
+                `).all(legacyCourse.id);
 
 
             res.json(
@@ -187,6 +191,9 @@ app.post(
             const unit =
                 req.body.unit || "unit1";
 
+            const unitId =
+                getLegacyUnitId(unit);
+
 
             // ---------------------------------
             // DETERMINE FILE TYPE
@@ -239,15 +246,14 @@ app.post(
             const statement =
                 db.prepare(`
                     INSERT INTO materials (
-
-                        name,
-                        type,
-                        unit,
-                        filename,
-                        original_name,
+                        course_id,
+                        unit_id,
+                        original_filename,
+                        stored_filename,
+                        material_type,
                         file_size,
                         mime_type,
-                        text_content
+                        extracted_text
 
                     )
 
@@ -268,16 +274,11 @@ app.post(
 
             const result =
                 statement.run(
-
+                    legacyCourse.id,
+                    unitId,
                     req.file.originalname,
-
-                    type,
-
-                    unit,
-
                     req.file.filename,
-
-                    req.file.originalname,
+                    type,
 
                     req.file.size,
 
@@ -355,20 +356,26 @@ app.get(
             const material =
                 db.prepare(`
                     SELECT
-                        id,
-                        name,
-                        type,
-                        unit,
-                        filename,
-                        original_name,
-                        file_size,
-                        mime_type,
-                        text_content,
-                        created_at
+                        materials.id,
+                        materials.original_filename AS name,
+                        materials.material_type AS type,
+                        CASE
+                            WHEN units.unit_number IS NULL THEN NULL
+                            ELSE 'unit' || units.unit_number
+                        END AS unit,
+                        materials.stored_filename AS filename,
+                        materials.original_filename AS original_name,
+                        materials.file_size,
+                        materials.mime_type,
+                        materials.extracted_text AS text_content,
+                        materials.created_at
                     FROM materials
-                    WHERE id = ?
+                    LEFT JOIN units ON units.id = materials.unit_id
+                    WHERE materials.id = ?
+                      AND materials.course_id = ?
                 `).get(
-                    req.params.id
+                    req.params.id,
+                    legacyCourse.id
                 );
 
 
@@ -423,12 +430,13 @@ app.get(
                 db.prepare(`
                     SELECT
                         id,
-                        name,
-                        text_content
+                        original_filename AS name,
+                        extracted_text AS text_content
                     FROM materials
-                    WHERE id = ?
+                    WHERE id = ? AND course_id = ?
                 `).get(
-                    req.params.id
+                    req.params.id,
+                    legacyCourse.id
                 );
 
 
@@ -706,12 +714,14 @@ app.post(
             const materials =
                 db.prepare(`
                     SELECT
-                        name,
-                        text_content
+                        original_filename AS name,
+                        extracted_text AS text_content
                     FROM materials
                     WHERE id IN (${placeholders})
+                      AND course_id = ?
                 `).all(
-                    ...materialIds
+                    ...materialIds,
+                    legacyCourse.id
                 );
 
 
@@ -956,12 +966,14 @@ app.post(
             const materials =
                 db.prepare(`
                     SELECT
-                        name,
-                        text_content
+                        original_filename AS name,
+                        extracted_text AS text_content
                     FROM materials
                     WHERE id IN (${placeholders})
+                      AND course_id = ?
                 `).all(
-                    ...materialIds
+                    ...materialIds,
+                    legacyCourse.id
                 );
 
 

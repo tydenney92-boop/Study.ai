@@ -51,6 +51,7 @@ test("a non-PDF material upload is stored without changing upload behavior", asy
         .prepare("SELECT * FROM materials WHERE id = ?")
         .get(response.body.material.id);
 
-    assert.equal(stored.original_name, "lecture.txt");
-    assert.equal(stored.text_content, "");
+    assert.equal(stored.original_filename, "lecture.txt");
+    assert.equal(stored.extracted_text, "");
+    assert.equal(stored.course_id, 1);
 });

@@ -5,6 +5,7 @@ backend/node_modules/
 
 # Local database
 backend/*.db
+backend/backups/
 
 # Uploaded user files
 backend/uploads/

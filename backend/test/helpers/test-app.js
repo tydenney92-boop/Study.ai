@@ -11,7 +11,9 @@ function createTestApp(options = {}) {
     const app = createApp({
         config: {
             databasePath: path.join(temporaryDirectory, "test.db"),
-            uploadDirectory: path.join(temporaryDirectory, "uploads")
+            uploadDirectory: path.join(temporaryDirectory, "uploads"),
+            backupDirectory: path.join(temporaryDirectory, "backups"),
+            migrationBackup: false
         },
         aiClient: options.aiClient || {
             async generate() {
@@ -38,37 +40,37 @@ function createTestApp(options = {}) {
 
 function insertMaterial(database, overrides = {}) {
     const material = {
-        name: "Test notes.txt",
-        type: "notes",
-        unit: "unit1",
-        filename: "stored-test-notes.txt",
-        originalName: "Test notes.txt",
+        courseId: 1,
+        unitId: 1,
+        materialType: "notes",
+        storedFilename: "stored-test-notes.txt",
+        originalFilename: "Test notes.txt",
         fileSize: 42,
         mimeType: "text/plain",
-        textContent: "Supply and demand test content.",
+        extractedText: "Supply and demand test content.",
         ...overrides
     };
 
     const result = database.prepare(`
         INSERT INTO materials (
-            name,
-            type,
-            unit,
-            filename,
-            original_name,
+            course_id,
+            unit_id,
+            original_filename,
+            stored_filename,
+            material_type,
             file_size,
             mime_type,
-            text_content
+            extracted_text
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
-        material.name,
-        material.type,
-        material.unit,
-        material.filename,
-        material.originalName,
+        material.courseId,
+        material.unitId,
+        material.originalFilename,
+        material.storedFilename,
+        material.materialType,
         material.fileSize,
         material.mimeType,
-        material.textContent
+        material.extractedText
     );
 
     return Number(result.lastInsertRowid);

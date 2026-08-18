@@ -5,7 +5,11 @@ function createDatabase(databasePath) {
         throw new Error("A database path is required.");
     }
 
-    return new Database(databasePath);
+    const database = new Database(databasePath);
+
+    database.pragma("foreign_keys = ON");
+
+    return database;
 }
 
 module.exports = {
