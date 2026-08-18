@@ -1,0 +1,168 @@
+const { AppError } = require("../utils/app-error");
+const { positiveInteger } = require("../utils/validation");
+const { materialTypeFor } = require("./material-type");
+
+function createMaterialService({
+    coursesRepository,
+    coursesService,
+    unitsRepository,
+    materialsRepository,
+    textExtractionService,
+    fileStorage
+}) {
+    function requireLegacyCourse(userId) {
+        const course = coursesRepository.findLegacyOwned(userId);
+
+        if (!course) {
+            throw new AppError({
+                code: "LEGACY_COURSE_NOT_FOUND",
+                message: "The legacy ECON 110 course was not found.",
+                status: 500,
+                expose: false
+            });
+        }
+
+        return course;
+    }
+
+    async function removeFailedUpload(file) {
+        if (!file || !file.filename) {
+            return;
+        }
+
+        try {
+            await fileStorage.remove(file.filename);
+        } catch (cleanupError) {
+            console.error("Failed to clean up uploaded file:", cleanupError);
+        }
+    }
+
+    async function createFromUpload({ courseId, userId, unitId, file }) {
+        if (!file) {
+            throw new AppError({
+                code: "FILE_REQUIRED",
+                message: "A file is required.",
+                status: 400
+            });
+        }
+
+        try {
+            coursesService.requireOwned(courseId, userId);
+
+            if (
+                typeof file.originalname !== "string" ||
+                file.originalname.length === 0 ||
+                file.originalname.length > 255
+            ) {
+                throw new AppError({
+                    code: "INVALID_ORIGINAL_FILENAME",
+                    message: "The original filename must be between 1 and 255 characters.",
+                    status: 400
+                });
+            }
+
+            const parsedUnitId = unitId === undefined || unitId === null || unitId === ""
+                ? null
+                : positiveInteger(unitId, "unitId");
+
+            if (
+                parsedUnitId !== null &&
+                !unitsRepository.findOwned(parsedUnitId, courseId, userId)
+            ) {
+                throw new AppError({
+                    code: "UNIT_NOT_FOUND",
+                    message: "Unit not found in this course.",
+                    status: 404
+                });
+            }
+
+            const materialType = materialTypeFor(file.originalname);
+            const extractedText = await textExtractionService.extract({
+                storedFilename: file.filename,
+                materialType
+            });
+
+            const materialId = materialsRepository.create({
+                courseId,
+                unitId: parsedUnitId,
+                originalFilename: file.originalname,
+                storedFilename: file.filename,
+                materialType,
+                extractedText,
+                fileSize: file.size,
+                mimeType: file.mimetype,
+                uploadStatus: "ready",
+                extractionError: null
+            });
+
+            return materialsRepository.findOwned(materialId, courseId, userId);
+        } catch (error) {
+            await removeFailedUpload(file);
+            throw error;
+        }
+    }
+
+    return {
+        list(courseId, userId) {
+            coursesService.requireOwned(courseId, userId);
+            return materialsRepository.listOwned(courseId, userId);
+        },
+
+        get(materialId, courseId, userId) {
+            coursesService.requireOwned(courseId, userId);
+            const material = materialsRepository.findOwned(
+                materialId,
+                courseId,
+                userId
+            );
+
+            if (!material) {
+                throw new AppError({
+                    code: "MATERIAL_NOT_FOUND",
+                    message: "Material not found in this course.",
+                    status: 404
+                });
+            }
+
+            return material;
+        },
+
+        createFromUpload,
+
+        legacyCourse(userId) {
+            return requireLegacyCourse(userId);
+        },
+
+        legacyList(userId) {
+            const course = requireLegacyCourse(userId);
+            return materialsRepository.listOwned(course.id, userId);
+        },
+
+        legacyGet(materialId, userId) {
+            const course = requireLegacyCourse(userId);
+            return this.get(materialId, course.id, userId);
+        },
+
+        async legacyCreate({ userId, legacyUnit, file }) {
+            const course = requireLegacyCourse(userId);
+            const match = /^unit(\d+)$/i.exec(legacyUnit || "unit1");
+            const unitNumber = match ? Number(match[1]) : 1;
+            const unit = unitsRepository.findByNumberOwned(
+                course.id,
+                userId,
+                unitNumber
+            );
+
+            return createFromUpload({
+                courseId: course.id,
+                userId,
+                unitId: unit ? unit.id : null,
+                file
+            });
+        }
+    };
+}
+
+module.exports = {
+    createMaterialService
+};

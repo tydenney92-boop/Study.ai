@@ -15,6 +15,12 @@ module.exports = {
     uploadDirectory:
         process.env.UPLOAD_DIRECTORY ||
         path.join(backendRoot, "uploads"),
+    maxUploadBytes:
+        Number(process.env.MAX_UPLOAD_BYTES) ||
+        20 * 1024 * 1024,
+    developmentUserEmail:
+        process.env.DEVELOPMENT_USER_EMAIL ||
+        "development@study.ai",
     ollamaBaseUrl:
         process.env.OLLAMA_BASE_URL ||
         "http://localhost:11434",

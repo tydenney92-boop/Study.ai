@@ -1,13 +1,27 @@
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
-const { PDFParse } = require("pdf-parse");
 const defaultConfig = require("./config");
 const { createDatabase } = require("./database/connection");
 const { runMigrations } = require("./database/migration-runner");
+const { createUsersRepository } = require("./repositories/users.repository");
+const { createCoursesRepository } = require("./repositories/courses.repository");
+const { createUnitsRepository } = require("./repositories/units.repository");
+const { createMaterialsRepository } = require("./repositories/materials.repository");
+const { createCourseService } = require("./services/course.service");
+const { createUnitService } = require("./services/unit.service");
+const { createMaterialService } = require("./services/material.service");
+const { createTextExtractionService } = require("./services/text-extraction.service");
 const { createLocalFileStorage } = require("./services/local-file-storage");
 const { createOllamaClient } = require("./services/ollama-client");
+const { ALLOWED_EXTENSIONS } = require("./services/material-type");
+const { createCurrentUserMiddleware } = require("./middleware/current-user");
 const { registerHealthRoutes } = require("./routes/health.routes");
+const { createCoursesRouter } = require("./routes/courses.routes");
+const { createUnitsRouter } = require("./routes/units.routes");
+const {
+    createCourseMaterialsRouter,
+    createLegacyMaterialsRouter
+} = require("./routes/materials.routes");
 const { notFoundHandler } = require("./middleware/not-found");
 const { errorHandler } = require("./middleware/error-handler");
 
@@ -39,7 +53,10 @@ fileStorage.ensureReady();
 
 const upload =
     options.uploadMiddleware ||
-    fileStorage.createUploadMiddleware();
+    fileStorage.createUploadMiddleware({
+        maxFileSize: config.maxUploadBytes,
+        allowedExtensions: ALLOWED_EXTENSIONS
+    });
 
 const aiClient =
     options.aiClient ||
@@ -52,27 +69,38 @@ app.locals.database = db;
 app.locals.fileStorage = fileStorage;
 app.locals.migrations = migrationResult;
 
-const legacyCourse = db.prepare(`
-    SELECT courses.id
-    FROM courses
-    JOIN users ON users.id = courses.user_id
-    WHERE users.email = 'development@study.ai'
-      AND courses.course_code = 'ECON 110'
-      AND courses.semester = 'Legacy Prototype'
-`).get();
+const defaultRepositories = {
+    users: createUsersRepository(db),
+    courses: createCoursesRepository(db),
+    units: createUnitsRepository(db),
+    materials: createMaterialsRepository(db)
+};
+const repositories = {
+    ...defaultRepositories,
+    ...(options.repositories || {}),
+    ...(options.extendRepositories
+        ? options.extendRepositories(defaultRepositories)
+        : {})
+};
 
-function getLegacyUnitId(unitValue) {
-    const match = /^unit(\d+)$/i.exec(unitValue || "unit1");
-    const unitNumber = match ? Number(match[1]) : 1;
-    const unit = db.prepare(`
-        SELECT id
-        FROM units
-        WHERE course_id = ? AND unit_number = ?
-    `).get(legacyCourse.id, unitNumber);
-
-    return unit ? unit.id : null;
-}
-
+const coursesService = createCourseService({
+    coursesRepository: repositories.courses
+});
+const unitsService = createUnitService({
+    coursesService,
+    unitsRepository: repositories.units
+});
+const textExtractionService =
+    options.textExtractionService ||
+    createTextExtractionService({ fileStorage });
+const materialService = createMaterialService({
+    coursesRepository: repositories.courses,
+    coursesService,
+    unitsRepository: repositories.units,
+    materialsRepository: repositories.materials,
+    textExtractionService,
+    fileStorage
+});
 
 // =========================================
 // MIDDLEWARE
@@ -99,430 +127,27 @@ console.log(
 
 registerHealthRoutes(app);
 
+app.use(createCurrentUserMiddleware({
+    usersRepository: repositories.users,
+    developmentEmail: config.developmentUserEmail
+}));
 
-// =========================================
-// GET ALL MATERIALS
-// =========================================
-
-app.get(
+app.use(
+    "/api/courses/:courseId/units",
+    createUnitsRouter({ unitsService })
+);
+app.use(
+    "/api/courses/:courseId/materials",
+    createCourseMaterialsRouter({ materialService, upload })
+);
+app.use(
+    "/api/courses",
+    createCoursesRouter({ coursesService })
+);
+app.use(
     "/api/materials",
-    function(req, res) {
-
-        try {
-
-            const materials =
-                db.prepare(`
-                    SELECT
-                        materials.id,
-                        materials.original_filename AS name,
-                        materials.material_type AS type,
-                        CASE
-                            WHEN units.unit_number IS NULL THEN NULL
-                            ELSE 'unit' || units.unit_number
-                        END AS unit,
-                        materials.stored_filename AS filename,
-                        materials.original_filename AS original_name,
-                        materials.file_size,
-                        materials.mime_type,
-                        materials.created_at
-                    FROM materials
-                    LEFT JOIN units ON units.id = materials.unit_id
-                    WHERE materials.course_id = ?
-                    ORDER BY materials.created_at DESC
-                `).all(legacyCourse.id);
-
-
-            res.json(
-                materials
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                error
-            );
-
-
-            res.status(500).json({
-
-                error:
-                    "Could not retrieve materials."
-
-            });
-
-        }
-
-    }
+    createLegacyMaterialsRouter({ materialService, upload })
 );
-
-
-// =========================================
-// UPLOAD MATERIAL
-// =========================================
-
-app.post(
-    "/api/materials",
-    upload.single("file"),
-    async function(req, res) {
-
-        try {
-
-            // ---------------------------------
-            // CHECK FILE
-            // ---------------------------------
-
-            if (!req.file) {
-
-                return res.status(400).json({
-
-                    error:
-                        "No file was uploaded."
-
-                });
-
-            }
-
-
-            // ---------------------------------
-            // GET UNIT
-            // ---------------------------------
-
-            const unit =
-                req.body.unit || "unit1";
-
-            const unitId =
-                getLegacyUnitId(unit);
-
-
-            // ---------------------------------
-            // DETERMINE FILE TYPE
-            // ---------------------------------
-
-            const type =
-                getFileType(
-                    req.file.originalname
-                );
-
-
-            // ---------------------------------
-            // EXTRACT TEXT
-            // ---------------------------------
-
-            let textContent = "";
-
-
-            if (type === "pdf") {
-
-                const pdfBuffer =
-                    await fileStorage.read(
-                        req.file.filename
-                    );
-
-
-                const parser =
-                    new PDFParse({
-                        data: pdfBuffer
-                    });
-
-
-                const pdfData =
-                    await parser.getText();
-
-
-                textContent =
-                    pdfData.text;
-
-
-                await parser.destroy();
-
-            }
-
-
-            // ---------------------------------
-            // SAVE MATERIAL TO DATABASE
-            // ---------------------------------
-
-            const statement =
-                db.prepare(`
-                    INSERT INTO materials (
-                        course_id,
-                        unit_id,
-                        original_filename,
-                        stored_filename,
-                        material_type,
-                        file_size,
-                        mime_type,
-                        extracted_text
-
-                    )
-
-                    VALUES (
-
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?
-
-                    )
-                `);
-
-
-            const result =
-                statement.run(
-                    legacyCourse.id,
-                    unitId,
-                    req.file.originalname,
-                    req.file.filename,
-                    type,
-
-                    req.file.size,
-
-                    req.file.mimetype,
-
-                    textContent
-
-                );
-
-
-            console.log(
-                "Material saved:",
-                req.file.originalname
-            );
-
-
-            // ---------------------------------
-            // SEND RESPONSE
-            // ---------------------------------
-
-            res.json({
-
-                message:
-                    "Material uploaded successfully.",
-
-                material: {
-
-                    id:
-                        result.lastInsertRowid,
-
-                    name:
-                        req.file.originalname,
-
-                    type:
-                        type,
-
-                    unit:
-                        unit
-
-                }
-
-            });
-
-
-        } catch (error) {
-
-            console.error(
-                "Upload error:",
-                error
-            );
-
-
-            res.status(500).json({
-
-                error:
-                    "Could not save material."
-
-            });
-
-        }
-
-    }
-);
-
-// =========================================
-// GET SINGLE MATERIAL
-// =========================================
-
-app.get(
-    "/api/materials/:id",
-    function(req, res) {
-
-        try {
-
-            const material =
-                db.prepare(`
-                    SELECT
-                        materials.id,
-                        materials.original_filename AS name,
-                        materials.material_type AS type,
-                        CASE
-                            WHEN units.unit_number IS NULL THEN NULL
-                            ELSE 'unit' || units.unit_number
-                        END AS unit,
-                        materials.stored_filename AS filename,
-                        materials.original_filename AS original_name,
-                        materials.file_size,
-                        materials.mime_type,
-                        materials.extracted_text AS text_content,
-                        materials.created_at
-                    FROM materials
-                    LEFT JOIN units ON units.id = materials.unit_id
-                    WHERE materials.id = ?
-                      AND materials.course_id = ?
-                `).get(
-                    req.params.id,
-                    legacyCourse.id
-                );
-
-
-            if (!material) {
-
-                return res.status(404).json({
-
-                    error:
-                        "Material not found."
-
-                });
-
-            }
-
-
-            res.json(
-                material
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                "Material retrieval error:",
-                error
-            );
-
-
-            res.status(500).json({
-
-                error:
-                    "Could not retrieve material."
-
-            });
-
-        }
-
-    }
-);
-
-// =========================================
-// GET EXTRACTED TEXT
-// =========================================
-
-app.get(
-    "/api/materials/:id/text",
-    function(req, res) {
-
-        try {
-
-            const material =
-                db.prepare(`
-                    SELECT
-                        id,
-                        original_filename AS name,
-                        extracted_text AS text_content
-                    FROM materials
-                    WHERE id = ? AND course_id = ?
-                `).get(
-                    req.params.id,
-                    legacyCourse.id
-                );
-
-
-            if (!material) {
-
-                return res.status(404).json({
-
-                    error:
-                        "Material not found."
-
-                });
-
-            }
-
-
-            res.json(
-                material
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                "Text retrieval error:",
-                error
-            );
-
-
-            res.status(500).json({
-
-                error:
-                    "Could not retrieve text."
-
-            });
-
-        }
-
-    }
-);
-
-
-// =========================================
-// DETERMINE FILE TYPE
-// =========================================
-
-function getFileType(
-    filename
-) {
-
-    const extension =
-        path.extname(
-            filename
-        ).toLowerCase();
-
-
-    if (extension === ".pdf") {
-
-        return "pdf";
-
-    }
-
-
-    if (
-        extension === ".ppt" ||
-        extension === ".pptx"
-    ) {
-
-        return "slides";
-
-    }
-
-
-    if (
-        extension === ".txt" ||
-        extension === ".doc" ||
-        extension === ".docx"
-    ) {
-
-        return "notes";
-
-    }
-
-
-    return "notes";
-
-}
 
 
 // =========================================
@@ -705,23 +330,14 @@ app.post(
             }
 
 
-            const placeholders =
-                materialIds
-                    .map(() => "?")
-                    .join(",");
-
+            const legacyCourse =
+                repositories.courses.findLegacyOwned(req.user.id);
 
             const materials =
-                db.prepare(`
-                    SELECT
-                        original_filename AS name,
-                        extracted_text AS text_content
-                    FROM materials
-                    WHERE id IN (${placeholders})
-                      AND course_id = ?
-                `).all(
-                    ...materialIds,
-                    legacyCourse.id
+                repositories.materials.findContextByIds(
+                    legacyCourse.id,
+                    req.user.id,
+                    materialIds
                 );
 
 
@@ -957,23 +573,14 @@ app.post(
             // FIND MATERIALS
             // ---------------------------------
 
-            const placeholders =
-                materialIds
-                    .map(() => "?")
-                    .join(",");
-
+            const legacyCourse =
+                repositories.courses.findLegacyOwned(req.user.id);
 
             const materials =
-                db.prepare(`
-                    SELECT
-                        original_filename AS name,
-                        extracted_text AS text_content
-                    FROM materials
-                    WHERE id IN (${placeholders})
-                      AND course_id = ?
-                `).all(
-                    ...materialIds,
-                    legacyCourse.id
+                repositories.materials.findContextByIds(
+                    legacyCourse.id,
+                    req.user.id,
+                    materialIds
                 );
 
 

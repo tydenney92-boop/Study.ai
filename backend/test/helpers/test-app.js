@@ -13,8 +13,11 @@ function createTestApp(options = {}) {
             databasePath: path.join(temporaryDirectory, "test.db"),
             uploadDirectory: path.join(temporaryDirectory, "uploads"),
             backupDirectory: path.join(temporaryDirectory, "backups"),
-            migrationBackup: false
+            migrationBackup: false,
+            ...(options.config || {})
         },
+        extendRepositories: options.extendRepositories,
+        textExtractionService: options.textExtractionService,
         aiClient: options.aiClient || {
             async generate() {
                 throw new Error("Unexpected AI request in test.");
