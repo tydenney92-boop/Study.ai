@@ -9,8 +9,15 @@
    is hosted somewhere else later, change only this value.
 */
 
+const isSplitLocalDevelopment =
+    ["localhost", "127.0.0.1"].includes(window.location.hostname) &&
+    window.location.port === "8080";
+
 const STUDY_AI_API_BASE_URL =
-    "http://localhost:3000";
+    window.STUDY_AI_API_BASE_URL ||
+    (isSplitLocalDevelopment
+        ? "http://localhost:3000"
+        : window.location.origin);
 
 
 window.StudyAI = {

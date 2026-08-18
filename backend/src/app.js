@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
 const defaultConfig = require("./config");
-const { createDatabase } = require("./database/connection");
+const { createConfiguredDatabase } = require("./database/database-factory");
 const { runMigrations } = require("./database/migration-runner");
 const { createUsersRepository } = require("./repositories/users.repository");
 const { createCoursesRepository } = require("./repositories/courses.repository");
@@ -22,8 +22,8 @@ const { createQuizAttemptService } = require("./services/quiz-attempt.service");
 const { createAuthService } = require("./services/auth.service");
 const { SqliteSessionStore } = require("./services/sqlite-session-store");
 const { createTextExtractionService } = require("./services/text-extraction.service");
-const { createLocalFileStorage } = require("./services/local-file-storage");
-const { createOllamaClient } = require("./services/ollama-client");
+const { createConfiguredStorage } = require("./services/storage-factory");
+const { createConfiguredAiClient } = require("./services/ai-client-factory");
 const { ALLOWED_EXTENSIONS } = require("./services/material-type");
 const { createRequireAuthentication } = require("./middleware/require-authentication");
 const { registerHealthRoutes } = require("./routes/health.routes");
@@ -38,6 +38,8 @@ const {
 } = require("./routes/materials.routes");
 const { notFoundHandler } = require("./middleware/not-found");
 const { errorHandler } = require("./middleware/error-handler");
+const { createRequestLogger } = require("./middleware/request-logger");
+const { registerFrontendRoutes } = require("./routes/frontend.routes");
 
 function createApp(options = {}) {
 
@@ -52,7 +54,7 @@ if (!config.sessionSecret) {
 
 const app = express();
 
-const db = options.database || createDatabase(config.databasePath);
+const db = options.database || createConfiguredDatabase(config);
 
 const migrationResult = runMigrations({
     database: db,
@@ -63,9 +65,7 @@ const migrationResult = runMigrations({
 
 const fileStorage =
     options.fileStorage ||
-    createLocalFileStorage({
-        uploadDirectory: config.uploadDirectory
-    });
+    createConfiguredStorage(config);
 
 fileStorage.ensureReady();
 
@@ -78,15 +78,12 @@ const upload =
 
 const aiClient =
     options.aiClient ||
-    createOllamaClient({
-        baseUrl: config.ollamaBaseUrl,
-        model: config.ollamaModel,
-        timeoutMs: config.aiTimeoutMs
-    });
+    createConfiguredAiClient(config);
 
 app.locals.database = db;
 app.locals.fileStorage = fileStorage;
 app.locals.migrations = migrationResult;
+app.locals.config = config;
 
 const defaultRepositories = {
     users: createUsersRepository(db),
@@ -159,9 +156,10 @@ app.locals.sessionStore = sessionStore;
 // MIDDLEWARE
 // =========================================
 
-app.set("trust proxy", config.secureCookies ? 1 : false);
+app.set("trust proxy", config.trustProxyHops || false);
+app.use(createRequestLogger({ environment: config.environment }));
 app.use(cors({
-    origin: config.frontendOrigin,
+    origin: config.frontendOrigin || config.appOrigin,
     credentials: true
 }));
 
@@ -197,7 +195,7 @@ console.log(
 // TEST ROUTE
 // =========================================
 
-registerHealthRoutes(app);
+registerHealthRoutes(app, { database: db, fileStorage, config });
 
 app.use("/api/auth", createAuthRouter({
     authService,
@@ -205,12 +203,19 @@ app.use("/api/auth", createAuthRouter({
     cookieName: config.sessionCookieName
 }));
 
-app.use(requireAuthentication);
+if (config.serveFrontend) {
+    registerFrontendRoutes(app, {
+        frontendDirectory: config.frontendDirectory
+    });
+}
+
+app.use("/api", requireAuthentication);
 
 app.use(
     "/api/courses/:courseId/units",
     createUnitsRouter({ unitsService })
 );
+
 app.use(
     "/api/courses/:courseId/materials",
     createCourseMaterialsRouter({ materialService, upload })

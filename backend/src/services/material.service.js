@@ -25,13 +25,13 @@ function createMaterialService({
         return course;
     }
 
-    async function removeFailedUpload(file) {
-        if (!file || !file.filename) {
+    async function removeFailedUpload(storedFilename) {
+        if (!storedFilename) {
             return;
         }
 
         try {
-            await fileStorage.remove(file.filename);
+            await fileStorage.remove(storedFilename);
         } catch (cleanupError) {
             console.error("Failed to clean up uploaded file:", cleanupError);
         }
@@ -46,6 +46,7 @@ function createMaterialService({
             });
         }
 
+        let storedFilename = null;
         try {
             coursesService.requireOwned(courseId, userId);
 
@@ -77,8 +78,9 @@ function createMaterialService({
             }
 
             const materialType = materialTypeFor(file.originalname);
+            storedFilename = await fileStorage.persist(file);
             const extractedText = await textExtractionService.extract({
-                storedFilename: file.filename,
+                storedFilename,
                 materialType
             });
 
@@ -86,7 +88,7 @@ function createMaterialService({
                 courseId,
                 unitId: parsedUnitId,
                 originalFilename: file.originalname,
-                storedFilename: file.filename,
+                storedFilename,
                 materialType,
                 extractedText,
                 fileSize: file.size,
@@ -97,7 +99,7 @@ function createMaterialService({
 
             return materialsRepository.findOwned(materialId, courseId, userId);
         } catch (error) {
-            await removeFailedUpload(file);
+            await removeFailedUpload(storedFilename);
             throw error;
         }
     }

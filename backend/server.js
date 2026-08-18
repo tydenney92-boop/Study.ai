@@ -3,9 +3,9 @@ const config = require("./src/config");
 
 const app = createApp();
 
-const server = app.listen(config.port, function() {
+const server = app.listen(config.port, config.host, function() {
     console.log(
-        `Study AI backend running at http://localhost:${config.port}`
+        `Study AI running on ${config.host}:${config.port} (${config.environment})`
     );
 });
 

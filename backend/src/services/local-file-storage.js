@@ -32,19 +32,8 @@ function createLocalFileStorage({ uploadDirectory }) {
 
         createUploadMiddleware({ maxFileSize, allowedExtensions }) {
             const allowed = new Set(allowedExtensions);
-            const storage = multer.diskStorage({
-                destination(req, file, callback) {
-                    callback(null, uploadDirectory);
-                },
-
-                filename(req, file, callback) {
-                    const extension = path.extname(file.originalname).toLowerCase();
-                    callback(null, `${crypto.randomUUID()}${extension}`);
-                }
-            });
-
             return multer({
-                storage,
+                storage: multer.memoryStorage(),
                 limits: {
                     fileSize: maxFileSize,
                     files: 1
@@ -65,6 +54,17 @@ function createLocalFileStorage({ uploadDirectory }) {
             });
         },
 
+        async persist(file) {
+            const extension = path.extname(file.originalname).toLowerCase();
+            const storedFilename = `${crypto.randomUUID()}${extension}`;
+            await fs.promises.writeFile(
+                resolveStoredFilename(storedFilename),
+                file.buffer,
+                { flag: "wx" }
+            );
+            return storedFilename;
+        },
+
         async read(storedFilename) {
             return fs.promises.readFile(
                 resolveStoredFilename(storedFilename)
@@ -79,7 +79,14 @@ function createLocalFileStorage({ uploadDirectory }) {
                     throw error;
                 }
             }
-        }
+        },
+
+        async healthCheck() {
+            await fs.promises.access(uploadDirectory, fs.constants.W_OK);
+            return true;
+        },
+
+        driver: "local"
     };
 }
 

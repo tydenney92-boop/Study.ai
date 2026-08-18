@@ -14,4 +14,5 @@ if (app.locals.migrations.applied.length === 0) {
     }
 }
 
+app.locals.sessionStore?.close();
 app.locals.database.close();

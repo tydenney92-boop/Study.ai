@@ -13,3 +13,8 @@ backend/uploads/
 # Environment variables / secrets
 .env
 backend/.env
+.env.*
+!.env.example
+
+# Local deployment volumes
+data/

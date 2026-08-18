@@ -26,7 +26,17 @@ function errorHandler(error, req, res, next) {
     }
 
     if ((error.status || 500) >= 500) {
-        console.error(error);
+        if (req.app?.locals?.config?.isProduction) {
+            console.error(JSON.stringify({
+                level: "error",
+                event: "request_error",
+                requestId: req.requestId,
+                code: error.code || "INTERNAL_SERVER_ERROR",
+                status: error.status || 500
+            }));
+        } else {
+            console.error(error);
+        }
     }
 
     const response = {

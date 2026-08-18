@@ -1,41 +1,70 @@
 const path = require("path");
 
 const backendRoot = path.resolve(__dirname, "..");
+const projectRoot = path.resolve(backendRoot, "..");
+const { validateProductionConfig } = require("./config/validate-config");
 
-module.exports = {
+const environment = process.env.NODE_ENV || "development";
+const isProduction = environment === "production";
+
+function booleanEnvironment(name, defaultValue) {
+    if (process.env[name] === undefined) return defaultValue;
+    return process.env[name] === "1" || process.env[name] === "true";
+}
+
+const config = {
+    environment,
+    isProduction,
+    host: process.env.HOST || "0.0.0.0",
     port: Number(process.env.PORT) || 3000,
+    appOrigin: process.env.APP_ORIGIN || (isProduction ? null : "http://localhost:8080"),
+    frontendOrigin: process.env.FRONTEND_ORIGIN || (isProduction ? null : "http://localhost:8080"),
+    frontendDirectory: process.env.FRONTEND_DIRECTORY || projectRoot,
+    serveFrontend: booleanEnvironment("SERVE_FRONTEND", isProduction),
+    databaseDriver: process.env.DATABASE_DRIVER || (isProduction ? null : "sqlite"),
     databasePath:
         process.env.DATABASE_PATH ||
-        path.join(backendRoot, "study-ai.db"),
+        (isProduction ? null : path.join(backendRoot, "study-ai.db")),
     backupDirectory:
         process.env.DATABASE_BACKUP_DIRECTORY ||
-        path.join(backendRoot, "backups"),
+        (isProduction ? null : path.join(backendRoot, "backups")),
     migrationBackup:
         process.env.SKIP_MIGRATION_BACKUP !== "1",
     uploadDirectory:
         process.env.UPLOAD_DIRECTORY ||
-        path.join(backendRoot, "uploads"),
+        (isProduction ? null : path.join(backendRoot, "uploads")),
+    storageDriver: process.env.STORAGE_DRIVER || (isProduction ? null : "local"),
+    objectStorageBucket: process.env.OBJECT_STORAGE_BUCKET || null,
+    objectStorageRegion: process.env.OBJECT_STORAGE_REGION || null,
+    objectStorageEndpoint: process.env.OBJECT_STORAGE_ENDPOINT || null,
+    objectStorageAccessKeyId: process.env.OBJECT_STORAGE_ACCESS_KEY_ID || null,
+    objectStorageSecretAccessKey: process.env.OBJECT_STORAGE_SECRET_ACCESS_KEY || null,
+    objectStorageForcePathStyle: booleanEnvironment("OBJECT_STORAGE_FORCE_PATH_STYLE", false),
     maxUploadBytes:
         Number(process.env.MAX_UPLOAD_BYTES) ||
         20 * 1024 * 1024,
-    frontendOrigin: process.env.FRONTEND_ORIGIN || "http://localhost:8080",
     sessionSecret:
         process.env.SESSION_SECRET ||
-        (process.env.NODE_ENV === "production"
+        (isProduction
             ? null
             : "study-ai-local-development-session-secret-change-me"),
     sessionCookieName: process.env.SESSION_COOKIE_NAME || "study_ai_session",
     sessionTtlMs:
         Number(process.env.SESSION_TTL_MS) || 7 * 24 * 60 * 60 * 1000,
-    secureCookies: process.env.NODE_ENV === "production",
+    secureCookies: booleanEnvironment("SECURE_COOKIES", isProduction),
+    trustProxyHops: Number(process.env.TRUST_PROXY_HOPS) || (isProduction ? 1 : 0),
     passwordRounds: Number(process.env.PASSWORD_ROUNDS) || 12,
+    aiProvider: process.env.AI_PROVIDER || (isProduction ? null : "ollama"),
+    aiEnabled: booleanEnvironment("AI_ENABLED", true),
     ollamaBaseUrl:
         process.env.OLLAMA_BASE_URL ||
-        "http://localhost:11434",
+        (isProduction ? null : "http://localhost:11434"),
     ollamaModel:
         process.env.OLLAMA_MODEL ||
-        "llama3.2",
+        (isProduction ? null : "llama3.2"),
     aiTimeoutMs:
         Number(process.env.AI_TIMEOUT_MS) ||
         120000
 };
+
+module.exports = isProduction ? validateProductionConfig(config) : config;
