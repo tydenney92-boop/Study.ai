@@ -16,7 +16,11 @@ function contextFor(search = "") {
         replacedWith: null,
         replace(value) { this.replacedWith = value; }
     };
-    const window = { location, StudyAI: {} };
+    const history = {
+        replacedWith: null,
+        replaceState(state, title, value) { this.replacedWith = value; }
+    };
+    const window = { location, history, StudyAI: {} };
     vm.runInNewContext(script, {
         window,
         URLSearchParams,
@@ -24,7 +28,7 @@ function contextFor(search = "") {
             setItem(key, value) { notices.set(key, value); }
         }
     });
-    return { navigation: window.StudyAI.courseContext, location, notices };
+    return { navigation: window.StudyAI.courseContext, history, location, notices };
 }
 
 test("course-wide and material-specific tool origins return correctly", () => {
@@ -45,4 +49,15 @@ test("missing course context redirects to canonical My Courses", () => {
     assert.equal(page.navigation.requireContext(), null);
     assert.equal(page.location.replacedWith, "index.html#courses");
     assert.equal(page.notices.get("studyai:notice"), "Choose a course to continue.");
+});
+
+test("legacy material URLs normalize before material actions are enabled", () => {
+    const page = contextFor("?courseId=7&id=12");
+    const normalized = page.navigation.normalizeMaterialUrl();
+    assert.equal(normalized.courseId, 7);
+    assert.equal(normalized.materialId, 12);
+    assert.equal(
+        page.history.replacedWith,
+        "material.html?courseId=7&materialId=12"
+    );
 });

@@ -139,6 +139,11 @@ test("material deletion is ownership scoped and removes its stored file and rela
         uploaded.body.storedFilename
     );
     assert.equal(fs.existsSync(storedPath), true);
+    const retrievable = await request(context.app)
+        .get(`/api/courses/${ownerCourse.id}/materials/${uploaded.body.id}`)
+        .expect(200);
+    assert.equal(retrievable.body.courseId, ownerCourse.id);
+    assert.equal(retrievable.body.id, uploaded.body.id);
     const guideId = Number(context.database.prepare(`
         INSERT INTO generated_study_guides (user_id, course_id, generated_content)
         VALUES (1, ?, 'historical guide')

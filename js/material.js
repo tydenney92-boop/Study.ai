@@ -1,11 +1,13 @@
-const courseId = StudyAI.courseContext.getCourseId();
-const materialId = StudyAI.courseContext.getMaterialId();
+const materialContext = StudyAI.courseContext.normalizeMaterialUrl();
+const courseId = materialContext.courseId;
+const materialId = materialContext.materialId;
 const title = document.querySelector("#material-title");
 const subtitle = document.querySelector("#material-subtitle");
 const content = document.querySelector("#material-content");
 const status = document.querySelector("#content-status");
 const errorBox = document.querySelector("#material-error");
 const deleteMaterialModal = document.querySelector("#delete-material-modal");
+let loadedMaterial = null;
 
 if (!courseId || !materialId) {
     StudyAI.courseContext.goToMyCourses("Choose a material from a course first.");
@@ -59,6 +61,7 @@ async function loadMaterial() {
             StudyAI.api.get(`/api/courses/${courseId}`),
             StudyAI.api.get(`/api/courses/${courseId}/materials/${materialId}`)
         ]);
+        loadedMaterial = material;
         setLinks(course);
         document.title = `${material.originalFilename} | Study AI`;
         title.textContent = material.originalFilename;
@@ -104,13 +107,20 @@ document.querySelector("#delete-material-button").addEventListener("click", () =
 document.querySelector("#close-delete-material-modal").addEventListener("click", closeDeleteMaterialModal);
 document.querySelector("#cancel-delete-material").addEventListener("click", closeDeleteMaterialModal);
 document.querySelector("#confirm-delete-material").addEventListener("click", async event => {
+    if (!loadedMaterial) return;
     const button = event.currentTarget;
     button.disabled = true;
     button.textContent = "Deleting…";
     try {
-        await StudyAI.api.delete(`/api/courses/${courseId}/materials/${materialId}`);
+        await StudyAI.api.delete(
+            `/api/courses/${loadedMaterial.courseId}/materials/${loadedMaterial.id}`
+        );
         StudyAI.courseContext.setNotice("Material deleted successfully.");
-        window.location.replace(StudyAI.courseContext.url("materials.html", { courseId }));
+        window.location.replace(
+            StudyAI.courseContext.url("materials.html", {
+                courseId: loadedMaterial.courseId
+            })
+        );
     } catch (error) {
         document.querySelector("#delete-material-error").textContent = error.message;
         button.disabled = false;

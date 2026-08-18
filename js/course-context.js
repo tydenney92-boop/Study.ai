@@ -72,11 +72,29 @@
             : url("course.html", { courseId });
     }
 
+    function normalizeMaterialUrl(page = "material.html") {
+        const courseId = getCourseId();
+        const materialId = getMaterialId();
+        if (
+            courseId &&
+            materialId &&
+            params.get("materialId") !== String(materialId)
+        ) {
+            window.history.replaceState(
+                null,
+                "",
+                url(page, { courseId, materialId })
+            );
+        }
+        return { courseId, materialId };
+    }
+
     window.StudyAI.courseContext = {
         getCourseId,
         getMaterialId,
         goToMyCourses,
         MY_COURSES_URL,
+        normalizeMaterialUrl,
         requireCourseId,
         requireContext,
         setNotice,

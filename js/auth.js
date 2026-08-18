@@ -43,6 +43,8 @@
         const isDashboard = page === "index.html" && window.location.hash !== "#courses";
         const isCourses = page === "index.html" && window.location.hash === "#courses";
         const isProgress = page === "progress.html";
+        document.querySelectorAll(".sidebar .nav-item, .sidebar-course-link")
+            .forEach(link => link.classList.remove("active"));
         sidebarNavigation.querySelectorAll(".nav-item").forEach(link => {
             const href = link.getAttribute("href") || "";
             const active =
@@ -51,6 +53,15 @@
                 (href === "progress.html" && isProgress);
             link.classList.toggle("active", active);
         });
+        if (!isDashboard && !isCourses && !isProgress && currentCourseId) {
+            document.querySelectorAll(".sidebar-course-link").forEach(link => {
+                const target = new URL(link.href, window.location.href);
+                link.classList.toggle(
+                    "active",
+                    target.searchParams.get("courseId") === currentCourseId
+                );
+            });
+        }
     }
 
     async function loadSidebarCourses() {
@@ -89,6 +100,7 @@
                 link.querySelector("span").textContent = course.courseName;
                 list.appendChild(link);
             });
+            updatePrimaryNavigationState();
         } catch (error) {
             courseNavigation.querySelector(".sidebar-course-list").innerHTML =
                 '<span class="sidebar-course-status">Courses unavailable</span>';

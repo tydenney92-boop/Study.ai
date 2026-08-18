@@ -40,28 +40,28 @@ async function loadCourse() {
     }
 
     try {
-        const [course, units, materials] = await Promise.all([
-            StudyAI.api.get(`/api/courses/${courseId}`),
-            StudyAI.api.get(`/api/courses/${courseId}/units`),
-            StudyAI.api.get(`/api/courses/${courseId}/materials`)
-        ]);
-
+        const course = await StudyAI.api.get(`/api/courses/${courseId}`);
         document.title = `${course.courseCode} | Study AI`;
         document.querySelector("#course-code-title").textContent = course.courseCode;
         document.querySelector("#course-name-subtitle").textContent = course.courseName;
         document.querySelector("#course-semester").textContent = course.semester;
+        document.querySelector("#course-danger-zone").removeAttribute("hidden");
+
+        document.querySelectorAll("[data-course-page]").forEach(link => {
+            link.href = courseUrl(link.dataset.coursePage);
+        });
+
+        const [units, materials] = await Promise.all([
+            StudyAI.api.get(`/api/courses/${courseId}/units`),
+            StudyAI.api.get(`/api/courses/${courseId}/materials`)
+        ]);
+
         document.querySelector("#course-unit-count").textContent = units.length;
         document.querySelector("#course-material-count").textContent = materials.length;
         document.querySelector("#course-pdf-count").textContent =
             materials.filter(material => material.materialType === "pdf").length;
         document.querySelector("#course-other-count").textContent =
             materials.filter(material => material.materialType !== "pdf").length;
-        document.querySelector("#course-danger-zone").hidden = false;
-
-        document.querySelectorAll("[data-course-page]").forEach(link => {
-            link.href = courseUrl(link.dataset.coursePage);
-        });
-
         unitsList.innerHTML = "";
         if (units.length === 0) {
             unitsList.innerHTML = `
