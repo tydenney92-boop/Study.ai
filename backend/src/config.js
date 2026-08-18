@@ -26,5 +26,8 @@ module.exports = {
         "http://localhost:11434",
     ollamaModel:
         process.env.OLLAMA_MODEL ||
-        "llama3.2"
+        "llama3.2",
+    aiTimeoutMs:
+        Number(process.env.AI_TIMEOUT_MS) ||
+        120000
 };
