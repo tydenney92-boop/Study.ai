@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const session = require("express-session");
 const defaultConfig = require("./config");
 const { createDatabase } = require("./database/connection");
 const { runMigrations } = require("./database/migration-runner");
@@ -10,6 +11,7 @@ const { createMaterialsRepository } = require("./repositories/materials.reposito
 const { createStudyGuidesRepository } = require("./repositories/study-guides.repository");
 const { createQuizzesRepository } = require("./repositories/quizzes.repository");
 const { createQuizAttemptsRepository } = require("./repositories/quiz-attempts.repository");
+const { createSessionsRepository } = require("./repositories/sessions.repository");
 const { createCourseService } = require("./services/course.service");
 const { createUnitService } = require("./services/unit.service");
 const { createMaterialService } = require("./services/material.service");
@@ -17,12 +19,15 @@ const { createMaterialContextService } = require("./services/material-context.se
 const { createStudyGuideService } = require("./services/study-guide.service");
 const { createQuizGenerationService } = require("./services/quiz-generation.service");
 const { createQuizAttemptService } = require("./services/quiz-attempt.service");
+const { createAuthService } = require("./services/auth.service");
+const { SqliteSessionStore } = require("./services/sqlite-session-store");
 const { createTextExtractionService } = require("./services/text-extraction.service");
 const { createLocalFileStorage } = require("./services/local-file-storage");
 const { createOllamaClient } = require("./services/ollama-client");
 const { ALLOWED_EXTENSIONS } = require("./services/material-type");
-const { createCurrentUserMiddleware } = require("./middleware/current-user");
+const { createRequireAuthentication } = require("./middleware/require-authentication");
 const { registerHealthRoutes } = require("./routes/health.routes");
+const { createAuthRouter } = require("./routes/auth.routes");
 const { createCoursesRouter } = require("./routes/courses.routes");
 const { createUnitsRouter } = require("./routes/units.routes");
 const { createCourseAiRouter, createLegacyAiRouter } = require("./routes/ai.routes");
@@ -40,6 +45,10 @@ const config = {
     ...defaultConfig,
     ...(options.config || {})
 };
+
+if (!config.sessionSecret) {
+    throw new Error("SESSION_SECRET is required in production.");
+}
 
 const app = express();
 
@@ -86,7 +95,8 @@ const defaultRepositories = {
     materials: createMaterialsRepository(db),
     studyGuides: createStudyGuidesRepository(db),
     quizzes: createQuizzesRepository(db),
-    quizAttempts: createQuizAttemptsRepository(db)
+    quizAttempts: createQuizAttemptsRepository(db),
+    sessions: createSessionsRepository(db)
 };
 const repositories = {
     ...defaultRepositories,
@@ -132,14 +142,45 @@ const quizAttemptService = createQuizAttemptService({
     quizzesRepository: repositories.quizzes,
     quizAttemptsRepository: repositories.quizAttempts
 });
+const authService = createAuthService({
+    usersRepository: repositories.users,
+    passwordRounds: config.passwordRounds
+});
+const requireAuthentication = createRequireAuthentication({
+    usersRepository: repositories.users
+});
+const sessionStore = options.sessionStore || new SqliteSessionStore({
+    sessionsRepository: repositories.sessions,
+    defaultTtlMs: config.sessionTtlMs
+});
+app.locals.sessionStore = sessionStore;
 
 // =========================================
 // MIDDLEWARE
 // =========================================
 
-app.use(cors());
+app.set("trust proxy", config.secureCookies ? 1 : false);
+app.use(cors({
+    origin: config.frontendOrigin,
+    credentials: true
+}));
 
 app.use(express.json());
+app.use(session({
+    name: config.sessionCookieName,
+    secret: config.sessionSecret,
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
+    cookie: {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: config.secureCookies,
+        maxAge: config.sessionTtlMs,
+        path: "/"
+    }
+}));
 
 
 console.log(
@@ -158,10 +199,13 @@ console.log(
 
 registerHealthRoutes(app);
 
-app.use(createCurrentUserMiddleware({
-    usersRepository: repositories.users,
-    developmentEmail: config.developmentUserEmail
+app.use("/api/auth", createAuthRouter({
+    authService,
+    requireAuthentication,
+    cookieName: config.sessionCookieName
 }));
+
+app.use(requireAuthentication);
 
 app.use(
     "/api/courses/:courseId/units",

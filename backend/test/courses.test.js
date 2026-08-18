@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const request = require("supertest");
+const { authenticatedRequest: request } = require("./helpers/test-app");
 const { createTestApp } = require("./helpers/test-app");
 
 test("courses can be created, listed, retrieved, updated, and deleted", async t => {

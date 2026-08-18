@@ -11,6 +11,9 @@ const server = app.listen(config.port, function() {
 
 function shutdown() {
     server.close(function() {
+        if (app.locals.sessionStore?.close) {
+            app.locals.sessionStore.close();
+        }
         if (app.locals.database) {
             app.locals.database.close();
         }

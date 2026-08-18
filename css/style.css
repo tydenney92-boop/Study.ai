@@ -974,3 +974,9 @@ h1 {
         flex-wrap: wrap;
     }
 }
+.logout-button {
+    width: 100%; margin-top: 10px; padding: 10px 12px; border: 1px solid #dde2ee;
+    border-radius: 9px; background: transparent; color: #6d7588; cursor: pointer;
+    font: inherit; font-size: 13px;
+}
+.logout-button:hover { background: #f3f5fa; color: #26324d; }

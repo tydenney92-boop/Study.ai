@@ -1,6 +1,8 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const crypto = require("crypto");
+const supertest = require("supertest");
 const { createApp } = require("../../src/app");
 
 function createTestApp(options = {}) {
@@ -8,12 +10,15 @@ function createTestApp(options = {}) {
         path.join(os.tmpdir(), "study-ai-test-")
     );
 
+    const sessionSecret = "study-ai-automated-test-session-secret";
     const app = createApp({
         config: {
             databasePath: path.join(temporaryDirectory, "test.db"),
             uploadDirectory: path.join(temporaryDirectory, "uploads"),
             backupDirectory: path.join(temporaryDirectory, "backups"),
             migrationBackup: false,
+            sessionSecret,
+            passwordRounds: 4,
             ...(options.config || {})
         },
         extendRepositories: options.extendRepositories,
@@ -25,7 +30,29 @@ function createTestApp(options = {}) {
         }
     });
 
+    const sid = crypto.randomBytes(24).toString("hex");
+    const signature = crypto
+        .createHmac("sha256", sessionSecret)
+        .update(sid)
+        .digest("base64")
+        .replace(/=+$/, "");
+    const cookieValue = encodeURIComponent(`s:${sid}.${signature}`);
+    const expiresAt = Date.now() + 60 * 60 * 1000;
+    app.locals.sessionStore.sessionsRepository.upsert(sid, {
+        cookie: {
+            originalMaxAge: 60 * 60 * 1000,
+            expires: new Date(expiresAt).toISOString(),
+            httpOnly: true,
+            path: "/",
+            sameSite: "lax",
+            secure: false
+        },
+        userId: 1
+    }, expiresAt);
+    app.locals.testAuthenticationCookie = `study_ai_session=${cookieValue}`;
+
     function cleanup() {
+        app.locals.sessionStore?.close();
         app.locals.database.close();
         fs.rmSync(temporaryDirectory, {
             recursive: true,
@@ -39,6 +66,19 @@ function createTestApp(options = {}) {
         temporaryDirectory,
         cleanup
     };
+}
+
+function authenticatedRequest(app) {
+    const request = supertest(app);
+    return new Proxy(request, {
+        get(target, property) {
+            if (["get", "post", "put", "patch", "delete"].includes(property)) {
+                return path => target[property](path)
+                    .set("Cookie", app.locals.testAuthenticationCookie);
+            }
+            return target[property];
+        }
+    });
 }
 
 function insertMaterial(database, overrides = {}) {
@@ -81,5 +121,6 @@ function insertMaterial(database, overrides = {}) {
 
 module.exports = {
     createTestApp,
+    authenticatedRequest,
     insertMaterial
 };

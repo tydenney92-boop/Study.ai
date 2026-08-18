@@ -33,6 +33,7 @@
                 method: options.method || "GET",
                 headers,
                 body,
+                credentials: "include",
                 signal: controller.signal
             });
             const payload = await response.json().catch(() => null);
@@ -42,11 +43,17 @@
                 const message = typeof errorPayload === "string"
                     ? errorPayload
                     : errorPayload?.message || "The request could not be completed.";
-                throw new ApiError(message, {
+                const apiError = new ApiError(message, {
                     status: response.status,
                     code: errorPayload?.code,
                     details: errorPayload?.details
                 });
+                if (response.status === 401) {
+                    window.dispatchEvent(new CustomEvent("studyai:unauthenticated", {
+                        detail: apiError
+                    }));
+                }
+                throw apiError;
             }
 
             return payload;

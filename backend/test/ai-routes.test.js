@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const request = require("supertest");
+const { authenticatedRequest: request } = require("./helpers/test-app");
 const { AppError } = require("../src/utils/app-error");
 const {
     createTestApp,

@@ -1,8 +1,9 @@
 const migration001 = require("./migrations/001-multi-user-schema");
+const migration002 = require("./migrations/002-auth-sessions");
 const { tableExists } = require("./schema-helpers");
 const { createVerifiedBackup } = require("./sqlite-backup");
 
-const migrations = [migration001];
+const migrations = [migration001, migration002];
 
 function appliedMigrationIds(database) {
     if (!tableExists(database, "schema_migrations")) {
