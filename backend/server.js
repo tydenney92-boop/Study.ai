@@ -2,10 +2,16 @@ const { createApp } = require("./src/app");
 const config = require("./src/config");
 
 const app = createApp();
+const port = Number(process.env.PORT) || 3000;
+const host = "0.0.0.0";
 
-const server = app.listen(config.port, config.host, function() {
+const server = app.listen(port, host, function() {
+    const address = server.address();
+    const listeningPort = typeof address === "object" && address
+        ? address.port
+        : port;
     console.log(
-        `Study AI running on ${config.host}:${config.port} (${config.environment})`
+        `Study AI running on ${host}:${listeningPort} (${config.environment})`
     );
 });
 
