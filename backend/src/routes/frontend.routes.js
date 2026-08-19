@@ -4,7 +4,7 @@ const path = require("path");
 const FRONTEND_PAGES = [
     "index.html", "login.html", "signup.html", "course.html", "materials.html",
     "material.html", "study-guide.html", "quiz.html", "flashcards.html",
-    "notes.html", "progress.html"
+    "notes.html", "progress.html", "history.html"
 ];
 
 function registerFrontendRoutes(app, { frontendDirectory }) {

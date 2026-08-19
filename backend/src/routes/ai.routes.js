@@ -5,6 +5,7 @@ const { positiveInteger, requestObject } = require("../utils/validation");
 function createCourseAiRouter({
     studyGuideService,
     quizGenerationService,
+    generatedContentService,
     aiUsageGuard
 }) {
     const router = express.Router({ mergeParams: true });
@@ -29,6 +30,21 @@ function createCourseAiRouter({
         })
     );
 
+    router.get("/study-guides", function(req, res) {
+        res.json(generatedContentService.listStudyGuides(req.courseId, req.user.id));
+    });
+
+    router.get("/study-guides/:guideId", function(req, res) {
+        const guideId = positiveInteger(req.params.guideId, "guideId");
+        res.json(generatedContentService.getStudyGuide(guideId, req.courseId, req.user.id));
+    });
+
+    router.delete("/study-guides/:guideId", function(req, res) {
+        const guideId = positiveInteger(req.params.guideId, "guideId");
+        generatedContentService.deleteStudyGuide(guideId, req.courseId, req.user.id);
+        res.status(204).end();
+    });
+
     router.post(
         "/quizzes",
         asyncHandler(async function(req, res) {
@@ -44,6 +60,21 @@ function createCourseAiRouter({
             res.status(201).json(quiz);
         })
     );
+
+    router.get("/quizzes", function(req, res) {
+        res.json(generatedContentService.listQuizzes(req.courseId, req.user.id));
+    });
+
+    router.get("/quizzes/:quizId", function(req, res) {
+        const quizId = positiveInteger(req.params.quizId, "quizId");
+        res.json(generatedContentService.getQuiz(quizId, req.courseId, req.user.id));
+    });
+
+    router.delete("/quizzes/:quizId", function(req, res) {
+        const quizId = positiveInteger(req.params.quizId, "quizId");
+        generatedContentService.deleteQuiz(quizId, req.courseId, req.user.id);
+        res.status(204).end();
+    });
 
     return router;
 }

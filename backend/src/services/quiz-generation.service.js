@@ -73,7 +73,10 @@ function createQuizGenerationService({
                     return quizzesRepository.createWithMaterials({
                         userId,
                         courseId,
-                        materialIds: context.materialIds,
+                        sources: context.materials.map(material => ({
+                            materialId: material.id,
+                            materialName: material.name
+                        })),
                         quiz
                     });
                 } catch (error) {

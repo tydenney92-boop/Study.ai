@@ -45,6 +45,11 @@ const courseId =
 const materialId =
     StudyAI.courseContext.getMaterialId();
 
+const savedGuideId = (() => {
+    const value = Number(new URLSearchParams(window.location.search).get("guideId"));
+    return Number.isInteger(value) && value > 0 ? value : null;
+})();
+
 let selectedMaterialIds = materialId ? [Number(materialId)] : [];
 
 if (!courseId) {
@@ -162,7 +167,7 @@ async function generateStudyGuide() {
    DISPLAY STUDY GUIDE
 ========================================= */
 
-function displayStudyGuide(guide) {
+function displayStudyGuide(guide, metadata = null) {
 
     /* -----------------------------------------
        BASIC PAGE INFORMATION
@@ -177,9 +182,14 @@ function displayStudyGuide(guide) {
     guideSummary.textContent =
         "Generated from your uploaded course material.";
 
-    sourceMaterial.textContent = selectedMaterialIds.length === 1
-        ? `Material #${selectedMaterialIds[0]}`
-        : `${selectedMaterialIds.length} selected materials`;
+    sourceMaterial.textContent = metadata?.sources?.length
+        ? metadata.sources.map(source => source.materialName).join(", ")
+        : selectedMaterialIds.length === 1
+            ? `Material #${selectedMaterialIds[0]}`
+            : `${selectedMaterialIds.length} selected materials`;
+    if (metadata?.createdAt) {
+        guideSummary.textContent = `Saved ${new Date(`${metadata.createdAt.replace(" ", "T")}Z`).toLocaleString()}.`;
+    }
 
 
 
@@ -661,7 +671,28 @@ generateButton.addEventListener(
    START
 ========================================= */
 
-if (courseId && materialId) {
+async function loadSavedGuide() {
+    document.querySelector("#guide-material-selection-wrap").style.display = "none";
+    generateButton.style.display = "none";
+    document.querySelector("#guide-back-link").href =
+        StudyAI.courseContext.url("history.html", { courseId });
+    document.querySelector("#guide-back-link").textContent = "← Saved Study";
+    try {
+        const guide = await StudyAI.api.get(
+            `/api/courses/${courseId}/study-guides/${savedGuideId}`
+        );
+        selectedMaterialIds = guide.materialIds;
+        displayStudyGuide(guide.generatedContent, guide);
+    } catch (error) {
+        if (error.status === 404) return StudyAI.courseContext.goToMyCourses("That saved guide is unavailable.");
+        guideSummary.textContent = error.message;
+    }
+}
+
+if (courseId && savedGuideId) {
+    loadSavedGuide();
+}
+else if (courseId && materialId) {
 
     document.querySelector("#guide-material-selection-wrap").style.display = "none";
     generateStudyGuide();

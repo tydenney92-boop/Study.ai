@@ -12,6 +12,7 @@ const { createStudyGuidesRepository } = require("./repositories/study-guides.rep
 const { createQuizzesRepository } = require("./repositories/quizzes.repository");
 const { createQuizAttemptsRepository } = require("./repositories/quiz-attempts.repository");
 const { createSessionsRepository } = require("./repositories/sessions.repository");
+const { createProgressRepository } = require("./repositories/progress.repository");
 const { createCourseService } = require("./services/course.service");
 const { createUnitService } = require("./services/unit.service");
 const { createMaterialService } = require("./services/material.service");
@@ -20,6 +21,8 @@ const { createStudyGuideService } = require("./services/study-guide.service");
 const { createQuizGenerationService } = require("./services/quiz-generation.service");
 const { createQuizAttemptService } = require("./services/quiz-attempt.service");
 const { createAuthService } = require("./services/auth.service");
+const { createGeneratedContentService } = require("./services/generated-content.service");
+const { createProgressService } = require("./services/progress.service");
 const { SqliteSessionStore } = require("./services/sqlite-session-store");
 const { createTextExtractionService } = require("./services/text-extraction.service");
 const { createConfiguredStorage } = require("./services/storage-factory");
@@ -33,6 +36,7 @@ const { createCoursesRouter } = require("./routes/courses.routes");
 const { createUnitsRouter } = require("./routes/units.routes");
 const { createCourseAiRouter, createLegacyAiRouter } = require("./routes/ai.routes");
 const { createQuizAttemptsRouter } = require("./routes/quiz-attempts.routes");
+const { createProgressRouter, createCourseProgressRouter } = require("./routes/progress.routes");
 const {
     createCourseMaterialsRouter,
     createLegacyMaterialsRouter
@@ -99,7 +103,8 @@ const defaultRepositories = {
     studyGuides: createStudyGuidesRepository(db),
     quizzes: createQuizzesRepository(db),
     quizAttempts: createQuizAttemptsRepository(db),
-    sessions: createSessionsRepository(db)
+    sessions: createSessionsRepository(db),
+    progress: createProgressRepository(db)
 };
 const repositories = {
     ...defaultRepositories,
@@ -150,6 +155,16 @@ const quizGenerationService = createQuizGenerationService({
 const quizAttemptService = createQuizAttemptService({
     quizzesRepository: repositories.quizzes,
     quizAttemptsRepository: repositories.quizAttempts
+});
+const generatedContentService = createGeneratedContentService({
+    coursesService,
+    studyGuidesRepository: repositories.studyGuides,
+    quizzesRepository: repositories.quizzes,
+    quizAttemptsRepository: repositories.quizAttempts
+});
+const progressService = createProgressService({
+    coursesService,
+    progressRepository: repositories.progress
 });
 const authService = createAuthService({
     usersRepository: repositories.users,
@@ -237,6 +252,7 @@ app.use(
     createCourseAiRouter({
         studyGuideService,
         quizGenerationService,
+        generatedContentService,
         aiUsageGuard
     })
 );
@@ -251,6 +267,11 @@ app.use(
 app.use(
     "/api/quizzes/:quizId/attempts",
     createQuizAttemptsRouter({ quizAttemptService })
+);
+app.use("/api/progress", createProgressRouter({ progressService }));
+app.use(
+    "/api/courses/:courseId/progress",
+    createCourseProgressRouter({ progressService })
 );
 app.use(
     "/api",

@@ -72,8 +72,16 @@ const courseId =
 const materialId =
     StudyAI.courseContext.getMaterialId();
 
+const savedQuizId = (() => {
+    const value = Number(new URLSearchParams(window.location.search).get("quizId"));
+    return Number.isInteger(value) && value > 0 ? value : null;
+})();
+
 let selectedMaterialIds = materialId ? [Number(materialId)] : [];
 const quizOrigin = StudyAI.courseContext.toolOrigin();
+const quizReturnUrl = savedQuizId
+    ? StudyAI.courseContext.url("history.html", { courseId })
+    : StudyAI.courseContext.toolBackUrl();
 
 if (!courseId) {
     StudyAI.courseContext.goToMyCourses("Choose a course before starting a quiz.");
@@ -84,7 +92,7 @@ const quizBackLink =
 
 
 if (courseId) {
-    quizBackLink.href = StudyAI.courseContext.toolBackUrl();
+    quizBackLink.href = quizReturnUrl;
 
     document.querySelector("#quiz-interface-back-link").href =
         quizBackLink.href;
@@ -726,13 +734,13 @@ function finishQuiz() {
 
 
             <a
-                href="${StudyAI.courseContext.toolBackUrl()}"
+                href="${quizReturnUrl}"
                 class="primary-button"
                 style="
                     display:inline-block;
                 "
             >
-                ${quizOrigin === "material" ? "Back to Material" : "Back to Course"}
+                ${savedQuizId ? "Back to Saved Study" : quizOrigin === "material" ? "Back to Material" : "Back to Course"}
             </a>
 
         </div>
@@ -797,9 +805,9 @@ async function loadQuizContext() {
         const course = await StudyAI.api.get(`/api/courses/${courseId}`);
         document.querySelector("#quiz-course-topic").textContent = course.courseCode;
         document.querySelector("#quiz-interface-course-topic").textContent = course.courseCode;
-        quizBackLink.textContent = `← Back to ${course.courseCode}`;
+        quizBackLink.textContent = savedQuizId ? "← Saved Study" : `← Back to ${course.courseCode}`;
         document.querySelector("#quiz-interface-back-link").textContent =
-            `← Back to ${course.courseCode}`;
+            savedQuizId ? "← Saved Study" : `← Back to ${course.courseCode}`;
     } catch (error) {
         if (error.status === 404) {
             StudyAI.courseContext.goToMyCourses("That course is unavailable.");
@@ -814,6 +822,27 @@ loadQuizContext();
 async function initializeQuizMaterials() {
     const container = document.querySelector("#quiz-material-selection");
     if (!courseId) return;
+    if (savedQuizId) {
+        document.querySelector("#quiz-material-selection-wrap").style.display = "none";
+        setupScreen.style.display = "none";
+        quizInterface.style.display = "block";
+        questionText.textContent = "Loading saved quiz…";
+        try {
+            const saved = await StudyAI.api.get(`/api/courses/${courseId}/quizzes/${savedQuizId}`);
+            questions = saved.quiz.questions;
+            generatedQuizId = saved.id;
+            selectedMaterialIds = saved.materialIds;
+            submittedAnswers = [];
+            score = 0;
+            questionNumber = 1;
+            totalQuestions.textContent = questions.length;
+            loadQuestion();
+        } catch (error) {
+            if (error.status === 404) return StudyAI.courseContext.goToMyCourses("That saved quiz is unavailable.");
+            questionText.textContent = error.message;
+        }
+        return;
+    }
     if (materialId) {
         document.querySelector("#quiz-material-selection-wrap").style.display = "none";
         return;

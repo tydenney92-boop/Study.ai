@@ -42,7 +42,7 @@
         const page = window.location.pathname.split("/").pop() || "index.html";
         const isDashboard = page === "index.html" && window.location.hash !== "#courses";
         const isCourses = page === "index.html" && window.location.hash === "#courses";
-        const isProgress = page === "progress.html";
+        const isProgress = page === "progress.html" && !currentCourseId;
         document.querySelectorAll(".sidebar .nav-item, .sidebar-course-link")
             .forEach(link => link.classList.remove("active"));
         sidebarNavigation.querySelectorAll(".nav-item").forEach(link => {

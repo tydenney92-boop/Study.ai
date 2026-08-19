@@ -9,6 +9,9 @@ const { getColumnNames, tableExists } = require("../src/database/schema-helpers"
 const extractionStatusMigration = require(
     "../src/database/migrations/004-material-extraction-status"
 );
+const sourceSnapshotMigration = require(
+    "../src/database/migrations/005-generated-content-source-snapshots"
+);
 
 const legacyMaterials = [
     {
@@ -97,7 +100,7 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
         createBackup: false
     });
 
-    assert.deepEqual(firstRun.applied, [1, 2, 3, 4]);
+    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5]);
     assert.equal(tableExists(context.database, "sessions"), true);
     assert.equal(
         context.database.prepare("SELECT COUNT(*) AS count FROM users").get().count,
@@ -293,4 +296,38 @@ test("extraction-status migration backfills legacy formats and is idempotent", t
         `).get().extraction_status,
         "no_text"
     );
+});
+
+test("source-snapshot migration backfills names and is idempotent", t => {
+    const context = temporaryDatabase(t);
+    context.database.exec(`
+        CREATE TABLE materials (id INTEGER PRIMARY KEY, original_filename TEXT NOT NULL);
+        CREATE TABLE generated_study_guides (id INTEGER PRIMARY KEY);
+        CREATE TABLE generated_quizzes (id INTEGER PRIMARY KEY);
+        CREATE TABLE study_guide_materials (
+            study_guide_id INTEGER NOT NULL, material_id INTEGER NOT NULL,
+            PRIMARY KEY (study_guide_id, material_id)
+        );
+        CREATE TABLE quiz_materials (
+            quiz_id INTEGER NOT NULL, material_id INTEGER NOT NULL,
+            PRIMARY KEY (quiz_id, material_id)
+        );
+        INSERT INTO materials VALUES (7, 'Archived lecture.txt');
+        INSERT INTO generated_study_guides VALUES (11);
+        INSERT INTO generated_quizzes VALUES (12);
+        INSERT INTO study_guide_materials VALUES (11, 7);
+        INSERT INTO quiz_materials VALUES (12, 7);
+    `);
+
+    sourceSnapshotMigration.up(context.database);
+    sourceSnapshotMigration.up(context.database);
+
+    assert.deepEqual(context.database.prepare(`
+        SELECT study_guide_id AS guideId, material_id AS materialId,
+               material_name AS materialName FROM study_guide_sources
+    `).all(), [{ guideId: 11, materialId: 7, materialName: "Archived lecture.txt" }]);
+    assert.deepEqual(context.database.prepare(`
+        SELECT quiz_id AS quizId, material_id AS materialId,
+               material_name AS materialName FROM quiz_sources
+    `).all(), [{ quizId: 12, materialId: 7, materialName: "Archived lecture.txt" }]);
 });
