@@ -913,3 +913,35 @@
     }
 
 }
+
+/* Persisted course flashcards */
+.flashcards-page { box-sizing: border-box; width: calc(100% - 250px); }
+.flashcard-library-bar { display: flex; align-items: end; justify-content: space-between; gap: 20px; max-width: 850px; margin: 0 auto 22px; padding: 15px 18px; border: 1px solid #e3e7ed; border-radius: 12px; background: #fff; }
+.flashcard-library-bar label { display: grid; gap: 6px; color: #7b8495; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+.flashcard-library-bar select, .card-count-field select { min-width: 220px; padding: 10px 34px 10px 12px; border: 1px solid #d8dee9; border-radius: 9px; background: #fff; color: #263246; font: inherit; }
+.flashcard-library-bar > div { display: grid; gap: 3px; text-align: right; color: #7b8495; font-size: 10px; }
+.flashcard-library-bar strong { color: #1d2939; font-size: 22px; }
+.flashcard-empty { max-width: 850px; margin: 0 auto; padding: 55px 28px; text-align: center; }
+.flashcard-empty[hidden], .flashcard-section[hidden] { display: none !important; }
+.flashcard-empty p { margin: 8px 0 22px; color: #7b8495; }
+.empty-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.flashcard-review-meta { display: flex; justify-content: space-between; margin-bottom: 10px; color: #7b8495; font-size: 11px; font-weight: 600; }
+button.flashcard { appearance: none; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: inherit; }
+.flashcard-inner, .flashcard-face { display: block; }
+.flashcard-face { display: flex; }
+.flashcard-heading { max-width: 650px; font-size: 28px; font-weight: 700; line-height: 1.4; text-align: center; }
+.flashcard-answer { max-width: 650px; color: #344054; font-size: 20px; line-height: 1.6; text-align: center; }
+.flashcard-card-actions { margin-top: 17px; text-align: center; }
+.flashcard-card-actions .history-delete { border: 0; background: transparent; color: #b42318; padding: 8px 12px; cursor: pointer; font: inherit; font-size: 12px; }
+.flashcard-generate-modal { max-width: 620px; }
+.card-count-field { display: grid; gap: 7px; margin-top: 18px; color: #7b8495; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+.app-form textarea { min-height: 95px; resize: vertical; }
+
+@media (max-width: 750px) {
+    .flashcards-page { width: calc(100% - 70px); }
+    .flashcard-library-bar { align-items: stretch; flex-direction: column; }
+    .flashcard-library-bar > div { text-align: left; }
+    .flashcard-library-bar select { min-width: 0; width: 100%; }
+    .flashcard-heading { font-size: 21px; }
+    .flashcard-answer { font-size: 16px; }
+}

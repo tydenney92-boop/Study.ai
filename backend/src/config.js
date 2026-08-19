@@ -86,7 +86,13 @@ const config = {
     aiQuizMaxQuestions:
         numberEnvironment("AI_QUIZ_MAX_QUESTIONS", 20),
     aiQuizMaxAttempts:
-        numberEnvironment("AI_QUIZ_MAX_ATTEMPTS", 3)
+        numberEnvironment("AI_QUIZ_MAX_ATTEMPTS", 3),
+    aiFlashcardMinCards:
+        numberEnvironment("AI_FLASHCARD_MIN_CARDS", 5),
+    aiFlashcardMaxCards:
+        numberEnvironment("AI_FLASHCARD_MAX_CARDS", 20),
+    aiFlashcardDefaultCards:
+        numberEnvironment("AI_FLASHCARD_DEFAULT_CARDS", 10)
 };
 
 module.exports = isProduction ? validateProductionConfig(config) : config;

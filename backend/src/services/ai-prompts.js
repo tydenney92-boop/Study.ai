@@ -72,7 +72,28 @@ ${courseContent}
 `;
 }
 
+function buildFlashcardPrompt(courseContent, cardCount) {
+    return `
+You are Study Signal, a college study assistant.
+
+Create EXACTLY ${cardCount} concise flashcards using ONLY the course material below.
+Each front should ask one clear question or identify one concept. Each back should
+give a focused answer supported by the material. Do not duplicate cards or invent facts.
+
+Return ONLY valid JSON with this exact schema:
+{
+  "flashcards": [
+    { "front": "Question or concept", "back": "Answer or explanation" }
+  ]
+}
+
+COURSE MATERIAL:
+${courseContent}
+`;
+}
+
 module.exports = {
+    buildFlashcardPrompt,
     buildQuizPrompt,
     buildQuizVerificationPrompt,
     buildStudyGuidePrompt

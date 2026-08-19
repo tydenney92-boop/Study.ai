@@ -80,6 +80,9 @@ function validateProductionConfig(config) {
     positiveInteger(config.aiQuizMinQuestions, "AI_QUIZ_MIN_QUESTIONS", errors);
     positiveInteger(config.aiQuizMaxQuestions, "AI_QUIZ_MAX_QUESTIONS", errors);
     positiveInteger(config.aiQuizMaxAttempts, "AI_QUIZ_MAX_ATTEMPTS", errors);
+    positiveInteger(config.aiFlashcardMinCards, "AI_FLASHCARD_MIN_CARDS", errors);
+    positiveInteger(config.aiFlashcardMaxCards, "AI_FLASHCARD_MAX_CARDS", errors);
+    positiveInteger(config.aiFlashcardDefaultCards, "AI_FLASHCARD_DEFAULT_CARDS", errors);
     if (config.aiQuizMinQuestions > config.aiQuizMaxQuestions) {
         errors.push("AI_QUIZ_MIN_QUESTIONS cannot exceed AI_QUIZ_MAX_QUESTIONS.");
     }
@@ -87,6 +90,15 @@ function validateProductionConfig(config) {
         count >= config.aiQuizMinQuestions && count <= config.aiQuizMaxQuestions
     )) {
         errors.push("The configured quiz range must include 5, 10, 15, or 20 questions.");
+    }
+    if (config.aiFlashcardMinCards > config.aiFlashcardMaxCards) {
+        errors.push("AI_FLASHCARD_MIN_CARDS cannot exceed AI_FLASHCARD_MAX_CARDS.");
+    }
+    if (
+        config.aiFlashcardDefaultCards < config.aiFlashcardMinCards ||
+        config.aiFlashcardDefaultCards > config.aiFlashcardMaxCards
+    ) {
+        errors.push("AI_FLASHCARD_DEFAULT_CARDS must be within the configured flashcard range.");
     }
 
     if (errors.length > 0) {

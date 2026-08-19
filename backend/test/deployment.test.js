@@ -37,6 +37,9 @@ function validProductionConfig() {
         aiQuizMinQuestions: 5,
         aiQuizMaxQuestions: 20,
         aiQuizMaxAttempts: 3,
+        aiFlashcardMinCards: 5,
+        aiFlashcardMaxCards: 20,
+        aiFlashcardDefaultCards: 10,
         secureCookies: true,
         trustProxyHops: 1,
         serveFrontend: true
@@ -90,6 +93,19 @@ test("production validates all AI safeguard limits", () => {
         }),
         error => error.message.includes("AI_RATE_LIMIT_MAX_REQUESTS") &&
             error.message.includes("cannot exceed")
+    );
+});
+
+test("production validates flashcard generation limits", () => {
+    assert.throws(
+        () => validateProductionConfig({
+            ...validProductionConfig(),
+            aiFlashcardMinCards: 15,
+            aiFlashcardMaxCards: 10,
+            aiFlashcardDefaultCards: 20
+        }),
+        error => error.message.includes("AI_FLASHCARD_MIN_CARDS") &&
+            error.message.includes("AI_FLASHCARD_DEFAULT_CARDS")
     );
 });
 

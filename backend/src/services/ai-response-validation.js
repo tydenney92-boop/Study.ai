@@ -125,8 +125,43 @@ function validateVerification(response) {
     return verification;
 }
 
+function validateFlashcards(payload, cardCount) {
+    if (!payload || typeof payload !== "object" || !Array.isArray(payload.flashcards)) {
+        throw invalidOutput("The AI response did not contain a flashcards array.");
+    }
+    if (payload.flashcards.length !== cardCount) {
+        throw invalidOutput(
+            `Expected ${cardCount} flashcards but received ${payload.flashcards.length}.`
+        );
+    }
+
+    const cards = payload.flashcards.map((card, index) => {
+        if (
+            !card ||
+            typeof card.front !== "string" ||
+            typeof card.back !== "string" ||
+            card.front.trim().length === 0 ||
+            card.back.trim().length === 0 ||
+            card.front.trim().length > 500 ||
+            card.back.trim().length > 2000
+        ) {
+            throw invalidOutput(`Flashcard ${index + 1} has an invalid schema.`);
+        }
+        return { front: card.front.trim(), back: card.back.trim() };
+    });
+
+    const keys = cards.map(card =>
+        `${card.front.toLowerCase()}\n${card.back.toLowerCase()}`
+    );
+    if (new Set(keys).size !== keys.length) {
+        throw invalidOutput("The AI response contained duplicate flashcards.");
+    }
+    return cards;
+}
+
 module.exports = {
     parseJsonResponse,
+    validateFlashcards,
     validateQuiz,
     validateStudyGuide,
     validateVerification

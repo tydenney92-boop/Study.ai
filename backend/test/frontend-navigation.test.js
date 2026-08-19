@@ -42,6 +42,14 @@ test("course-wide and material-specific tool origins return correctly", () => {
         materialSpecific.toolBackUrl(),
         "material.html?courseId=7&materialId=12"
     );
+    assert.equal(
+        courseWide.url("flashcards.html", { courseId: 7 }),
+        "flashcards.html?courseId=7"
+    );
+    assert.equal(
+        courseWide.url("course.html", { courseId: 7 }),
+        "course.html?courseId=7"
+    );
 });
 
 test("missing course context redirects to canonical My Courses", () => {

@@ -13,6 +13,7 @@ const { createQuizzesRepository } = require("./repositories/quizzes.repository")
 const { createQuizAttemptsRepository } = require("./repositories/quiz-attempts.repository");
 const { createSessionsRepository } = require("./repositories/sessions.repository");
 const { createProgressRepository } = require("./repositories/progress.repository");
+const { createFlashcardsRepository } = require("./repositories/flashcards.repository");
 const { createCourseService } = require("./services/course.service");
 const { createUnitService } = require("./services/unit.service");
 const { createMaterialService } = require("./services/material.service");
@@ -23,6 +24,8 @@ const { createQuizAttemptService } = require("./services/quiz-attempt.service");
 const { createAuthService } = require("./services/auth.service");
 const { createGeneratedContentService } = require("./services/generated-content.service");
 const { createProgressService } = require("./services/progress.service");
+const { createFlashcardService } = require("./services/flashcard.service");
+const { createFlashcardGenerationService } = require("./services/flashcard-generation.service");
 const { SqliteSessionStore } = require("./services/sqlite-session-store");
 const { createTextExtractionService } = require("./services/text-extraction.service");
 const { createConfiguredStorage } = require("./services/storage-factory");
@@ -37,6 +40,7 @@ const { createUnitsRouter } = require("./routes/units.routes");
 const { createCourseAiRouter, createLegacyAiRouter } = require("./routes/ai.routes");
 const { createQuizAttemptsRouter } = require("./routes/quiz-attempts.routes");
 const { createProgressRouter, createCourseProgressRouter } = require("./routes/progress.routes");
+const { createFlashcardsRouter } = require("./routes/flashcards.routes");
 const {
     createCourseMaterialsRouter,
     createLegacyMaterialsRouter
@@ -104,7 +108,8 @@ const defaultRepositories = {
     quizzes: createQuizzesRepository(db),
     quizAttempts: createQuizAttemptsRepository(db),
     sessions: createSessionsRepository(db),
-    progress: createProgressRepository(db)
+    progress: createProgressRepository(db),
+    flashcards: createFlashcardsRepository(db)
 };
 const repositories = {
     ...defaultRepositories,
@@ -165,6 +170,19 @@ const generatedContentService = createGeneratedContentService({
 const progressService = createProgressService({
     coursesService,
     progressRepository: repositories.progress
+});
+const flashcardService = createFlashcardService({
+    coursesService,
+    materialService,
+    flashcardsRepository: repositories.flashcards
+});
+const flashcardGenerationService = createFlashcardGenerationService({
+    aiClient,
+    materialContextService,
+    flashcardsRepository: repositories.flashcards,
+    minCards: config.aiFlashcardMinCards,
+    maxCards: config.aiFlashcardMaxCards,
+    defaultCards: config.aiFlashcardDefaultCards
 });
 const authService = createAuthService({
     usersRepository: repositories.users,
@@ -246,6 +264,14 @@ app.use(
 app.use(
     "/api/courses/:courseId/materials",
     createCourseMaterialsRouter({ materialService, upload })
+);
+app.use(
+    "/api/courses/:courseId/flashcards",
+    createFlashcardsRouter({
+        flashcardService,
+        flashcardGenerationService,
+        aiUsageGuard
+    })
 );
 app.use(
     "/api/courses/:courseId",
