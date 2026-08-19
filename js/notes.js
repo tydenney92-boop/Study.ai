@@ -1,330 +1,163 @@
-const chatInput =
-    document.querySelector("#chat-input");
-
-const sendButton =
-    document.querySelector("#send-message");
-
-const chatMessages =
-    document.querySelector("#chat-messages");
-
-const suggestions =
-    document.querySelectorAll(".suggestion");
-
-const notesContext = window.StudyAI?.courseContext;
+const notesContext = StudyAI.courseContext;
+const notesCourseId = notesContext.getCourseId();
+const notesMaterialId = notesContext.getMaterialId();
 const notesBackLink = document.querySelector("#notes-back-link");
-const notesCourseLabel = document.querySelector("#notes-course-label");
-const notesCourseId = notesContext?.getCourseId();
+const chatInput = document.querySelector("#chat-input");
+const sendButton = document.querySelector("#send-message");
+const chatMessages = document.querySelector("#chat-messages");
+let notesMaterialSelector = null;
+let asking = false;
 
 if (!notesCourseId) {
     notesContext.goToMyCourses("Choose a course before opening Ask My Notes.");
 }
 
-if (notesCourseId && notesBackLink) {
-    notesBackLink.href = notesContext.url("course.html");
-    StudyAI.api.get(`/api/courses/${notesCourseId}`)
-        .then(function(course) {
-            notesCourseLabel.textContent = `← ${course.courseCode || course.courseName}`;
-        })
-        .catch(function(error) {
-            if (error.status === 404) {
-                notesContext.goToMyCourses("That course is unavailable.");
-                return;
-            }
-            notesCourseLabel.textContent = "← Course";
-        });
+function selectedMaterialIds() {
+    return notesMaterialSelector ? notesMaterialSelector.getSelectedIds() : [];
 }
 
-
-/* =========================================
-   SEND MESSAGE
-========================================= */
-
-function sendMessage(message) {
-
-    if (!message.trim()) {
-        return;
-    }
-
-
-    addUserMessage(message);
-
-
-    chatInput.value = "";
-
-
-    setTimeout(function() {
-
-        addAssistantMessage(
-            generateDemoResponse(message)
-        );
-
-    }, 600);
-
+function updateInputState() {
+    const count = selectedMaterialIds().length;
+    const enabled = count > 0 && !asking;
+    chatInput.disabled = !enabled;
+    sendButton.disabled = !enabled;
+    document.querySelectorAll(".suggestion").forEach(button => {
+        button.disabled = !enabled;
+    });
+    document.querySelector("#notes-status-label").textContent = count === 0
+        ? "Choose materials"
+        : `${count} source${count === 1 ? "" : "s"} selected`;
 }
-
-
-/* =========================================
-   USER MESSAGE
-========================================= */
-
-function addUserMessage(message) {
-
-    const messageElement =
-        document.createElement("div");
-
-
-    messageElement.className =
-        "message user";
-
-
-    messageElement.innerHTML = `
-
-        <div class="message-content">
-
-            <p>
-                ${escapeHTML(message)}
-            </p>
-
-        </div>
-
-    `;
-
-
-    chatMessages.appendChild(
-        messageElement
-    );
-
-
-    scrollToBottom();
-
-}
-
-
-/* =========================================
-   AI MESSAGE
-========================================= */
-
-function addAssistantMessage(message) {
-
-    const messageElement =
-        document.createElement("div");
-
-
-    messageElement.className =
-        "message assistant";
-
-
-    messageElement.innerHTML = `
-
-        <div class="message-avatar">
-            S
-        </div>
-
-        <div class="message-content">
-
-            <p>
-                ${message}
-            </p>
-
-        </div>
-
-    `;
-
-
-    chatMessages.appendChild(
-        messageElement
-    );
-
-
-    scrollToBottom();
-
-}
-
-
-/* =========================================
-   DEMO AI RESPONSES
-========================================= */
-
-function generateDemoResponse(message) {
-
-    const lowerMessage =
-        message.toLowerCase();
-
-
-    if (
-        lowerMessage.includes("elasticity")
-    ) {
-
-        return `
-            <strong>Price elasticity of demand</strong>
-            measures how responsive quantity demanded
-            is to a change in price.
-
-            <br><br>
-
-            The basic formula is:
-
-            <br><br>
-
-            <strong>
-                % Change in Quantity Demanded ÷
-                % Change in Price
-            </strong>
-
-            <br><br>
-
-            If demand is elastic, quantity demanded
-            responds relatively strongly to a change
-            in price.
-        `;
-
-    }
-
-
-    if (
-        lowerMessage.includes("gdp")
-    ) {
-
-        return `
-            <strong>GDP</strong>, or gross domestic product,
-            measures the market value of final goods and
-            services produced within an economy during
-            a given period.
-
-            <br><br>
-
-            Remember the four major components:
-
-            <br><br>
-
-            <strong>
-                C + I + G + NX
-            </strong>
-        `;
-
-    }
-
-
-    if (
-        lowerMessage.includes("quiz")
-    ) {
-
-        return `
-            Based on your recent performance,
-            I'd recommend focusing on
-            <strong>Fiscal Policy</strong>.
-
-            <br><br>
-
-            You could start with a short
-            10-question practice quiz.
-        `;
-
-    }
-
-
-    return `
-        That's a great question.
-
-        <br><br>
-
-        In the future, Study Signal will search your
-        uploaded course materials and generate
-        an answer specifically from your notes.
-
-        <br><br>
-
-        For now, this is a demonstration of the
-        chat interface.
-    `;
-
-}
-
-
-/* =========================================
-   SUGGESTIONS
-========================================= */
-
-suggestions.forEach(function(button) {
-
-    button.addEventListener(
-        "click",
-        function() {
-
-            sendMessage(
-                button.textContent
-            );
-
-        }
-    );
-
-});
-
-
-/* =========================================
-   SEND BUTTON
-========================================= */
-
-sendButton.addEventListener(
-    "click",
-    function() {
-
-        sendMessage(
-            chatInput.value
-        );
-
-    }
-);
-
-
-/* =========================================
-   ENTER KEY
-========================================= */
-
-chatInput.addEventListener(
-    "keydown",
-    function(event) {
-
-        if (
-            event.key === "Enter" &&
-            !event.shiftKey
-        ) {
-
-            event.preventDefault();
-
-            sendMessage(
-                chatInput.value
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================
-   SCROLL
-========================================= */
 
 function scrollToBottom() {
-
-    chatMessages.scrollTop =
-        chatMessages.scrollHeight;
-
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-
-/* =========================================
-   SECURITY HELPER
-========================================= */
-
-function escapeHTML(text) {
-
-    const div =
-        document.createElement("div");
-
-    div.textContent = text;
-
-    return div.innerHTML;
-
+function addUserMessage(message) {
+    const element = document.createElement("div");
+    element.className = "message user";
+    const content = document.createElement("div");
+    content.className = "message-content";
+    const paragraph = document.createElement("p");
+    paragraph.textContent = message;
+    content.appendChild(paragraph);
+    element.appendChild(content);
+    chatMessages.appendChild(element);
+    scrollToBottom();
 }
+
+function addAssistantMessage(answer, sources) {
+    const element = document.createElement("div");
+    element.className = "message assistant";
+    element.innerHTML = '<div class="message-avatar">S</div><div class="message-content"><p></p><div class="answer-sources"><strong>Sources</strong><div></div></div></div>';
+    element.querySelector("p").textContent = answer;
+    const sourceList = element.querySelector(".answer-sources div");
+    sources.forEach(source => {
+        const chip = document.createElement("span");
+        chip.textContent = source.name;
+        sourceList.appendChild(chip);
+    });
+    chatMessages.appendChild(element);
+    scrollToBottom();
+}
+
+function addLoadingMessage() {
+    const element = document.createElement("div");
+    element.className = "message assistant notes-loading-message";
+    element.innerHTML = '<div class="message-avatar">S</div><div class="message-content"><p>Reading the selected materials…</p></div>';
+    chatMessages.appendChild(element);
+    scrollToBottom();
+    return element;
+}
+
+function addErrorMessage(error, question, materialIds) {
+    const element = document.createElement("div");
+    element.className = "message assistant error-message";
+    element.innerHTML = '<div class="message-avatar">!</div><div class="message-content"><p></p><button class="secondary-tool-button">Try Again</button></div>';
+    element.querySelector("p").textContent = error.message;
+    element.querySelector("button").addEventListener("click", () => {
+        element.remove();
+        askQuestion(question, materialIds, false);
+    });
+    chatMessages.appendChild(element);
+    scrollToBottom();
+}
+
+async function askQuestion(question, materialIds = selectedMaterialIds(), showUser = true) {
+    const trimmed = question.trim();
+    if (!trimmed || materialIds.length === 0 || asking) return;
+    if (showUser) addUserMessage(trimmed);
+    chatInput.value = "";
+    asking = true;
+    updateInputState();
+    const loading = addLoadingMessage();
+    try {
+        const response = await StudyAI.api.post(
+            `/api/courses/${notesCourseId}/ask`,
+            { materialIds, question: trimmed },
+            { timeoutMs: 120000 }
+        );
+        loading.remove();
+        addAssistantMessage(response.answer, response.sources);
+    } catch (error) {
+        loading.remove();
+        if (error.status === 404) {
+            return notesContext.goToMyCourses("That course or material is unavailable.");
+        }
+        addErrorMessage(error, trimmed, materialIds);
+    } finally {
+        asking = false;
+        updateInputState();
+        chatInput.focus();
+    }
+}
+
+sendButton.addEventListener("click", () => askQuestion(chatInput.value));
+chatInput.addEventListener("keydown", event => {
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        askQuestion(chatInput.value);
+    }
+});
+document.querySelectorAll(".suggestion").forEach(button => {
+    button.addEventListener("click", () => askQuestion(button.textContent));
+});
+
+async function initializeNotes() {
+    if (!notesCourseId) return;
+    notesBackLink.href = notesContext.url("course.html", { courseId: notesCourseId });
+    try {
+        const course = await StudyAI.api.get(`/api/courses/${notesCourseId}`);
+        document.querySelector("#notes-course-label").textContent = `← ${course.courseCode}`;
+        document.querySelector("#notes-assistant-label").textContent = `${course.courseCode} assistant`;
+        document.querySelector("#notes-page-subtitle").textContent =
+            `Ask grounded questions about ${course.courseCode} materials.`;
+        notesMaterialSelector = await StudyAI.materialSelection.mount({
+            container: document.querySelector("#notes-material-selection"),
+            courseId: notesCourseId,
+            initialMaterialIds: notesMaterialId ? [notesMaterialId] : []
+        });
+        if (notesMaterialSelector.getUsableCount() === 0) {
+            document.querySelector("#notes-status-label").textContent = "No usable materials";
+            document.querySelector("#notes-material-selection").insertAdjacentHTML(
+                "afterbegin",
+                '<div class="notes-material-empty"><strong>No usable extracted text</strong><span>Upload a typed PDF, DOCX, PPTX, or TXT file to ask grounded questions.</span></div>'
+            );
+        }
+        document.querySelector("#notes-material-selection").addEventListener(
+            "change",
+            updateInputState
+        );
+        updateInputState();
+        if (notesMaterialSelector.getUsableCount() === 0) {
+            document.querySelector("#notes-status-label").textContent = "No usable materials";
+        }
+    } catch (error) {
+        if (error.status === 404) {
+            return notesContext.goToMyCourses("That course is unavailable.");
+        }
+        document.querySelector("#notes-page-error").textContent = error.message;
+    }
+}
+
+initializeNotes();

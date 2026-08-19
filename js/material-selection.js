@@ -10,7 +10,7 @@
                 <div class="friendly-empty"><strong>No course selected</strong>
                 <a class="text-link" href="index.html#courses">Choose a course →</a></div>`;
             updateAction();
-            return { getSelectedIds: () => [...selected] };
+            return { getSelectedIds: () => [...selected], getUsableCount: () => 0 };
         }
 
         container.innerHTML = '<div class="friendly-empty"><span>Loading course materials…</span></div>';
@@ -22,7 +22,7 @@
                 <a class="primary-button compact-action" href="materials.html?courseId=${encodeURIComponent(courseId)}">+ Add Materials</a></div>`;
             selected.clear();
             updateAction();
-            return { getSelectedIds: () => [] };
+            return { getSelectedIds: () => [], getUsableCount: () => 0 };
         }
 
         container.innerHTML = '<div class="material-choice-list"></div>';
@@ -60,7 +60,13 @@
             list.appendChild(label);
         });
         updateAction();
-        return { getSelectedIds: () => [...selected] };
+        const usableCount = materials.filter(
+            material => material.extractionStatus === "extracted"
+        ).length;
+        return {
+            getSelectedIds: () => [...selected],
+            getUsableCount: () => usableCount
+        };
     }
 
     window.StudyAI.materialSelection = { mount };

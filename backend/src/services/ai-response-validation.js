@@ -159,8 +159,23 @@ function validateFlashcards(payload, cardCount) {
     return cards;
 }
 
+function validateAskNotesAnswer(payload) {
+    if (
+        !payload ||
+        typeof payload !== "object" ||
+        Array.isArray(payload) ||
+        typeof payload.answer !== "string" ||
+        payload.answer.trim().length === 0 ||
+        payload.answer.trim().length > 8000
+    ) {
+        throw invalidOutput("The AI answer did not match the required schema.");
+    }
+    return payload.answer.trim();
+}
+
 module.exports = {
     parseJsonResponse,
+    validateAskNotesAnswer,
     validateFlashcards,
     validateQuiz,
     validateStudyGuide,

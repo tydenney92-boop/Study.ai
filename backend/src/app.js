@@ -26,6 +26,7 @@ const { createGeneratedContentService } = require("./services/generated-content.
 const { createProgressService } = require("./services/progress.service");
 const { createFlashcardService } = require("./services/flashcard.service");
 const { createFlashcardGenerationService } = require("./services/flashcard-generation.service");
+const { createAskNotesService } = require("./services/ask-notes.service");
 const { SqliteSessionStore } = require("./services/sqlite-session-store");
 const { createTextExtractionService } = require("./services/text-extraction.service");
 const { createConfiguredStorage } = require("./services/storage-factory");
@@ -41,6 +42,7 @@ const { createCourseAiRouter, createLegacyAiRouter } = require("./routes/ai.rout
 const { createQuizAttemptsRouter } = require("./routes/quiz-attempts.routes");
 const { createProgressRouter, createCourseProgressRouter } = require("./routes/progress.routes");
 const { createFlashcardsRouter } = require("./routes/flashcards.routes");
+const { createAskNotesRouter } = require("./routes/ask-notes.routes");
 const {
     createCourseMaterialsRouter,
     createLegacyMaterialsRouter
@@ -184,6 +186,10 @@ const flashcardGenerationService = createFlashcardGenerationService({
     maxCards: config.aiFlashcardMaxCards,
     defaultCards: config.aiFlashcardDefaultCards
 });
+const askNotesService = createAskNotesService({
+    aiClient,
+    materialContextService
+});
 const authService = createAuthService({
     usersRepository: repositories.users,
     passwordRounds: config.passwordRounds
@@ -272,6 +278,10 @@ app.use(
         flashcardGenerationService,
         aiUsageGuard
     })
+);
+app.use(
+    "/api/courses/:courseId/ask",
+    createAskNotesRouter({ askNotesService, aiUsageGuard })
 );
 app.use(
     "/api/courses/:courseId",
