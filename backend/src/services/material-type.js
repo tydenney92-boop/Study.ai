@@ -4,9 +4,7 @@ const { AppError } = require("../utils/app-error");
 const MATERIAL_TYPES = new Map([
     [".pdf", "pdf"],
     [".txt", "notes"],
-    [".doc", "notes"],
     [".docx", "notes"],
-    [".ppt", "slides"],
     [".pptx", "slides"]
 ]);
 
@@ -22,7 +20,7 @@ function materialTypeFor(filename) {
     if (!materialType) {
         throw new AppError({
             code: "FILE_TYPE_NOT_ALLOWED",
-            message: "Allowed file types are PDF, TXT, DOC, DOCX, PPT, and PPTX.",
+            message: "Supported file types are PDF, TXT, DOCX, and PPTX. Legacy DOC and PPT files cannot be extracted.",
             status: 415
         });
     }

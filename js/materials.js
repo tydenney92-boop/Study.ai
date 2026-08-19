@@ -46,7 +46,8 @@ function materialCard(material) {
         <div class="material-info">
             <h3></h3>
             <p></p>
-            <span></span>
+            <span class="material-metadata"></span>
+            <span class="extraction-badge" hidden></span>
         </div>
         <span class="material-arrow">→</span>
     `;
@@ -55,8 +56,19 @@ function materialCard(material) {
             material.materialType === "slides" ? "PPT" : "TXT";
     card.querySelector("h3").textContent = material.originalFilename;
     card.querySelector("p").textContent = material.unitName || "No unit";
-    card.querySelector(".material-info span").textContent =
+    card.querySelector(".material-metadata").textContent =
         `${material.materialType.toUpperCase()} • ${formatSize(material.fileSize)}`;
+    const extractionBadge = card.querySelector(".extraction-badge");
+    const statusLabels = {
+        no_text: "No extractable text",
+        unsupported: "Unsupported for AI",
+        failed: "Extraction failed"
+    };
+    if (statusLabels[material.extractionStatus]) {
+        extractionBadge.hidden = false;
+        extractionBadge.textContent = statusLabels[material.extractionStatus];
+        extractionBadge.classList.add(material.extractionStatus);
+    }
 
     const openMaterial = () => {
         window.location.href = StudyAI.courseContext.url("material.html", {
@@ -154,7 +166,7 @@ async function loadPage() {
             StudyAI.api.get(`/api/courses/${courseId}/units`),
             StudyAI.api.get(`/api/courses/${courseId}/materials`)
         ]);
-        document.title = `${course.courseCode} Materials | Study AI`;
+        document.title = `${course.courseCode} Materials | Study Signal`;
         document.querySelector("#materials-course-name").textContent =
             `${course.courseCode} · ${course.courseName}`;
         document.querySelector("#upload-course-description").textContent =

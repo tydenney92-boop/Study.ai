@@ -33,11 +33,23 @@
             label.innerHTML = '<input type="checkbox"><span><strong></strong><small></small></span>';
             const input = label.querySelector("input");
             input.value = material.id;
-            input.checked = selected.has(material.id);
+            const usable = material.extractionStatus === "extracted";
+            input.disabled = !usable;
+            input.checked = usable && selected.has(material.id);
+            if (!usable) selected.delete(material.id);
             label.querySelector("strong").textContent = material.originalFilename;
-            label.querySelector("small").textContent = material.unitName
+            const location = material.unitName
                 ? `Unit ${material.unitNumber}: ${material.unitName}`
                 : "No unit assigned";
+            const unavailableLabels = {
+                no_text: "No extractable text",
+                unsupported: "Unsupported for AI",
+                failed: "Extraction failed"
+            };
+            label.querySelector("small").textContent = usable
+                ? location
+                : `${location} · ${unavailableLabels[material.extractionStatus] || "Text unavailable"}`;
+            label.classList.toggle("unavailable", !usable);
             input.addEventListener("change", () => {
                 if (input.checked) selected.add(material.id);
                 else selected.delete(material.id);

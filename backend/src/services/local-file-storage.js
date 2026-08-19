@@ -44,7 +44,7 @@ function createLocalFileStorage({ uploadDirectory }) {
                     if (!allowed.has(extension)) {
                         return callback(new AppError({
                             code: "FILE_TYPE_NOT_ALLOWED",
-                            message: "Allowed file types are PDF, TXT, DOC, DOCX, PPT, and PPTX.",
+                            message: "Supported file types are PDF, TXT, DOCX, and PPTX. Legacy DOC and PPT files cannot be extracted.",
                             status: 415
                         }));
                     }

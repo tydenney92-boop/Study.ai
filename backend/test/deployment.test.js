@@ -198,7 +198,7 @@ test("Express serves allowlisted frontend assets without exposing backend files"
     t.after(context.cleanup);
 
     await request(context.app).get("/").expect(200).expect("Content-Type", /html/);
-    await request(context.app).get("/login.html").expect(200).expect(/Log in to Study AI/);
+    await request(context.app).get("/login.html").expect(200).expect(/Sign in to Study Signal/);
     await request(context.app).get("/js/config.js").expect(200).expect(/window\.location\.origin/);
     await request(context.app).get("/backend/package.json").expect(404);
 });

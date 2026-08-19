@@ -23,6 +23,9 @@
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
+    "fast-xml-parser": "^5.11.0",
+    "jszip": "^3.10.1",
+    "mammoth": "^1.12.1",
     "multer": "^2.2.0",
     "openai": "^7.5.0",
     "pdf-parse": "^2.4.5"

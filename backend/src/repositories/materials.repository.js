@@ -10,6 +10,7 @@ function createMaterialsRepository(database) {
         materials.mime_type AS mimeType,
         materials.upload_status AS uploadStatus,
         materials.extraction_error AS extractionError,
+        materials.extraction_status AS extractionStatus,
         materials.created_at AS createdAt,
         units.name AS unitName,
         units.unit_number AS unitNumber
@@ -59,7 +60,8 @@ function createMaterialsRepository(database) {
                 SELECT
                     materials.id,
                     materials.original_filename AS name,
-                    materials.extracted_text AS text_content
+                    materials.extracted_text AS text_content,
+                    materials.extraction_status AS extraction_status
                 FROM materials
                 JOIN courses ON courses.id = materials.course_id
                 WHERE materials.id IN (${placeholders})
@@ -80,8 +82,9 @@ function createMaterialsRepository(database) {
                     file_size,
                     mime_type,
                     upload_status,
-                    extraction_error
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    extraction_error,
+                    extraction_status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).run(
                 material.courseId,
                 material.unitId,
@@ -92,7 +95,8 @@ function createMaterialsRepository(database) {
                 material.fileSize,
                 material.mimeType,
                 material.uploadStatus,
-                material.extractionError
+                material.extractionError,
+                material.extractionStatus
             );
 
             return Number(result.lastInsertRowid);

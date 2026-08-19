@@ -41,7 +41,7 @@ async function loadCourse() {
 
     try {
         const course = await StudyAI.api.get(`/api/courses/${courseId}`);
-        document.title = `${course.courseCode} | Study AI`;
+        document.title = `${course.courseCode} | Study Signal`;
         document.querySelector("#course-code-title").textContent = course.courseCode;
         document.querySelector("#course-name-subtitle").textContent = course.courseName;
         document.querySelector("#course-semester").textContent = course.semester;

@@ -6,6 +6,7 @@ const {
     createTestApp,
     insertMaterial
 } = require("./helpers/test-app");
+const { docxFixture, pptxFixture } = require("./helpers/office-fixtures");
 
 const validStudyGuide = `
 KEY CONCEPTS
@@ -415,6 +416,88 @@ test("AI safeguards reject empty and oversized material context before provider 
         ).get().count,
         0
     );
+});
+
+test("AI rejects every non-usable extraction status before provider calls", async t => {
+    let aiCalls = 0;
+    const context = createTestApp({
+        aiClient: {
+            async generate() {
+                aiCalls++;
+                return validStudyGuide;
+            }
+        }
+    });
+    t.after(context.cleanup);
+
+    for (const extractionStatus of ["no_text", "unsupported", "failed"]) {
+        const materialId = insertMaterial(context.database, {
+            storedFilename: `${extractionStatus}.txt`,
+            originalFilename: `${extractionStatus}.txt`,
+            extractedText: "Text exists but the extraction status is not usable.",
+            extractionStatus
+        });
+        const response = await request(context.app)
+            .post("/api/courses/1/study-guides")
+            .send({ materialIds: [materialId] })
+            .expect(422);
+        assert.equal(response.body.error.code, "MATERIAL_HAS_NO_TEXT");
+        assert.equal(response.body.error.details.extractionStatus, extractionStatus);
+    }
+
+    assert.equal(aiCalls, 0);
+});
+
+test("extracted TXT, DOCX, and PPTX uploads produce successful AI context", async t => {
+    const prompts = [];
+    const context = createTestApp({
+        aiClient: queuedAi([validStudyGuide], prompts)
+    });
+    t.after(context.cleanup);
+    const docx = await docxFixture(["DOCX course content for a generated study guide."]);
+    const pptx = await pptxFixture([
+        ["PPTX slide content for the study guide."]
+    ]);
+    const uploads = [
+        {
+            buffer: Buffer.from("TXT course content for a generated study guide."),
+            filename: "notes.txt",
+            contentType: "text/plain"
+        },
+        {
+            buffer: docx,
+            filename: "document.docx",
+            contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        },
+        {
+            buffer: pptx,
+            filename: "slides.pptx",
+            contentType: "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        }
+    ];
+    const materialIds = [];
+
+    for (const upload of uploads) {
+        const response = await request(context.app)
+            .post("/api/courses/1/materials")
+            .attach("file", upload.buffer, {
+                filename: upload.filename,
+                contentType: upload.contentType
+            })
+            .expect(201);
+        assert.equal(response.body.extractionStatus, "extracted");
+        materialIds.push(response.body.id);
+    }
+
+    await request(context.app)
+        .post("/api/courses/1/study-guides")
+        .send({ materialIds })
+        .expect(201);
+
+    assert.match(prompts[0], /TXT course content/);
+    assert.match(prompts[0], /DOCX course content/);
+    assert.match(prompts[0], /Slide 1/);
+    assert.match(prompts[0], /PPTX slide content/);
 });
 
 test("configured quiz question limits reject requests before provider calls", async t => {

@@ -51,6 +51,20 @@ function setLinks(course) {
         StudyAI.courseContext.url("flashcards.html", materialUrlValues);
 }
 
+function disableStudyActions(message) {
+    [
+        "#material-quiz-link",
+        "#material-study-guide-link",
+        "#material-flashcards-link"
+    ].forEach(selector => {
+        const link = document.querySelector(selector);
+        link.removeAttribute("href");
+        link.classList.add("disabled");
+        link.setAttribute("aria-disabled", "true");
+        link.title = message;
+    });
+}
+
 async function loadMaterial() {
     if (!courseId || !materialId) {
         return;
@@ -63,7 +77,7 @@ async function loadMaterial() {
         ]);
         loadedMaterial = material;
         setLinks(course);
-        document.title = `${material.originalFilename} | Study AI`;
+        document.title = `${material.originalFilename} | Study Signal`;
         title.textContent = material.originalFilename;
         subtitle.textContent = `${course.courseCode} · ${material.unitName || "No unit"}`;
         document.querySelector("#material-type").textContent =
@@ -73,17 +87,39 @@ async function loadMaterial() {
         document.querySelector("#material-date").textContent = formatDate(material.createdAt);
         document.querySelector("#delete-material-button").hidden = false;
 
-        if (material.extractedText && material.extractedText.trim()) {
+        if (material.extractionStatus === "extracted" &&
+            material.extractedText && material.extractedText.trim()) {
             content.textContent = material.extractedText;
             status.textContent = "Text extracted";
         } else {
+            const statusContent = {
+                no_text: {
+                    label: "No extractable text",
+                    message: "This file does not contain enough readable text. Scanned PDFs require OCR, which is not currently supported."
+                },
+                unsupported: {
+                    label: "Unsupported format",
+                    message: "Legacy DOC and PPT files are stored but cannot be used with AI. Re-upload as DOCX, PPTX, PDF, or TXT."
+                },
+                failed: {
+                    label: "Extraction failed",
+                    message: material.extractionError || "Text extraction failed. Try re-uploading a valid PDF, TXT, DOCX, or PPTX file."
+                }
+            }[material.extractionStatus] || {
+                label: "No text available",
+                message: "This file does not contain readable text yet."
+            };
             content.innerHTML = `
                 <div class="empty-content">
                     <div>—</div><h3>No extracted text</h3>
-                    <p>This file does not contain readable text yet.</p>
+                    <p></p>
                 </div>
             `;
-            status.textContent = "No text available";
+            content.querySelector("p").textContent = statusContent.message;
+            status.textContent = statusContent.label;
+            disableStudyActions(
+                "This material does not contain extractable text yet. Try a typed PDF, DOCX, PPTX, or TXT file."
+            );
         }
     } catch (error) {
         if (error.code === "COURSE_NOT_FOUND") {

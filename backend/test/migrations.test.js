@@ -6,6 +6,9 @@ const path = require("path");
 const { createDatabase } = require("../src/database/connection");
 const { runMigrations } = require("../src/database/migration-runner");
 const { getColumnNames, tableExists } = require("../src/database/schema-helpers");
+const extractionStatusMigration = require(
+    "../src/database/migrations/004-material-extraction-status"
+);
 
 const legacyMaterials = [
     {
@@ -94,7 +97,7 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
         createBackup: false
     });
 
-    assert.deepEqual(firstRun.applied, [1, 2, 3]);
+    assert.deepEqual(firstRun.applied, [1, 2, 3, 4]);
     assert.equal(tableExists(context.database, "sessions"), true);
     assert.equal(
         context.database.prepare("SELECT COUNT(*) AS count FROM users").get().count,
@@ -177,6 +180,16 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
         context.database.prepare("PRAGMA table_info(courses)").all()
             .some(column => column.name === "last_opened_at")
     );
+    assert.deepEqual(
+        context.database.prepare(`
+            SELECT id, extraction_status FROM materials ORDER BY id
+        `).all(),
+        [
+            { id: 1, extraction_status: "extracted" },
+            { id: 2, extraction_status: "extracted" },
+            { id: 3, extraction_status: "extracted" }
+        ]
+    );
 
     const secondRun = runMigrations({
         database: context.database,
@@ -228,5 +241,56 @@ test("an unmappable legacy unit rolls back the entire migration", t => {
             "SELECT COUNT(*) AS count FROM schema_migrations"
         ).get().count,
         0
+    );
+});
+
+test("extraction-status migration backfills legacy formats and is idempotent", t => {
+    const context = temporaryDatabase(t);
+    context.database.exec(`
+        CREATE TABLE materials (
+            id INTEGER PRIMARY KEY,
+            course_id INTEGER NOT NULL,
+            original_filename TEXT NOT NULL,
+            extracted_text TEXT NOT NULL DEFAULT '',
+            extraction_error TEXT
+        )
+    `);
+    const insert = context.database.prepare(`
+        INSERT INTO materials (
+            id, course_id, original_filename, extracted_text, extraction_error
+        ) VALUES (?, 1, ?, ?, NULL)
+    `);
+    insert.run(1, "typed.pdf", "A sufficiently long body of extracted PDF text.");
+    insert.run(2, "scan.pdf", "");
+    insert.run(3, "legacy.doc", "");
+    insert.run(4, "legacy.ppt", "");
+    insert.run(5, "old.docx", "");
+    insert.run(6, "old.txt", "Existing extracted text that remains usable.");
+
+    extractionStatusMigration.up(context.database);
+    assert.deepEqual(
+        context.database.prepare(`
+            SELECT id, extraction_status AS status
+            FROM materials ORDER BY id
+        `).all(),
+        [
+            { id: 1, status: "extracted" },
+            { id: 2, status: "no_text" },
+            { id: 3, status: "unsupported" },
+            { id: 4, status: "unsupported" },
+            { id: 5, status: "failed" },
+            { id: 6, status: "extracted" }
+        ]
+    );
+
+    context.database.prepare(`
+        UPDATE materials SET extraction_status = 'no_text' WHERE id = 5
+    `).run();
+    extractionStatusMigration.up(context.database);
+    assert.equal(
+        context.database.prepare(`
+            SELECT extraction_status FROM materials WHERE id = 5
+        `).get().extraction_status,
+        "no_text"
     );
 });

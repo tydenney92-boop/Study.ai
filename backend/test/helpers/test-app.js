@@ -105,8 +105,9 @@ function insertMaterial(database, overrides = {}) {
             material_type,
             file_size,
             mime_type,
-            extracted_text
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            extracted_text,
+            extraction_status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
         material.courseId,
         material.unitId,
@@ -115,7 +116,8 @@ function insertMaterial(database, overrides = {}) {
         material.materialType,
         material.fileSize,
         material.mimeType,
-        material.extractedText
+        material.extractedText,
+        material.extractionStatus || "extracted"
     );
 
     return Number(result.lastInsertRowid);

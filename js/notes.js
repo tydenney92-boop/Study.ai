@@ -228,7 +228,7 @@ function generateDemoResponse(message) {
 
         <br><br>
 
-        In the future, Study AI will search your
+        In the future, Study Signal will search your
         uploaded course materials and generate
         an answer specifically from your notes.
 

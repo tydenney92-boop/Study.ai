@@ -232,6 +232,12 @@
     font-weight: 600;
 }
 
+.material-action-button.disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 
 .material-content {
     padding: 28px;

@@ -7,7 +7,9 @@ function normalizedTextResponse(material) {
         id: material.id,
         courseId: material.courseId,
         originalFilename: material.originalFilename,
-        extractedText: material.extractedText
+        extractedText: material.extractedText,
+        extractionStatus: material.extractionStatus,
+        extractionError: material.extractionError
     };
 }
 
@@ -21,14 +23,17 @@ function legacyListResponse(material) {
         original_name: material.originalFilename,
         file_size: material.fileSize,
         mime_type: material.mimeType,
-        created_at: material.createdAt
+        created_at: material.createdAt,
+        extraction_status: material.extractionStatus
     };
 }
 
 function legacyDetailResponse(material) {
     return {
         ...legacyListResponse(material),
-        text_content: material.extractedText
+        text_content: material.extractedText,
+        extraction_status: material.extractionStatus,
+        extraction_error: material.extractionError
     };
 }
 

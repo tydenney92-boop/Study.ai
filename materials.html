@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Materials | Study AI</title>
+    <title>Materials | Study Signal</title>
     <link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/materials.css">
 </head>
 <body>
     <aside class="sidebar">
-        <div class="brand"><div class="brand-icon">S</div><span>Study AI</span></div>
+        <div class="brand"><div class="brand-icon">S</div><span>Study Signal</span></div>
         <nav class="sidebar-nav"><a href="index.html" class="nav-item"><span>⌂</span>Dashboard</a><a href="index.html#courses" class="nav-item"><span>▣</span>My Courses</a><a href="progress.html" class="nav-item"><span>◔</span>Progress</a></nav>
         <div class="sidebar-bottom"><div class="profile-card"><div class="profile-avatar">D</div><div><strong>Development User</strong><small>Student</small></div></div></div>
     </aside>
@@ -16,7 +16,7 @@
         <header class="materials-header">
             <div><a href="index.html#courses" class="back-link" id="materials-course-link">← My Courses</a><p class="eyebrow">COURSE MATERIALS</p><h1>Materials</h1><p class="subtitle" id="materials-course-name">Loading course…</p></div>
             <button class="primary-button" id="upload-button">+ Upload Material</button>
-            <input type="file" id="file-input" hidden accept=".pdf,.txt,.doc,.docx,.ppt,.pptx">
+            <input type="file" id="file-input" hidden accept=".pdf,.txt,.docx,.pptx">
         </header>
         <section class="materials-controls">
             <div class="search-box"><span>⌕</span><input type="text" id="material-search" placeholder="Search your materials…"></div>
@@ -25,14 +25,14 @@
         </section>
         <div id="materials-container"><div class="friendly-empty"><span>Loading materials…</span></div></div>
         <div class="empty-materials" id="empty-materials"><div>⌕</div><h2>No materials found</h2><p>Upload a file or try a different filter.</p></div>
-        <section class="upload-area"><div class="upload-icon">↑</div><div><h2>Add course material</h2><p>Upload a PDF, note, or slide file to this course.</p></div><button class="secondary-tool-button" id="upload-button-bottom">Choose File</button></section>
+        <section class="upload-area"><div class="upload-icon">↑</div><div><h2>Add course material</h2><p>Upload a PDF, TXT, DOCX, or PPTX file to this course.</p></div><button class="secondary-tool-button" id="upload-button-bottom">Choose File</button></section>
     </main>
 
     <div class="upload-modal-overlay" id="upload-modal">
         <div class="upload-modal">
             <div class="upload-modal-header"><div><p class="eyebrow">COURSE MATERIAL</p><h2>Upload Material</h2></div><button class="upload-modal-close" id="close-upload-modal" aria-label="Close">×</button></div>
             <p class="upload-modal-description" id="upload-course-description">Add a file to this course.</p>
-            <div class="upload-form-group"><label>File</label><div class="file-drop-zone" id="file-drop-zone" role="button" tabindex="0" aria-label="Choose or drop a course material file"><div class="upload-zone-icon">↑</div><strong>Choose a file or drop it here</strong><span>PDF, TXT, DOC, DOCX, PPT, or PPTX · max 20 MB</span><button type="button" class="secondary-tool-button" id="modal-file-button">Browse Files</button><div class="selected-file" id="selected-file" aria-live="polite"></div></div></div>
+            <div class="upload-form-group"><label>File</label><div class="file-drop-zone" id="file-drop-zone" role="button" tabindex="0" aria-label="Choose or drop a course material file"><div class="upload-zone-icon">↑</div><strong>Choose a file or drop it here</strong><span>PDF, TXT, DOCX, or PPTX · max 20 MB</span><button type="button" class="secondary-tool-button" id="modal-file-button">Browse Files</button><div class="selected-file" id="selected-file" aria-live="polite"></div></div></div>
             <div class="upload-form-group"><label for="upload-unit-modal">Unit <span class="optional-label">optional</span></label><select id="upload-unit-modal" class="upload-select"><option value="">No unit</option></select></div>
             <p class="form-error" id="upload-error"></p>
             <div class="upload-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-upload">Cancel</button><button type="button" class="primary-button" id="confirm-upload">Upload Material</button></div>

@@ -60,7 +60,8 @@ test("course-aware materials can be uploaded, listed, retrieved, and read", asyn
     const retrieved = await request(context.app)
         .get(`/api/courses/${course.id}/materials/${uploaded.body.id}`)
         .expect(200);
-    assert.equal(retrieved.body.extractedText, "");
+    assert.equal(retrieved.body.extractedText, "Lecture notes");
+    assert.equal(retrieved.body.extractionStatus, "no_text");
 
     const text = await request(context.app)
         .get(`/api/courses/${course.id}/materials/${uploaded.body.id}/text`)
@@ -69,7 +70,9 @@ test("course-aware materials can be uploaded, listed, retrieved, and read", asyn
         id: uploaded.body.id,
         courseId: course.id,
         originalFilename: "My Lecture Notes.txt",
-        extractedText: ""
+        extractedText: "Lecture notes",
+        extractionStatus: "no_text",
+        extractionError: "This material does not contain enough extractable text."
     });
 });
 
@@ -325,6 +328,7 @@ test("legacy material routes retain their frontend response contract", async t =
     const detail = await request(context.app)
         .get(`/api/materials/${uploaded.body.material.id}`)
         .expect(200);
-    assert.equal(detail.body.text_content, "");
+    assert.equal(detail.body.text_content, "legacy notes");
+    assert.equal(detail.body.extraction_status, "no_text");
     assert.equal(detail.body.original_name, "Legacy Notes.txt");
 });

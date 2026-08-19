@@ -79,10 +79,20 @@ function createMaterialService({
 
             const materialType = materialTypeFor(file.originalname);
             storedFilename = await fileStorage.persist(file);
-            const extractedText = await textExtractionService.extract({
+            const extraction = await textExtractionService.extract({
                 storedFilename,
+                originalFilename: file.originalname,
                 materialType
             });
+            const extractionResult = typeof extraction === "string"
+                ? {
+                    text: extraction,
+                    status: extraction.trim() ? "extracted" : "no_text",
+                    error: extraction.trim()
+                        ? null
+                        : "This material does not contain enough extractable text."
+                }
+                : extraction;
 
             const materialId = materialsRepository.create({
                 courseId,
@@ -90,11 +100,12 @@ function createMaterialService({
                 originalFilename: file.originalname,
                 storedFilename,
                 materialType,
-                extractedText,
+                extractedText: extractionResult.text,
                 fileSize: file.size,
                 mimeType: file.mimetype,
                 uploadStatus: "ready",
-                extractionError: null
+                extractionError: extractionResult.error,
+                extractionStatus: extractionResult.status
             });
 
             return materialsRepository.findOwned(materialId, courseId, userId);

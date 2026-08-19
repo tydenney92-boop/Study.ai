@@ -46,6 +46,7 @@ function createMaterialContextService({
             );
             const orderedMaterials = uniqueIds.map(id => materialsById.get(id));
             const emptyMaterial = orderedMaterials.find(material =>
+                material.extraction_status !== "extracted" ||
                 typeof material.text_content !== "string" ||
                 material.text_content.trim() === ""
             );
@@ -53,9 +54,12 @@ function createMaterialContextService({
             if (emptyMaterial) {
                 throw new AppError({
                     code: "MATERIAL_HAS_NO_TEXT",
-                    message: "Every selected material must contain extractable text.",
+                    message: "This material does not contain extractable text yet. Try a typed PDF, DOCX, PPTX, or TXT file.",
                     status: 422,
-                    details: { materialId: emptyMaterial.id }
+                    details: {
+                        materialId: emptyMaterial.id,
+                        extractionStatus: emptyMaterial.extraction_status
+                    }
                 });
             }
 

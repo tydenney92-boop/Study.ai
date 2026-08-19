@@ -241,6 +241,23 @@
     flex: 1;
 }
 
+.material-info .extraction-badge {
+    display: inline-flex;
+    width: fit-content;
+    margin-top: 5px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: #fff7ed;
+    color: #9a3412;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.material-info .extraction-badge[hidden] {
+    display: none;
+}
+
 
 .material-info h3 {
     font-size: 12px;
