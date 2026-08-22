@@ -45,40 +45,54 @@
 
         <div class="quiz-setup-content">
 
-            <div class="quiz-topic">
-                <span id="quiz-course-topic">
-                Course
-                </span>
-            </div>
+            <header class="quiz-setup-intro">
+                <div class="quiz-topic">
+                    <span id="quiz-course-topic">Course</span>
+                </div>
 
+                <h1>Practice Quiz</h1>
 
-            <h1>
-                Practice Quiz
-            </h1>
+                <p>Build a focused practice quiz from your course materials.</p>
+            </header>
 
-
-            <p>
-                Test your understanding of the course material
-                with an AI-generated practice quiz.
-            </p>
-
-            <section class="material-selection" id="quiz-material-selection-wrap">
-                <h3>Choose source materials</h3>
+            <section
+                class="material-selection quiz-setup-card quiz-material-card"
+                id="quiz-material-selection-wrap"
+                aria-labelledby="quiz-material-heading"
+            >
+                <div class="quiz-step-heading">
+                    <span class="quiz-step-number" aria-hidden="true">1</span>
+                    <div>
+                        <h2 id="quiz-material-heading">Choose your study materials</h2>
+                        <p>Select one or more AI-ready sources for this quiz.</p>
+                    </div>
+                </div>
                 <div id="quiz-material-selection"></div>
+                <div id="quiz-material-assistance"></div>
             </section>
 
+            <section
+                class="quiz-setup-card quiz-settings-card"
+                aria-labelledby="quiz-settings-heading"
+            >
+                <div class="quiz-step-heading">
+                    <span class="quiz-step-number" id="quiz-settings-step" aria-hidden="true">2</span>
+                    <div>
+                        <h2 id="quiz-settings-heading">Quiz settings</h2>
+                        <p>Choose how many questions you'd like to practice.</p>
+                    </div>
+                </div>
 
-            <h3>
-                Choose Quiz Length
-            </h3>
-
-
-            <div class="quiz-length-options">
-
-
-                <button
-                    class="quiz-length-button"
+                <div
+                    class="quiz-length-options"
+                    role="group"
+                    aria-label="Number of quiz questions"
+                >
+                    <button
+                    type="button"
+                    class="quiz-length-button selected"
                     data-question-count="5"
+                    aria-pressed="true"
                 >
 
                     <strong>
@@ -89,12 +103,13 @@
                         Questions
                     </span>
 
-                </button>
-
+                    </button>
 
                 <button
+                    type="button"
                     class="quiz-length-button"
                     data-question-count="10"
+                    aria-pressed="false"
                 >
 
                     <strong>
@@ -109,8 +124,10 @@
 
 
                 <button
+                    type="button"
                     class="quiz-length-button"
                     data-question-count="15"
+                    aria-pressed="false"
                 >
 
                     <strong>
@@ -125,8 +142,10 @@
 
 
                 <button
+                    type="button"
                     class="quiz-length-button"
                     data-question-count="20"
+                    aria-pressed="false"
                 >
 
                     <strong>
@@ -140,13 +159,29 @@
                 </button>
 
 
+                </div>
+            </section>
+
+            <div class="quiz-generate-area">
+                <p
+                    class="quiz-setup-status"
+                    id="quiz-setup-status"
+                    role="status"
+                    aria-live="polite"
+                    hidden
+                ></p>
+                <button
+                    type="button"
+                    class="primary-button quiz-generate-button"
+                    id="generate-quiz-button"
+                    disabled
+                >
+                    Generate Quiz
+                </button>
+                <p class="quiz-setup-hint">
+                    Questions are generated only from the materials you select.
+                </p>
             </div>
-
-
-            <p class="quiz-setup-hint">
-                Questions will be generated from your uploaded
-                course materials.
-            </p>
 
 
         </div>

@@ -167,9 +167,13 @@ test("quizzes persist attempts, retake without generation, update progress, and 
     const materialId = await uploadTextMaterial(page, courseId);
 
     await page.goto(`/quiz.html?courseId=${courseId}`);
+    await expect(page.locator("#generate-quiz-button")).toBeDisabled();
     await page.locator(".material-choice", { hasText: "market-notes.txt" }).locator("input").check();
+    await expect(page.locator("#generate-quiz-button")).toBeEnabled();
     await resetAiCounts(page);
     await page.locator('.quiz-length-button[data-question-count="5"]').click();
+    expect((await aiCounts(page)).total).toBe(0);
+    await page.locator("#generate-quiz-button").click();
     await completeFiveQuestionQuiz(page);
     const generated = await aiCounts(page);
     expect(generated.quiz).toBe(1);
@@ -200,6 +204,7 @@ test("quizzes persist attempts, retake without generation, update progress, and 
     await expect(page.locator("#quiz-material-selection-wrap")).toBeHidden();
     await expect(page.locator("#quiz-back-link")).toHaveAttribute("href", new RegExp(`materialId=${materialId}`));
     await page.locator('.quiz-length-button[data-question-count="5"]').click();
+    await page.locator("#generate-quiz-button").click();
     await expect(page.locator("#question")).toContainText("selected material");
 
     await page.goto(`/history.html?courseId=${courseId}`);

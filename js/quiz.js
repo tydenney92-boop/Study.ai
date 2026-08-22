@@ -18,6 +18,12 @@ const quizLengthButtons =
         ".quiz-length-button"
     );
 
+const generateQuizButton =
+    document.querySelector("#generate-quiz-button");
+
+const quizSetupStatus =
+    document.querySelector("#quiz-setup-status");
+
 
 const answerContainer =
     document.querySelector("#answer-container");
@@ -60,6 +66,8 @@ let selectedQuestionCount = 5;
 let generatedQuizId = null;
 
 let submittedAnswers = [];
+
+let generatingQuiz = false;
 
 
 /* =========================================
@@ -116,7 +124,11 @@ quizLengthButtons.forEach(
                     );
 
 
-                startQuiz();
+                quizLengthButtons.forEach(function(otherButton) {
+                    const isSelected = otherButton === button;
+                    otherButton.classList.toggle("selected", isSelected);
+                    otherButton.setAttribute("aria-pressed", String(isSelected));
+                });
 
             }
         );
@@ -124,12 +136,18 @@ quizLengthButtons.forEach(
     }
 );
 
+generateQuizButton.addEventListener("click", startQuiz);
+
 
 /* =========================================
    START QUIZ
 ========================================= */
 
 async function startQuiz() {
+
+    if (generatingQuiz) {
+        return;
+    }
 
     if (!courseId || selectedMaterialIds.length === 0) {
 
@@ -142,28 +160,15 @@ async function startQuiz() {
     }
 
 
-    setupScreen.style.display =
-        "none";
-
-
-    quizInterface.style.display =
-        "block";
-
-
-    questionText.textContent =
-        "Generating your quiz...";
-
-
-    answerContainer.innerHTML = "";
-
-
-    submitButton.style.display =
-        "none";
-
-
-    resultBox.classList.remove(
-        "show"
-    );
+    generatingQuiz = true;
+    generateQuizButton.disabled = true;
+    generateQuizButton.textContent = "Generating Quiz…";
+    generateQuizButton.classList.add("loading");
+    quizLengthButtons.forEach(button => { button.disabled = true; });
+    setupScreen.setAttribute("aria-busy", "true");
+    quizSetupStatus.hidden = false;
+    quizSetupStatus.className = "quiz-setup-status loading-state";
+    quizSetupStatus.textContent = "Study Signal is building your quiz. This may take a moment.";
 
 
     try {
@@ -227,6 +232,20 @@ async function startQuiz() {
         score =
             0;
 
+        setupScreen.style.display =
+            "none";
+
+        quizInterface.style.display =
+            "block";
+
+        answerContainer.innerHTML = "";
+
+        submitButton.style.display =
+            "none";
+
+        resultBox.classList.remove(
+            "show"
+        );
 
         loadQuestion();
 
@@ -239,43 +258,19 @@ async function startQuiz() {
         );
 
 
-        questionText.textContent =
-            "Unable to generate quiz.";
-
-
-        answerContainer.innerHTML = "";
-
-        const errorMessage =
-            document.createElement("p");
-
-        errorMessage.style.cssText =
-            "color:#dc2626;text-align:center;padding:20px;";
-
-        errorMessage.textContent =
+        quizSetupStatus.className = "quiz-setup-status error-state";
+        quizSetupStatus.textContent =
             error.name === "AbortError"
                 ? "The quiz took too long to generate. Please try again."
                 : error.message;
 
-        const retryButton =
-            document.createElement("button");
-
-        retryButton.className =
-            "primary-button";
-
-        retryButton.textContent =
-            "Try Again";
-
-        retryButton.addEventListener(
-            "click",
-            startQuiz
-        );
-
-        answerContainer.appendChild(errorMessage);
-        answerContainer.appendChild(retryButton);
-
-
-        submitButton.style.display =
-            "none";
+    } finally {
+        generatingQuiz = false;
+        generateQuizButton.textContent = "Generate Quiz";
+        generateQuizButton.classList.remove("loading");
+        generateQuizButton.disabled = selectedMaterialIds.length === 0;
+        quizLengthButtons.forEach(button => { button.disabled = false; });
+        setupScreen.removeAttribute("aria-busy");
 
     }
 
@@ -845,29 +840,42 @@ async function initializeQuizMaterials() {
     }
     if (materialId) {
         document.querySelector("#quiz-material-selection-wrap").style.display = "none";
+        document.querySelector("#quiz-settings-step").textContent = "1";
+        generateQuizButton.disabled = false;
         return;
     }
-    quizLengthButtons.forEach(button => { button.disabled = true; });
     try {
         const selector = await StudyAI.materialSelection.mount({
             container,
             courseId,
-            initialMaterialIds: []
+            initialMaterialIds: [],
+            actionButton: generateQuizButton,
+            showFileType: true
         });
         container.addEventListener("change", () => {
             selectedMaterialIds = selector.getSelectedIds();
-            quizLengthButtons.forEach(button => {
-                button.disabled = selectedMaterialIds.length === 0;
-            });
         });
         selectedMaterialIds = selector.getSelectedIds();
+        if (selector.getUsableCount() === 0) {
+            document.querySelector("#quiz-material-assistance").innerHTML = `
+                <div class="quiz-material-assistance friendly-empty">
+                    <strong>No AI-ready materials</strong>
+                    <span>Upload a typed PDF, DOCX, PPTX, or TXT file to generate a quiz.</span>
+                    <a class="primary-button compact-action" href="materials.html?courseId=${encodeURIComponent(courseId)}">+ Add Materials</a>
+                </div>`;
+        }
     } catch (error) {
         if (error.status === 404) {
             StudyAI.courseContext.goToMyCourses("That course is unavailable.");
             return;
         }
-        container.innerHTML = '<div class="friendly-empty error-state"></div>';
-        container.firstElementChild.textContent = error.message;
+        container.innerHTML = `
+            <div class="friendly-empty error-state" role="alert">
+                <strong>Materials could not be loaded</strong>
+                <span></span>
+                <a class="primary-button compact-action" href="materials.html?courseId=${encodeURIComponent(courseId)}">Add Materials</a>
+            </div>`;
+        container.querySelector("span").textContent = error.message;
     }
 }
 

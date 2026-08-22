@@ -1,5 +1,17 @@
 (function() {
-    async function mount({ container, courseId, initialMaterialIds = [], actionButton }) {
+    function fileTypeLabel(material) {
+        const filename = material.originalFilename || material.displayName || "";
+        const extension = filename.includes(".") ? filename.split(".").pop() : "";
+        return extension && extension.length <= 5 ? extension.toUpperCase() : "";
+    }
+
+    async function mount({
+        container,
+        courseId,
+        initialMaterialIds = [],
+        actionButton,
+        showFileType = false
+    }) {
         const selected = new Set(initialMaterialIds.map(Number));
         const updateAction = () => {
             if (actionButton) actionButton.disabled = selected.size === 0;
@@ -46,9 +58,14 @@
                 unsupported: "Unsupported for AI",
                 failed: "Extraction failed"
             };
-            label.querySelector("small").textContent = usable
-                ? location
-                : `${location} · ${unavailableLabels[material.extractionStatus] || "Text unavailable"}`;
+            const metadata = [];
+            const fileType = showFileType ? fileTypeLabel(material) : "";
+            if (fileType) metadata.push(fileType);
+            metadata.push(location);
+            if (!usable) {
+                metadata.push(unavailableLabels[material.extractionStatus] || "Text unavailable");
+            }
+            label.querySelector("small").textContent = metadata.join(" · ");
             label.classList.toggle("unavailable", !usable);
             input.addEventListener("change", () => {
                 if (input.checked) selected.add(material.id);
