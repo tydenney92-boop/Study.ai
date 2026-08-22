@@ -1,6 +1,6 @@
 (function() {
     const loginUrl = `login.html?returnTo=${encodeURIComponent(
-        window.location.pathname.split("/").pop() + window.location.search
+        window.location.pathname.split("/").pop() + window.location.search + window.location.hash
     )}`;
 
     function redirectToLogin() {
@@ -24,6 +24,13 @@
             return null;
         }
     }
+
+    document.querySelectorAll(".profile-card strong").forEach(element => {
+        element.textContent = "";
+    });
+    document.querySelectorAll(".profile-avatar").forEach(element => {
+        element.textContent = "";
+    });
 
     async function logout() {
         try {
@@ -76,6 +83,7 @@
         sidebarNavigation.insertAdjacentElement("afterend", courseNavigation);
 
         try {
+            await StudyAI.api.post("/api/storage-cleanup/reconcile", {});
             if (currentCourseId && /^\d+$/.test(currentCourseId)) {
                 try {
                     await StudyAI.api.post(`/api/courses/${currentCourseId}/open`, {});

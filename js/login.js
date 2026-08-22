@@ -13,8 +13,15 @@ loginForm.addEventListener("submit", async event => {
             password: document.querySelector("#password").value
         });
         const requested = new URLSearchParams(window.location.search).get("returnTo");
-        const safeReturn = requested && !requested.includes(":") && !requested.startsWith("//")
-            ? requested
+        const allowedPages = new Set([
+            "index.html", "course.html", "materials.html", "material.html",
+            "study-guide.html", "quiz.html", "flashcards.html", "notes.html",
+            "progress.html", "history.html"
+        ]);
+        const parsedReturn = requested ? new URL(requested, window.location.href) : null;
+        const page = parsedReturn?.pathname.split("/").pop();
+        const safeReturn = parsedReturn && parsedReturn.origin === window.location.origin && allowedPages.has(page)
+            ? `${page}${parsedReturn.search}${parsedReturn.hash}`
             : "index.html";
         window.location.replace(safeReturn);
     } catch (error) {

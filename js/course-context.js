@@ -1,14 +1,17 @@
 (function() {
-    const params = new URLSearchParams(window.location.search);
+    function params() {
+        return new URLSearchParams(window.location.search);
+    }
     const MY_COURSES_URL = "index.html#courses";
 
     function getCourseId() {
-        const value = Number(params.get("courseId"));
+        const value = Number(params().get("courseId"));
         return Number.isInteger(value) && value > 0 ? value : null;
     }
 
     function getMaterialId() {
-        const value = Number(params.get("materialId") || params.get("id"));
+        const current = params();
+        const value = Number(current.get("materialId") || current.get("id"));
         return Number.isInteger(value) && value > 0 ? value : null;
     }
 
@@ -78,7 +81,7 @@
         if (
             courseId &&
             materialId &&
-            params.get("materialId") !== String(materialId)
+            params().get("materialId") !== String(materialId)
         ) {
             window.history.replaceState(
                 null,

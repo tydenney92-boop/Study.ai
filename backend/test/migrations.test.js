@@ -103,7 +103,8 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
         createBackup: false
     });
 
-    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6]);
+    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7]);
+    assert.equal(tableExists(context.database, "storage_cleanup_jobs"), true);
     assert.equal(tableExists(context.database, "sessions"), true);
     assert.equal(
         context.database.prepare("SELECT COUNT(*) AS count FROM users").get().count,

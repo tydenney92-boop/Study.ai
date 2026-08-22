@@ -11,6 +11,9 @@ const selectedFileLabel = document.querySelector("#selected-file");
 const uploadUnit = document.querySelector("#upload-unit-modal");
 const uploadError = document.querySelector("#upload-error");
 const confirmUpload = document.querySelector("#confirm-upload");
+const emptyTitle = document.querySelector("#empty-materials-title");
+const emptyMessage = document.querySelector("#empty-materials-message");
+const emptyAction = document.querySelector("#empty-materials-action");
 
 let course = null;
 let units = [];
@@ -98,6 +101,21 @@ function renderMaterials() {
 
     container.innerHTML = "";
     emptyState.style.display = filtered.length ? "none" : "block";
+    if (!filtered.length) {
+        const hasQuery = searchInput.value.trim().length > 0;
+        const hasFilter = unitFilter.value !== "all" || typeFilter.value !== "all";
+        if (hasQuery || hasFilter) {
+            emptyTitle.textContent = "No matching materials";
+            emptyMessage.textContent = "Try a different search or clear the active filters.";
+            emptyAction.textContent = "Clear Search & Filters";
+            emptyAction.dataset.action = "clear";
+        } else {
+            emptyTitle.textContent = "No materials yet";
+            emptyMessage.textContent = "Upload the first PDF, TXT, DOCX, or PPTX for this course.";
+            emptyAction.textContent = "Upload Material";
+            emptyAction.dataset.action = "upload";
+        }
+    }
 
     const groups = new Map();
     filtered.forEach(material => {
@@ -176,11 +194,18 @@ async function loadPage() {
     }
 
     try {
-        [course, units, materials] = await Promise.all([
+        const [loadedCourse, loadedUnits, loadedMaterials, clientConfig] = await Promise.all([
             StudyAI.api.get(`/api/courses/${courseId}`),
             StudyAI.api.get(`/api/courses/${courseId}/units`),
-            StudyAI.api.get(`/api/courses/${courseId}/materials`)
+            StudyAI.api.get(`/api/courses/${courseId}/materials`),
+            StudyAI.api.get("/api/client-config")
         ]);
+        course = loadedCourse;
+        units = loadedUnits;
+        materials = loadedMaterials;
+        const megabytes = clientConfig.maxUploadBytes / (1024 * 1024);
+        document.querySelector("#upload-file-help").textContent =
+            `PDF, TXT, DOCX, or PPTX · max ${Number.isInteger(megabytes) ? megabytes : megabytes.toFixed(1)} MB`;
         document.title = `${course.courseCode} Materials | Study Signal`;
         document.querySelector("#materials-course-name").textContent =
             `${course.courseCode} · ${course.courseName}`;
@@ -191,6 +216,7 @@ async function loadPage() {
         courseLink.href = StudyAI.courseContext.url("course.html", { courseId });
         populateUnitSelects();
         renderMaterials();
+        if (new URLSearchParams(window.location.search).get("upload") === "1") openModal();
     } catch (error) {
         if (error.status === 404) {
             StudyAI.courseContext.goToMyCourses("That course is unavailable.");
@@ -215,8 +241,20 @@ function closeModal() {
     uploadError.textContent = "";
 }
 
+modal.addEventListener("studyai:modal-close", closeModal);
+
 document.querySelector("#upload-button").addEventListener("click", openModal);
 document.querySelector("#upload-button-bottom").addEventListener("click", openModal);
+emptyAction.addEventListener("click", () => {
+    if (emptyAction.dataset.action === "clear") {
+        searchInput.value = "";
+        unitFilter.value = "all";
+        typeFilter.value = "all";
+        searchMaterials();
+    } else {
+        openModal();
+    }
+});
 document.querySelector("#close-upload-modal").addEventListener("click", closeModal);
 document.querySelector("#cancel-upload").addEventListener("click", closeModal);
 document.querySelector("#modal-file-button").addEventListener("click", () => fileInput.click());

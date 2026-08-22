@@ -49,7 +49,7 @@ function addUserMessage(message) {
 function addAssistantMessage(answer, sources) {
     const element = document.createElement("div");
     element.className = "message assistant";
-    element.innerHTML = '<div class="message-avatar">S</div><div class="message-content"><p></p><div class="answer-sources"><strong>Sources</strong><div></div></div></div>';
+    element.innerHTML = '<div class="message-avatar">S</div><div class="message-content"><p></p><div class="answer-sources"><strong>Selected materials</strong><div></div></div></div>';
     element.querySelector("p").textContent = answer;
     const sourceList = element.querySelector(".answer-sources div");
     sources.forEach(source => {
@@ -141,7 +141,7 @@ async function initializeNotes() {
             document.querySelector("#notes-status-label").textContent = "No usable materials";
             document.querySelector("#notes-material-selection").insertAdjacentHTML(
                 "afterbegin",
-                '<div class="notes-material-empty"><strong>No usable extracted text</strong><span>Upload a typed PDF, DOCX, PPTX, or TXT file to ask grounded questions.</span></div>'
+                `<div class="notes-material-empty"><strong>No usable extracted text</strong><span>Upload a typed PDF, DOCX, PPTX, or TXT file to ask grounded questions.</span><a class="primary-button compact-action" href="materials.html?courseId=${encodeURIComponent(notesCourseId)}&upload=1">+ Add Materials</a></div>`
             );
         }
         document.querySelector("#notes-material-selection").addEventListener(

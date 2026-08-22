@@ -73,3 +73,10 @@ test("legacy material URLs normalize before material actions are enabled", () =>
         "material.html?courseId=7&materialId=12"
     );
 });
+
+test("course context reads the current URL after replaceState changes it", () => {
+    const page = contextFor("?courseId=7");
+    page.location.search = "?courseId=9&materialId=14";
+    assert.equal(page.navigation.getCourseId(), 9);
+    assert.equal(page.navigation.getMaterialId(), 14);
+});

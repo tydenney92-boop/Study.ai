@@ -126,6 +126,22 @@ test("opening a course updates persisted ordering and remains ownership scoped",
     );
 });
 
+test("course summaries return dashboard counts and only extracted materials are ready", async t => {
+    const context = createTestApp();
+    t.after(context.cleanup);
+    context.database.prepare(`
+        INSERT INTO materials (course_id, unit_id, original_filename, stored_filename,
+            material_type, extracted_text, extraction_status)
+        VALUES (1, 1, 'ready.txt', 'ready.txt', 'notes', 'text', 'extracted'),
+               (1, 1, 'scan.pdf', 'scan.pdf', 'pdf', '', 'no_text')
+    `).run();
+    const response = await request(context.app).get("/api/courses/summary").expect(200);
+    const legacy = response.body.find(course => course.id === 1);
+    assert.equal(legacy.unitCount, 5);
+    assert.equal(legacy.materialCount, 2);
+    assert.equal(legacy.readyMaterialCount, 1);
+});
+
 test("deleting a course cascades relational data and removes stored materials", async t => {
     const context = createTestApp();
     t.after(context.cleanup);
@@ -178,7 +194,8 @@ test("deleting a course cascades relational data and removes stored materials", 
     }
 });
 
-test("course deletion leaves database records intact when storage cleanup fails", async t => {
+test("course deletion cascades data and journals failed storage cleanup", async t => {
+    let storageAvailable = false;
     const context = createTestApp({
         fileStorage: {
             driver: "test",
@@ -186,7 +203,7 @@ test("course deletion leaves database records intact when storage cleanup fails"
             createUploadMiddleware() {
                 return { single() { return (req, res, next) => next(); } };
             },
-            async remove() { throw new Error("Storage unavailable"); },
+            async remove() { if (!storageAvailable) throw new Error("Storage unavailable"); },
             async healthCheck() { return true; }
         }
     });
@@ -198,14 +215,17 @@ test("course deletion leaves database records intact when storage cleanup fails"
         ) VALUES (1, 1, 'keep.txt', 'keep.txt', 'notes', '', 'ready')
     `).run();
 
-    const response = await request(context.app).delete("/api/courses/1").expect(503);
-    assert.equal(response.body.error.code, "COURSE_STORAGE_CLEANUP_FAILED");
+    const response = await request(context.app).delete("/api/courses/1").expect(202);
+    assert.equal(response.body.cleanup.pending, 1);
     assert.equal(
         context.database.prepare("SELECT COUNT(*) AS count FROM courses WHERE id = 1").get().count,
-        1
+        0
     );
     assert.equal(
         context.database.prepare("SELECT COUNT(*) AS count FROM materials WHERE course_id = 1").get().count,
-        1
+        0
     );
+    assert.equal(context.database.prepare("SELECT COUNT(*) AS count FROM storage_cleanup_jobs").get().count, 1);
+    storageAvailable = true;
+    await request(context.app).post("/api/storage-cleanup/reconcile").send({}).expect(200, { completed: 1, pending: 0 });
 });

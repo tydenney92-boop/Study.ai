@@ -8,7 +8,9 @@ function createMaterialService({
     unitsRepository,
     materialsRepository,
     textExtractionService,
-    fileStorage
+    fileStorage,
+    storageCleanupRepository,
+    storageCleanupService
 }) {
     function requireLegacyCourse(userId) {
         const course = coursesRepository.findLegacyOwned(userId);
@@ -187,19 +189,13 @@ function createMaterialService({
 
         async delete(materialId, courseId, userId) {
             const material = this.get(materialId, courseId, userId);
-
-            try {
-                await fileStorage.remove(material.storedFilename);
-            } catch (error) {
-                throw new AppError({
-                    code: "MATERIAL_STORAGE_CLEANUP_FAILED",
-                    message: "The uploaded file could not be removed. The material was not deleted.",
-                    status: 503,
-                    expose: true
-                });
-            }
-
-            materialsRepository.deleteOwned(materialId, courseId, userId);
+            const jobs = storageCleanupRepository.deleteMaterialWithCleanup({
+                materialId,
+                courseId,
+                userId,
+                storedFilename: material.storedFilename
+            });
+            return storageCleanupService.reconcileJobs(jobs);
         },
 
         legacyCourse(userId) {

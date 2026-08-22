@@ -213,10 +213,12 @@ document.querySelector("#confirm-delete-material").addEventListener("click", asy
     button.disabled = true;
     button.textContent = "Deleting…";
     try {
-        await StudyAI.api.delete(
+        const result = await StudyAI.api.delete(
             `/api/courses/${loadedMaterial.courseId}/materials/${loadedMaterial.id}`
         );
-        StudyAI.courseContext.setNotice("Material deleted successfully.");
+        StudyAI.courseContext.setNotice(result?.cleanup?.pending
+            ? "Material deleted. Stored-file cleanup is queued and will be retried."
+            : "Material deleted successfully.");
         window.location.replace(
             StudyAI.courseContext.url("materials.html", {
                 courseId: loadedMaterial.courseId

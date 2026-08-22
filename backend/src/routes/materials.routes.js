@@ -144,7 +144,8 @@ function createCourseMaterialsRouter({ materialService, upload }) {
 
     router.delete("/:materialId", asyncHandler(async function(req, res) {
         const materialId = positiveInteger(req.params.materialId, "materialId");
-        await materialService.delete(materialId, req.courseId, req.user.id);
+        const cleanup = await materialService.delete(materialId, req.courseId, req.user.id);
+        if (cleanup.pending) return res.status(202).json({ cleanup });
         res.status(204).end();
     }));
 

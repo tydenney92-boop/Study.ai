@@ -11,6 +11,7 @@ let units = [];
 let materials = [];
 let editingUnit = null;
 let pendingDeleteUnit = null;
+let reorderPending = false;
 
 if (!courseId) StudyAI.courseContext.goToMyCourses("Choose a course to continue.");
 
@@ -45,8 +46,8 @@ function renderUnit(unit, index) {
     card.querySelector(".course-meta-line").textContent = `${count} material${count === 1 ? "" : "s"}`;
     const up = card.querySelector(".unit-up");
     const down = card.querySelector(".unit-down");
-    up.disabled = index === 0;
-    down.disabled = index === units.length - 1;
+    up.disabled = reorderPending || index === 0;
+    down.disabled = reorderPending || index === units.length - 1;
     up.addEventListener("click", () => moveUnit(index, -1));
     down.addEventListener("click", () => moveUnit(index, 1));
     card.querySelector(".unit-edit").addEventListener("click", () => openUnitModal(unit));
@@ -78,7 +79,7 @@ async function loadCourse() {
         document.querySelector("#course-danger-zone").hidden = false;
         document.querySelector("#edit-course-button").hidden = false;
         document.querySelectorAll("[data-course-page]").forEach(link => {
-            link.href = courseUrl(link.dataset.coursePage);
+            link.href = courseUrl(link.dataset.coursePage, link.dataset.openUpload ? { upload: 1 } : {});
         });
         document.querySelector("#course-unit-count").textContent = units.length;
         document.querySelector("#course-material-count").textContent = materials.length;
@@ -102,8 +103,6 @@ function openUnitModal(unit = null) {
     unitFormError.textContent = "";
     document.querySelector("#unit-modal-title").textContent = unit ? "Rename Unit" : "Add a Unit";
     document.querySelector("#save-unit-button").textContent = unit ? "Save Name" : "Create Unit";
-    document.querySelector("#unit-number-field").hidden = Boolean(unit);
-    document.querySelector("#unit-number").required = !unit;
     if (unit) document.querySelector("#unit-name").value = unit.name;
     unitModal.classList.add("open");
 }
@@ -116,10 +115,13 @@ function closeUnitModal() {
 }
 
 async function moveUnit(index, offset) {
+    if (reorderPending) return;
     const reordered = [...units];
     const [unit] = reordered.splice(index, 1);
     reordered.splice(index + offset, 0, unit);
     try {
+        reorderPending = true;
+        renderUnits();
         units = await StudyAI.api.put(`/api/courses/${courseId}/units/order`, {
             unitIds: reordered.map(item => item.id)
         });
@@ -127,6 +129,9 @@ async function moveUnit(index, offset) {
         StudyAI.ui.notify("Unit order updated.", { type: "success" });
     } catch (error) {
         StudyAI.ui.notify(error.message, { type: "error" });
+    } finally {
+        reorderPending = false;
+        renderUnits();
     }
 }
 
@@ -158,8 +163,7 @@ unitForm.addEventListener("submit", async event => {
             });
         } else {
             await StudyAI.api.post(`/api/courses/${courseId}/units`, {
-                name: document.querySelector("#unit-name").value,
-                unitNumber: Number(document.querySelector("#unit-number").value)
+                name: document.querySelector("#unit-name").value
             });
         }
         closeUnitModal();
@@ -237,9 +241,11 @@ document.querySelector("#confirm-delete-course").addEventListener("click", async
     button.disabled = true;
     button.textContent = "Deleting…";
     try {
-        await StudyAI.api.delete(`/api/courses/${courseId}`);
+        const result = await StudyAI.api.delete(`/api/courses/${courseId}`);
         document.querySelector(`.sidebar-course-link[href$="courseId=${courseId}"]`)?.remove();
-        StudyAI.courseContext.setNotice("Course deleted successfully.");
+        StudyAI.courseContext.setNotice(result?.cleanup?.pending
+            ? "Course deleted. Stored-file cleanup is queued and will be retried."
+            : "Course deleted successfully.");
         window.location.replace("index.html#courses");
     } catch (error) {
         document.querySelector("#delete-course-error").textContent = error.message;

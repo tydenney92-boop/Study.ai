@@ -12,7 +12,12 @@ function translateCourseConstraint(error) {
     throw error;
 }
 
-function createCourseService({ coursesRepository, materialsRepository, fileStorage }) {
+function createCourseService({
+    coursesRepository,
+    materialsRepository,
+    storageCleanupRepository,
+    storageCleanupService
+}) {
     function requireOwned(courseId, userId) {
         const course = coursesRepository.findOwned(courseId, userId);
 
@@ -32,6 +37,10 @@ function createCourseService({ coursesRepository, materialsRepository, fileStora
 
         list(userId) {
             return coursesRepository.listByUser(userId);
+        },
+
+        summaries(userId) {
+            return coursesRepository.listSummariesByUser(userId);
         },
 
         create(userId, input) {
@@ -64,21 +73,12 @@ function createCourseService({ coursesRepository, materialsRepository, fileStora
                 courseId,
                 userId
             );
-            const results = await Promise.allSettled(
-                storedFiles.map(file => fileStorage.remove(file.storedFilename))
-            );
-            const failed = results.filter(result => result.status === "rejected");
-            if (failed.length > 0) {
-                throw new AppError({
-                    code: "COURSE_STORAGE_CLEANUP_FAILED",
-                    message: "Uploaded files could not be removed. The course was not deleted.",
-                    status: 503,
-                    expose: true,
-                    details: { failedFiles: failed.length }
-                });
-            }
-
-            coursesRepository.deleteOwned(courseId, userId);
+            const jobs = storageCleanupRepository.deleteCourseWithCleanup({
+                courseId,
+                userId,
+                filenames: storedFiles.map(file => file.storedFilename)
+            });
+            return storageCleanupService.reconcileJobs(jobs);
         }
     };
 }

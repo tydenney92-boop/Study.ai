@@ -15,7 +15,7 @@ function unitInput(body, partial = false) {
             optional: partial,
             maxLength: 200
         }),
-        unitNumber: body.unitNumber === undefined && partial
+        unitNumber: body.unitNumber === undefined
             ? undefined
             : positiveInteger(body.unitNumber, "unitNumber")
     };

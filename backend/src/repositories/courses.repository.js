@@ -19,6 +19,20 @@ function createCoursesRepository(database) {
             `).all(userId);
         },
 
+        listSummariesByUser(userId) {
+            return database.prepare(`
+                SELECT ${selectFields},
+                       (SELECT COUNT(*) FROM units WHERE units.course_id = courses.id) AS unitCount,
+                       (SELECT COUNT(*) FROM materials WHERE materials.course_id = courses.id) AS materialCount,
+                       (SELECT COUNT(*) FROM materials
+                        WHERE materials.course_id = courses.id
+                          AND materials.extraction_status = 'extracted') AS readyMaterialCount
+                FROM courses
+                WHERE user_id = ?
+                ORDER BY COALESCE(last_opened_at, created_at) DESC, id DESC
+            `).all(userId);
+        },
+
         findOwned(courseId, userId) {
             return database.prepare(`
                 SELECT ${selectFields}

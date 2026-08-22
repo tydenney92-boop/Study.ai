@@ -122,7 +122,8 @@ async function generateStudyGuide() {
 
 
         displayStudyGuide(
-            result.generatedContent
+            result.generatedContent,
+            result
         );
 
 
@@ -270,6 +271,13 @@ function displayStudyGuide(guide, metadata = null) {
             "ADDITIONAL TIPS"
         );
 
+    const tips =
+        extractSection(
+            text,
+            "ADDITIONAL TIPS",
+            null
+        );
+
 
 
     /* -----------------------------------------
@@ -306,7 +314,8 @@ function displayStudyGuide(guide, metadata = null) {
 
     addExtraGuideSection(
         "Formulas",
-        formulas
+        formulas,
+        "03"
     );
 
 
@@ -317,7 +326,8 @@ function displayStudyGuide(guide, metadata = null) {
 
     addExtraGuideSection(
         "Common Mistakes",
-        mistakes
+        mistakes,
+        "04"
     );
 
 
@@ -328,8 +338,22 @@ function displayStudyGuide(guide, metadata = null) {
 
     addExtraGuideSection(
         "Exam Questions",
-        questions
+        questions,
+        "05"
     );
+
+    addExtraGuideSection(
+        "Additional Tips",
+        tips,
+        "06"
+    );
+
+    const sourceSection = document.querySelector("#source-section");
+    const quickReview = document.querySelector("#quick-review");
+    if (sourceSection && quickReview) {
+        sourceSection.querySelector(".guide-section-heading span").textContent = "07";
+        quickReview.parentElement.insertBefore(sourceSection, quickReview);
+    }
 
 }
 
@@ -362,11 +386,9 @@ function extractSection(
         startTitle.length;
 
 
-    const endIndex =
-        text.toUpperCase().indexOf(
-            endTitle,
-            contentStart
-        );
+    const endIndex = endTitle
+        ? text.toUpperCase().indexOf(endTitle, contentStart)
+        : -1;
 
 
     if (endIndex === -1) {
@@ -484,7 +506,8 @@ function addTextAsList(
 
 function addExtraGuideSection(
     title,
-    content
+    content,
+    number
 ) {
 
     if (!content) {
@@ -522,6 +545,8 @@ function addExtraGuideSection(
     section.className =
         "guide-section";
 
+    section.id = title.toLowerCase().replace(/\s+/g, "-");
+
 
     section.dataset.aiSection =
         title;
@@ -543,8 +568,7 @@ function addExtraGuideSection(
         );
 
 
-    headingNumber.textContent =
-        "AI";
+    headingNumber.textContent = number;
 
 
     const headingTitle =
@@ -696,7 +720,8 @@ if (courseId && savedGuideId) {
 else if (courseId && materialId) {
 
     document.querySelector("#guide-material-selection-wrap").style.display = "none";
-    generateStudyGuide();
+    generateButton.disabled = false;
+    guideSummary.textContent = "Generate a guide from the selected material when you are ready.";
 
 }
 else if (courseId) {

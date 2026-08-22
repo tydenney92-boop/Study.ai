@@ -14,13 +14,13 @@
             <a href="index.html#courses" class="nav-item"><span>▣</span>My Courses</a>
             <a href="progress.html" class="nav-item"><span>◔</span>Progress</a>
         </nav>
-        <div class="sidebar-bottom"><div class="profile-card"><div class="profile-avatar">D</div><div><strong>Development User</strong><small>Student</small></div></div></div>
+        <div class="sidebar-bottom"><div class="profile-card"><div class="profile-avatar"></div><div><strong></strong><small>Student</small></div></div></div>
     </aside>
 
     <main class="main-content">
         <header class="topbar">
             <div><a class="back-link" href="index.html#courses">← My Courses</a><p class="eyebrow">MY COURSE · <span id="course-semester">Loading…</span></p><h1 id="course-code-title">Course</h1><p class="subtitle" id="course-name-subtitle">Loading course…</p></div>
-            <div class="header-actions"><button class="secondary-tool-button" id="edit-course-button" hidden>Edit Course</button><button class="secondary-tool-button" id="add-unit-button">+ Add Unit</button><a href="index.html#courses" data-course-page="materials.html" class="primary-button">+ Add Materials</a></div>
+            <div class="header-actions"><button class="secondary-tool-button" id="edit-course-button" hidden>Edit Course</button><button class="secondary-tool-button" id="add-unit-button">+ Add Unit</button><a href="index.html#courses" data-course-page="materials.html" data-open-upload="true" class="primary-button">+ Add Materials</a></div>
         </header>
 
         <section class="stats-grid">
@@ -57,7 +57,6 @@
             <div class="app-modal-header"><div><p class="eyebrow">COURSE UNIT</p><h2 id="unit-modal-title">Add a Unit</h2></div><button class="icon-button" id="close-unit-modal" aria-label="Close">×</button></div>
             <form id="unit-form" class="app-form">
                 <label>Unit name<input id="unit-name" maxlength="200" required placeholder="Cell Biology"></label>
-                <label id="unit-number-field">Unit number<input id="unit-number" type="number" min="1" required placeholder="1"></label>
                 <p class="form-error" id="unit-form-error"></p>
                 <div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-unit">Cancel</button><button type="submit" class="primary-button" id="save-unit-button">Create Unit</button></div>
             </form>

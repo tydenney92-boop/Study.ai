@@ -14,6 +14,7 @@ const { createQuizAttemptsRepository } = require("./repositories/quiz-attempts.r
 const { createSessionsRepository } = require("./repositories/sessions.repository");
 const { createProgressRepository } = require("./repositories/progress.repository");
 const { createFlashcardsRepository } = require("./repositories/flashcards.repository");
+const { createStorageCleanupRepository } = require("./repositories/storage-cleanup.repository");
 const { createCourseService } = require("./services/course.service");
 const { createUnitService } = require("./services/unit.service");
 const { createMaterialService } = require("./services/material.service");
@@ -27,6 +28,7 @@ const { createProgressService } = require("./services/progress.service");
 const { createFlashcardService } = require("./services/flashcard.service");
 const { createFlashcardGenerationService } = require("./services/flashcard-generation.service");
 const { createAskNotesService } = require("./services/ask-notes.service");
+const { createStorageCleanupService } = require("./services/storage-cleanup.service");
 const { SqliteSessionStore } = require("./services/sqlite-session-store");
 const { createTextExtractionService } = require("./services/text-extraction.service");
 const { createConfiguredStorage } = require("./services/storage-factory");
@@ -43,6 +45,7 @@ const { createQuizAttemptsRouter } = require("./routes/quiz-attempts.routes");
 const { createProgressRouter, createCourseProgressRouter } = require("./routes/progress.routes");
 const { createFlashcardsRouter } = require("./routes/flashcards.routes");
 const { createAskNotesRouter } = require("./routes/ask-notes.routes");
+const { createStorageCleanupRouter } = require("./routes/storage-cleanup.routes");
 const {
     createCourseMaterialsRouter,
     createLegacyMaterialsRouter
@@ -111,7 +114,8 @@ const defaultRepositories = {
     quizAttempts: createQuizAttemptsRepository(db),
     sessions: createSessionsRepository(db),
     progress: createProgressRepository(db),
-    flashcards: createFlashcardsRepository(db)
+    flashcards: createFlashcardsRepository(db),
+    storageCleanup: createStorageCleanupRepository(db)
 };
 const repositories = {
     ...defaultRepositories,
@@ -121,10 +125,15 @@ const repositories = {
         : {})
 };
 
+const storageCleanupService = createStorageCleanupService({
+    repository: repositories.storageCleanup,
+    fileStorage
+});
 const coursesService = createCourseService({
     coursesRepository: repositories.courses,
     materialsRepository: repositories.materials,
-    fileStorage
+    storageCleanupRepository: repositories.storageCleanup,
+    storageCleanupService
 });
 const unitsService = createUnitService({
     coursesService,
@@ -139,7 +148,9 @@ const materialService = createMaterialService({
     unitsRepository: repositories.units,
     materialsRepository: repositories.materials,
     textExtractionService,
-    fileStorage
+    fileStorage,
+    storageCleanupRepository: repositories.storageCleanup,
+    storageCleanupService
 });
 const materialContextService = createMaterialContextService({
     coursesService,
@@ -262,6 +273,15 @@ if (config.serveFrontend) {
 
 app.use("/api", requireAuthentication);
 
+app.get("/api/client-config", function(req, res) {
+    res.json({ maxUploadBytes: config.maxUploadBytes });
+});
+
+app.use(
+    "/api/storage-cleanup",
+    createStorageCleanupRouter({ storageCleanupService })
+);
+
 app.use(
     "/api/courses/:courseId/units",
     createUnitsRouter({ unitsService })
@@ -284,6 +304,10 @@ app.use(
     createAskNotesRouter({ askNotesService, aiUsageGuard })
 );
 app.use(
+    "/api/courses",
+    createCoursesRouter({ coursesService })
+);
+app.use(
     "/api/courses/:courseId",
     createCourseAiRouter({
         studyGuideService,
@@ -291,10 +315,6 @@ app.use(
         generatedContentService,
         aiUsageGuard
     })
-);
-app.use(
-    "/api/courses",
-    createCoursesRouter({ coursesService })
 );
 app.use(
     "/api/materials",

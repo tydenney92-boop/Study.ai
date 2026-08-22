@@ -40,7 +40,12 @@ function createUnitService({ coursesService, unitsRepository }) {
             coursesService.requireOwned(courseId, userId);
 
             try {
-                const unitId = unitsRepository.create({ courseId, ...input });
+                const existing = unitsRepository.listOwned(courseId, userId);
+                const unitId = unitsRepository.create({
+                    courseId,
+                    ...input,
+                    unitNumber: input.unitNumber ?? existing.length + 1
+                });
                 return unitsRepository.findOwned(unitId, courseId, userId);
             } catch (error) {
                 return translateUnitConstraint(error);

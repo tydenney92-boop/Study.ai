@@ -46,4 +46,27 @@ test("shared modal support provides keyboard and focus accessibility", () => {
     assert.match(ui, /event\.key !== "Tab"/);
     assert.match(ui, /aria-hidden/);
     assert.match(ui, /opener\?\.focus/);
+    assert.match(ui, /studyai:modal-close/);
+});
+
+test("stabilized frontend uses explicit study-guide generation and accurate states", () => {
+    const guideHtml = read("study-guide.html");
+    const guideScript = read("js/study-guide.js");
+    const dashboard = read("js/dashboard.js");
+    const auth = read("js/auth.js");
+    const materials = read("js/materials.js");
+    const notes = read("notes.html");
+    const flashcards = read("js/flashcards.js");
+
+    assert.match(guideHtml, />\s*Definitions\s*</);
+    assert.match(guideHtml, /id="quick-review"/);
+    assert.match(guideScript, /"Additional Tips"/);
+    assert.doesNotMatch(guideScript, /else if \(courseId && materialId\)[\s\S]{0,180}generateStudyGuide\(\)/);
+    assert.match(dashboard, /\/api\/courses\/summary/);
+    assert.match(dashboard, /readyMaterialCount/);
+    assert.match(auth, /window\.location\.hash/);
+    assert.match(materials, /\/api\/client-config/);
+    assert.match(materials, /No matching materials/);
+    assert.match(notes, /Each question is answered independently/);
+    assert.match(flashcards, /StudyAI\.api\.patch/);
 });

@@ -23,7 +23,13 @@ function historyItem(item, type) {
     const target = StudyAI.courseContext.url(isQuiz ? "quiz.html" : "study-guide.html", { courseId: historyCourseId, [idKey]: item.id });
     article.innerHTML = `<div class="history-item-top"><div><p class="eyebrow"></p><h3></h3></div><span class="score-chip"></span></div><p class="history-meta"></p><p class="history-sources"></p><div class="history-actions"><a class="primary-button">${isQuiz ? "Open / Retake" : "Open Guide"}</a><button class="history-delete">Delete</button></div>`;
     article.querySelector(".eyebrow").textContent = isQuiz ? "SAVED QUIZ" : "SAVED GUIDE";
-    article.querySelector("h3").textContent = isQuiz ? `Practice Quiz #${item.id}` : `Study Guide #${item.id}`;
+    const sourceNames = item.sources.map(source => source.materialName).filter(Boolean);
+    const scope = sourceNames.length === 0
+        ? "Unavailable source"
+        : sourceNames.length === 1
+            ? sourceNames[0]
+            : `${sourceNames[0]} + ${sourceNames.length - 1} more`;
+    article.querySelector("h3").textContent = `${isQuiz ? "Practice Quiz" : "Study Guide"} · ${scope}`;
     const chip = article.querySelector(".score-chip");
     chip.textContent = isQuiz ? `${item.attemptCount} attempt${item.attemptCount === 1 ? "" : "s"}` : "Saved";
     article.querySelector(".history-meta").textContent = `Created ${dateLabel(item.createdAt)}`;

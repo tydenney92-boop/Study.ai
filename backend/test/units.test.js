@@ -55,6 +55,17 @@ test("units can be created, listed, retrieved, updated, and deleted", async t =>
         .expect(404);
 });
 
+test("new units append automatically when unitNumber is omitted", async t => {
+    const context = createTestApp();
+    t.after(context.cleanup);
+    const course = await createCourse(context.app, "AUTO 101");
+    const first = await request(context.app).post(`/api/courses/${course.id}/units`)
+        .send({ name: "First" }).expect(201);
+    const second = await request(context.app).post(`/api/courses/${course.id}/units`)
+        .send({ name: "Second" }).expect(201);
+    assert.deepEqual([first.body.unitNumber, second.body.unitNumber], [1, 2]);
+});
+
 test("unit routes enforce course ownership and course-unit relationships", async t => {
     const context = createTestApp();
     t.after(context.cleanup);

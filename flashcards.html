@@ -9,7 +9,7 @@
 <aside class="sidebar">
     <div class="brand"><div class="brand-icon">S</div><span>Study Signal</span></div>
     <nav class="sidebar-nav"><a href="index.html" class="nav-item"><span>⌂</span>Dashboard</a><a href="index.html#courses" class="nav-item"><span>▣</span>My Courses</a><a href="progress.html" class="nav-item"><span>◔</span>Progress</a></nav>
-    <div class="sidebar-bottom"><div class="profile-card"><div class="profile-avatar">S</div><div><strong>Student</strong><small>Student</small></div></div></div>
+    <div class="sidebar-bottom"><div class="profile-card"><div class="profile-avatar"></div><div><strong></strong><small>Student</small></div></div></div>
 </aside>
 <main class="main-content flashcards-page">
     <header class="tool-page-header">
@@ -42,11 +42,11 @@
             <button class="secondary-tool-button" id="next-card">Next →</button>
         </div>
         <div class="flashcard-progress"><div class="progress-bar"><div class="progress-fill blue-fill" id="flashcard-progress"></div></div></div>
-        <div class="flashcard-card-actions"><button class="history-delete" id="delete-card-button">Delete this card</button></div>
+        <div class="flashcard-card-actions"><button class="text-button" id="edit-card-button">Edit this card</button><button class="history-delete" id="delete-card-button">Delete this card</button></div>
     </section>
 </main>
 
-<div class="app-modal-overlay" id="manual-card-modal"><div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="manual-card-title"><div class="app-modal-header"><div><p class="eyebrow">MANUAL FLASHCARD</p><h2 id="manual-card-title">Add a Card</h2></div><button class="icon-button" id="manual-card-close" aria-label="Close">×</button></div><form id="manual-card-form" class="app-form"><label>Front<textarea id="manual-card-front" maxlength="500" required placeholder="Question or concept"></textarea></label><label>Back<textarea id="manual-card-back" maxlength="2000" required placeholder="Answer or explanation"></textarea></label><p class="form-error" id="manual-card-error"></p><div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="manual-card-cancel">Cancel</button><button type="submit" class="primary-button">Save Card</button></div></form></div></div>
+<div class="app-modal-overlay" id="manual-card-modal"><div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="manual-card-title"><div class="app-modal-header"><div><p class="eyebrow">FLASHCARD</p><h2 id="manual-card-title">Add a Card</h2></div><button class="icon-button" id="manual-card-close" aria-label="Close">×</button></div><form id="manual-card-form" class="app-form"><label>Front<textarea id="manual-card-front" maxlength="500" required placeholder="Question or concept"></textarea></label><label>Back<textarea id="manual-card-back" maxlength="2000" required placeholder="Answer or explanation"></textarea></label><p class="form-error" id="manual-card-error"></p><div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="manual-card-cancel">Cancel</button><button type="submit" class="primary-button" id="save-manual-card">Save Card</button></div></form></div></div>
 
 <div class="app-modal-overlay" id="generate-card-modal"><div class="app-modal flashcard-generate-modal" role="dialog" aria-modal="true" aria-labelledby="generate-card-title"><div class="app-modal-header"><div><p class="eyebrow">AI FLASHCARDS</p><h2 id="generate-card-title">Choose source materials</h2></div><button class="icon-button" id="generate-card-close" aria-label="Close">×</button></div><div id="flashcard-material-selection"></div><label class="card-count-field">NUMBER OF CARDS<select id="flashcard-count"><option value="5">5 cards</option><option value="10" selected>10 cards</option><option value="15">15 cards</option><option value="20">20 cards</option></select></label><p class="form-error" id="generate-card-error"></p><div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="generate-card-cancel">Cancel</button><button type="button" class="primary-button" id="confirm-generate-cards" disabled>Generate Cards</button></div></div></div>
 

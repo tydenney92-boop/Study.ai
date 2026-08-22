@@ -11,6 +11,7 @@ const deleteModal = document.querySelector("#delete-card-modal");
 let flashcards = [];
 let currentCard = 0;
 let materialSelector = null;
+let editingCardId = null;
 
 if (!flashcardCourseId) {
     flashcardContext.goToMyCourses("Choose a course before opening flashcards.");
@@ -144,14 +145,24 @@ async function review(outcome) {
 document.querySelector("#know-card").addEventListener("click", () => review("know_it"));
 document.querySelector("#still-learning").addEventListener("click", () => review("still_learning"));
 
-function openManual() {
+function openManual(card = null) {
+    editingCardId = card?.id || null;
     document.querySelector("#manual-card-form").reset();
     document.querySelector("#manual-card-error").textContent = "";
+    document.querySelector("#manual-card-title").textContent = card ? "Edit Card" : "Add a Card";
+    document.querySelector("#save-manual-card").textContent = card ? "Save Changes" : "Save Card";
+    if (card) {
+        document.querySelector("#manual-card-front").value = card.front;
+        document.querySelector("#manual-card-back").value = card.back;
+    }
     manualModal.classList.add("open");
     document.querySelector("#manual-card-front").focus();
 }
-document.querySelector("#add-card-button").addEventListener("click", openManual);
-document.querySelector("#empty-add-button").addEventListener("click", openManual);
+document.querySelector("#add-card-button").addEventListener("click", () => openManual());
+document.querySelector("#empty-add-button").addEventListener("click", () => openManual());
+document.querySelector("#edit-card-button").addEventListener("click", () => {
+    if (current()) openManual(current());
+});
 document.querySelector("#manual-card-close").addEventListener("click", () => closeModal(manualModal));
 document.querySelector("#manual-card-cancel").addEventListener("click", () => closeModal(manualModal));
 document.querySelector("#manual-card-form").addEventListener("submit", async event => {
@@ -159,11 +170,11 @@ document.querySelector("#manual-card-form").addEventListener("submit", async eve
     const button = event.currentTarget.querySelector("button[type='submit']");
     button.disabled = true;
     try {
-        await StudyAI.api.post(`/api/courses/${flashcardCourseId}/flashcards`, {
-            front: document.querySelector("#manual-card-front").value,
-            back: document.querySelector("#manual-card-back").value
-        });
+        const payload = { front: document.querySelector("#manual-card-front").value, back: document.querySelector("#manual-card-back").value };
+        if (editingCardId) await StudyAI.api.patch(`/api/courses/${flashcardCourseId}/flashcards/${editingCardId}`, payload);
+        else await StudyAI.api.post(`/api/courses/${flashcardCourseId}/flashcards`, payload);
         closeModal(manualModal);
+        editingCardId = null;
         filterSelect.value = "";
         syncFilterUrl();
         await loadCards();

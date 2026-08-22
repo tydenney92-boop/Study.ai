@@ -50,9 +50,13 @@
 
         function close() {
             if (!isOpen()) return;
+            overlay.querySelectorAll("form").forEach(form => form.reset());
+            overlay.querySelectorAll(".form-error").forEach(element => {
+                element.textContent = "";
+            });
+            overlay.dispatchEvent(new CustomEvent("studyai:modal-close"));
             overlay.classList.remove(openClass);
             overlay.setAttribute("aria-hidden", "true");
-            overlay.dispatchEvent(new CustomEvent("studyai:modal-close"));
         }
 
         overlay.setAttribute("aria-hidden", isOpen() ? "false" : "true");

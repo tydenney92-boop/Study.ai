@@ -51,7 +51,7 @@ function createQuizGenerationService({
                 try {
                     const generatedResponse = await callAi(
                         aiClient,
-                        buildQuizPrompt(context.courseContent, normalizedCount)
+                        buildQuizPrompt(context.courseContent, normalizedCount, lastIssues)
                     );
                     const quiz = validateQuiz(
                         parseJsonResponse(generatedResponse),

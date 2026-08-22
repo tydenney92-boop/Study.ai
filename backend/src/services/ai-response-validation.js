@@ -48,15 +48,26 @@ function validateStudyGuide(response) {
         "EXAM QUESTIONS",
         "ADDITIONAL TIPS"
     ];
-    const missingSections = requiredSections.filter(
-        section => !response.includes(section)
-    );
+    const upper = response.toUpperCase();
+    const positions = requiredSections.map(section => upper.indexOf(section));
+    const missingSections = requiredSections.filter((section, index) => positions[index] === -1);
 
     if (missingSections.length > 0) {
         throw invalidOutput("The AI study guide did not match the required schema.", {
             missingSections
         });
     }
+
+    if (positions.some((position, index) => index > 0 && position <= positions[index - 1])) {
+        throw invalidOutput("The AI study guide sections were out of order.");
+    }
+    requiredSections.forEach((section, index) => {
+        const start = positions[index] + section.length;
+        const end = positions[index + 1] ?? response.length;
+        if (!response.slice(start, end).trim()) {
+            throw invalidOutput(`The ${section} section was empty.`);
+        }
+    });
 
     return response.trim();
 }
@@ -76,24 +87,32 @@ function validateQuiz(quiz, questionCount) {
         const valid = question &&
             typeof question.question === "string" &&
             question.question.trim().length > 0 &&
+            question.question.trim().length <= 500 &&
             Array.isArray(question.options) &&
             question.options.length === 4 &&
             question.options.every(option =>
-                typeof option === "string" && option.trim().length > 0
+                typeof option === "string" && option.trim().length > 0 && option.trim().length <= 300
             ) &&
             Number.isInteger(question.correctAnswer) &&
             question.correctAnswer >= 0 &&
             question.correctAnswer <= 3 &&
             typeof question.explanation === "string" &&
-            question.explanation.trim().length > 0;
+            question.explanation.trim().length > 0 &&
+            question.explanation.trim().length <= 1200;
 
         if (!valid) {
             throw invalidOutput(`Question ${index + 1} has an invalid schema.`);
         }
+        const normalizedOptions = question.options.map(option =>
+            option.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
+        );
+        if (new Set(normalizedOptions).size !== normalizedOptions.length) {
+            throw invalidOutput(`Question ${index + 1} contained duplicate answer choices.`);
+        }
     }
 
     const normalizedQuestions = quiz.questions.map(question =>
-        question.question.trim().toLowerCase()
+        question.question.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
     );
 
     if (new Set(normalizedQuestions).size !== normalizedQuestions.length) {
@@ -150,11 +169,14 @@ function validateFlashcards(payload, cardCount) {
         return { front: card.front.trim(), back: card.back.trim() };
     });
 
-    const keys = cards.map(card =>
-        `${card.front.toLowerCase()}\n${card.back.toLowerCase()}`
-    );
+    const normalize = value => value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const keys = cards.map(card => `${normalize(card.front)}\n${normalize(card.back)}`);
     if (new Set(keys).size !== keys.length) {
         throw invalidOutput("The AI response contained duplicate flashcards.");
+    }
+    const fronts = cards.map(card => normalize(card.front));
+    if (new Set(fronts).size !== fronts.length) {
+        throw invalidOutput("The AI response contained duplicate flashcard prompts.");
     }
     return cards;
 }

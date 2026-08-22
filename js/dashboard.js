@@ -4,7 +4,7 @@ const courseModal = document.querySelector("#course-modal");
 const courseForm = document.querySelector("#course-form");
 const courseFormError = document.querySelector("#course-form-error");
 
-function createCourseCard(course, index, summary) {
+function createCourseCard(course, index) {
     const link = document.createElement("a");
     link.className = "course-card";
     link.href = StudyAI.courseContext.url("course.html", {
@@ -31,9 +31,9 @@ function createCourseCard(course, index, summary) {
     link.querySelector(".course-meta-line").textContent =
         course.semester || "Semester not specified";
     link.querySelector(".unit-total").textContent =
-        `${summary.units.length} unit${summary.units.length === 1 ? "" : "s"}`;
+        `${course.unitCount} unit${course.unitCount === 1 ? "" : "s"}`;
     link.querySelector(".material-total").textContent =
-        `${summary.materials.length} material${summary.materials.length === 1 ? "" : "s"}`;
+        `${course.materialCount} material${course.materialCount === 1 ? "" : "s"}`;
     return link;
 }
 
@@ -48,29 +48,19 @@ function createAddCourseCard() {
 
 async function loadDashboard() {
     try {
-        const courses = await StudyAI.api.get("/api/courses");
+        const courses = await StudyAI.api.get("/api/courses/summary");
         courseList.innerHTML = "";
 
-        const summaries = await Promise.all(courses.map(async course => {
-            const [units, materials] = await Promise.all([
-                StudyAI.api.get(`/api/courses/${course.id}/units`),
-                StudyAI.api.get(`/api/courses/${course.id}/materials`)
-            ]);
-            return { units, materials };
-        }));
-
         courses.forEach((course, index) => {
-            courseList.appendChild(createCourseCard(course, index, summaries[index]));
+            courseList.appendChild(createCourseCard(course, index));
         });
         courseList.appendChild(createAddCourseCard());
-        const unitCount = summaries.reduce((sum, value) => sum + value.units.length, 0);
-        const materials = summaries.flatMap(value => value.materials);
 
         document.querySelector("#course-count").textContent = courses.length;
-        document.querySelector("#unit-count").textContent = unitCount;
-        document.querySelector("#material-count").textContent = materials.length;
+        document.querySelector("#unit-count").textContent = courses.reduce((sum, course) => sum + course.unitCount, 0);
+        document.querySelector("#material-count").textContent = courses.reduce((sum, course) => sum + course.materialCount, 0);
         document.querySelector("#ready-count").textContent =
-            materials.filter(material => material.uploadStatus === "ready").length;
+            courses.reduce((sum, course) => sum + course.readyMaterialCount, 0);
     } catch (error) {
         courseList.innerHTML = `<div class="friendly-empty error-state"></div>`;
         courseList.querySelector("div").textContent = error.message;

@@ -10,7 +10,7 @@
     <aside class="sidebar">
         <div class="brand"><div class="brand-icon">S</div><span>Study Signal</span></div>
         <nav class="sidebar-nav"><a href="index.html" class="nav-item"><span>⌂</span>Dashboard</a><a href="index.html#courses" class="nav-item"><span>▣</span>My Courses</a><a href="progress.html" class="nav-item"><span>◔</span>Progress</a></nav>
-        <div class="sidebar-bottom"><div class="profile-card"><div class="profile-avatar">D</div><div><strong>Development User</strong><small>Student</small></div></div></div>
+        <div class="sidebar-bottom"><div class="profile-card"><div class="profile-avatar"></div><div><strong></strong><small>Student</small></div></div></div>
     </aside>
     <main class="main-content">
         <header class="materials-header">
@@ -24,7 +24,7 @@
             <select id="type-filter"><option value="all">All Types</option><option value="pdf">PDF</option><option value="notes">Notes</option><option value="slides">Slides</option></select>
         </section>
         <div id="materials-container"><div class="friendly-empty"><span>Loading materials…</span></div></div>
-        <div class="empty-materials" id="empty-materials"><div>⌕</div><h2>No materials found</h2><p>Upload a file or try a different filter.</p></div>
+        <div class="empty-materials" id="empty-materials"><div>⌕</div><h2 id="empty-materials-title">No materials yet</h2><p id="empty-materials-message">Upload the first file for this course.</p><button type="button" class="secondary-tool-button" id="empty-materials-action">Upload Material</button></div>
         <section class="upload-area"><div class="upload-icon">↑</div><div><h2>Add course material</h2><p>Upload a PDF, TXT, DOCX, or PPTX file to this course.</p></div><button class="secondary-tool-button" id="upload-button-bottom">Choose File</button></section>
     </main>
 
@@ -32,7 +32,7 @@
         <div class="upload-modal" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title">
             <div class="upload-modal-header"><div><p class="eyebrow">COURSE MATERIAL</p><h2 id="upload-modal-title">Upload Material</h2></div><button class="upload-modal-close" id="close-upload-modal" aria-label="Close">×</button></div>
             <p class="upload-modal-description" id="upload-course-description">Add a file to this course.</p>
-            <div class="upload-form-group"><label>File</label><div class="file-drop-zone" id="file-drop-zone" role="button" tabindex="0" aria-label="Choose or drop a course material file"><div class="upload-zone-icon">↑</div><strong>Choose a file or drop it here</strong><span>PDF, TXT, DOCX, or PPTX · max 20 MB</span><button type="button" class="secondary-tool-button" id="modal-file-button">Browse Files</button><div class="selected-file" id="selected-file" aria-live="polite"></div></div></div>
+            <div class="upload-form-group"><label>File</label><div class="file-drop-zone" id="file-drop-zone" role="button" tabindex="0" aria-label="Choose or drop a course material file"><div class="upload-zone-icon">↑</div><strong>Choose a file or drop it here</strong><span id="upload-file-help">PDF, TXT, DOCX, or PPTX</span><button type="button" class="secondary-tool-button" id="modal-file-button">Browse Files</button><div class="selected-file" id="selected-file" aria-live="polite"></div></div></div>
             <div class="upload-form-group"><label for="upload-unit-modal">Unit <span class="optional-label">optional</span></label><select id="upload-unit-modal" class="upload-select"><option value="">No unit</option></select></div>
             <p class="form-error" id="upload-error"></p>
             <div class="upload-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-upload">Cancel</button><button type="button" class="primary-button" id="confirm-upload">Upload Material</button></div>

@@ -264,7 +264,8 @@ test("material deletion is ownership scoped and removes its stored file and rela
     );
 });
 
-test("material deletion keeps its database row when stored-file cleanup fails", async t => {
+test("material deletion journals failed storage cleanup and reconciles deterministically", async t => {
+    let storageAvailable = false;
     const context = createTestApp({
         fileStorage: {
             driver: "test",
@@ -272,7 +273,7 @@ test("material deletion keeps its database row when stored-file cleanup fails", 
             createUploadMiddleware() {
                 return { single() { return (req, res, next) => next(); } };
             },
-            async remove() { throw new Error("Storage unavailable"); },
+            async remove() { if (!storageAvailable) throw new Error("Storage unavailable"); },
             async healthCheck() { return true; }
         }
     });
@@ -286,13 +287,18 @@ test("material deletion keeps its database row when stored-file cleanup fails", 
 
     const response = await request(context.app)
         .delete(`/api/courses/1/materials/${materialId}`)
-        .expect(503);
-    assert.equal(response.body.error.code, "MATERIAL_STORAGE_CLEANUP_FAILED");
+        .expect(202);
+    assert.equal(response.body.cleanup.pending, 1);
     assert.equal(
         context.database.prepare("SELECT COUNT(*) AS count FROM materials WHERE id = ?")
             .get(materialId).count,
-        1
+        0
     );
+    assert.equal(context.database.prepare("SELECT COUNT(*) AS count FROM storage_cleanup_jobs").get().count, 1);
+    storageAvailable = true;
+    const reconciled = await request(context.app).post("/api/storage-cleanup/reconcile").send({}).expect(200);
+    assert.deepEqual(reconciled.body, { completed: 1, pending: 0 });
+    assert.equal(context.database.prepare("SELECT COUNT(*) AS count FROM storage_cleanup_jobs").get().count, 0);
 });
 
 test("a unit from another course is rejected and its upload is cleaned up", async t => {

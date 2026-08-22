@@ -36,6 +36,10 @@ function createCoursesRouter({ coursesService }) {
         res.json(coursesService.list(req.user.id));
     });
 
+    router.get("/summary", function(req, res) {
+        res.json(coursesService.summaries(req.user.id));
+    });
+
     router.post("/", function(req, res) {
         const course = coursesService.create(
             req.user.id,
@@ -67,7 +71,8 @@ function createCoursesRouter({ coursesService }) {
 
     router.delete("/:courseId", asyncHandler(async function(req, res) {
         const courseId = positiveInteger(req.params.courseId, "courseId");
-        await coursesService.delete(courseId, req.user.id);
+        const cleanup = await coursesService.delete(courseId, req.user.id);
+        if (cleanup.pending) return res.status(202).json({ cleanup });
         res.status(204).end();
     }));
 
