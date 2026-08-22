@@ -70,6 +70,33 @@ function createUnitsRepository(database) {
             return this.findOwned(unitId, courseId, userId);
         },
 
+        reorderOwned(courseId, userId, orderedUnitIds) {
+            const reorder = database.transaction(() => {
+                const current = this.listOwned(courseId, userId);
+                const maximum = current.reduce(
+                    (value, unit) => Math.max(value, unit.unitNumber),
+                    0
+                );
+                const temporaryStart = maximum + orderedUnitIds.length + 1;
+                const update = database.prepare(`
+                    UPDATE units
+                    SET unit_number = ?
+                    WHERE id = ? AND course_id = ?
+                `);
+
+                orderedUnitIds.forEach((unitId, index) => {
+                    update.run(temporaryStart + index, unitId, courseId);
+                });
+                orderedUnitIds.forEach((unitId, index) => {
+                    update.run(index + 1, unitId, courseId);
+                });
+
+                return this.listOwned(courseId, userId);
+            });
+
+            return reorder();
+        },
+
         deleteOwned(unitId, courseId, userId) {
             const unit = this.findOwned(unitId, courseId, userId);
 
@@ -77,10 +104,21 @@ function createUnitsRepository(database) {
                 return false;
             }
 
-            return database.prepare(`
-                DELETE FROM units
-                WHERE id = ? AND course_id = ?
-            `).run(unitId, courseId).changes > 0;
+            const remove = database.transaction(() => {
+                const deleted = database.prepare(`
+                    DELETE FROM units
+                    WHERE id = ? AND course_id = ?
+                `).run(unitId, courseId).changes > 0;
+                if (deleted) {
+                    this.reorderOwned(
+                        courseId,
+                        userId,
+                        this.listOwned(courseId, userId).map(item => item.id)
+                    );
+                }
+                return deleted;
+            });
+            return remove();
         }
     };
 }

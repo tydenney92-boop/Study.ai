@@ -142,10 +142,11 @@ async function generateStudyGuide() {
         guideSummary.textContent =
             "There was a problem generating the study guide.";
 
-        alert(
+        StudyAI.ui.notify(
             error.name === "AbortError"
                 ? "The study guide took too long to generate. Please try again."
-                : error.message
+                : error.message,
+            { type: "error" }
         );
 
     }

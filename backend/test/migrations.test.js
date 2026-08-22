@@ -12,6 +12,9 @@ const extractionStatusMigration = require(
 const sourceSnapshotMigration = require(
     "../src/database/migrations/005-generated-content-source-snapshots"
 );
+const displayNameMigration = require(
+    "../src/database/migrations/006-material-display-name"
+);
 
 const legacyMaterials = [
     {
@@ -100,7 +103,7 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
         createBackup: false
     });
 
-    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5]);
+    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6]);
     assert.equal(tableExists(context.database, "sessions"), true);
     assert.equal(
         context.database.prepare("SELECT COUNT(*) AS count FROM users").get().count,
@@ -330,4 +333,29 @@ test("source-snapshot migration backfills names and is idempotent", t => {
         SELECT quiz_id AS quizId, material_id AS materialId,
                material_name AS materialName FROM quiz_sources
     `).all(), [{ quizId: 12, materialId: 7, materialName: "Archived lecture.txt" }]);
+});
+
+test("material display-name migration backfills filenames and is idempotent", t => {
+    const context = temporaryDatabase(t);
+    context.database.exec(`
+        CREATE TABLE materials (
+            id INTEGER PRIMARY KEY,
+            original_filename TEXT NOT NULL
+        );
+        INSERT INTO materials VALUES (1, 'Lecture One.pdf');
+        INSERT INTO materials VALUES (2, 'Notes.txt');
+    `);
+
+    displayNameMigration.up(context.database);
+    context.database.prepare(`
+        UPDATE materials SET display_name = 'Custom Notes' WHERE id = 2
+    `).run();
+    displayNameMigration.up(context.database);
+
+    assert.deepEqual(context.database.prepare(`
+        SELECT id, display_name AS displayName FROM materials ORDER BY id
+    `).all(), [
+        { id: 1, displayName: "Lecture One.pdf" },
+        { id: 2, displayName: "Custom Notes" }
+    ]);
 });

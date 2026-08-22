@@ -97,6 +97,7 @@ function createMaterialService({
             const materialId = materialsRepository.create({
                 courseId,
                 unitId: parsedUnitId,
+                displayName: file.originalname,
                 originalFilename: file.originalname,
                 storedFilename,
                 materialType,
@@ -116,9 +117,9 @@ function createMaterialService({
     }
 
     return {
-        list(courseId, userId) {
+        list(courseId, userId, search = "") {
             coursesService.requireOwned(courseId, userId);
-            return materialsRepository.listOwned(courseId, userId);
+            return materialsRepository.listOwned(courseId, userId, search);
         },
 
         get(materialId, courseId, userId) {
@@ -141,6 +142,48 @@ function createMaterialService({
         },
 
         createFromUpload,
+
+        update(materialId, courseId, userId, changes) {
+            this.get(materialId, courseId, userId);
+
+            if (changes.unitId !== undefined && changes.unitId !== null) {
+                if (!unitsRepository.findOwned(
+                    changes.unitId,
+                    courseId,
+                    userId
+                )) {
+                    throw new AppError({
+                        code: "UNIT_NOT_FOUND",
+                        message: "Unit not found in this course.",
+                        status: 404
+                    });
+                }
+            }
+
+            return materialsRepository.updateOwned(
+                materialId,
+                courseId,
+                userId,
+                changes
+            );
+        },
+
+        async readFile(materialId, courseId, userId) {
+            const material = this.get(materialId, courseId, userId);
+            try {
+                return {
+                    material,
+                    content: await fileStorage.read(material.storedFilename)
+                };
+            } catch (error) {
+                throw new AppError({
+                    code: "MATERIAL_FILE_UNAVAILABLE",
+                    message: "The original uploaded file is currently unavailable.",
+                    status: 503,
+                    expose: true
+                });
+            }
+        },
 
         async delete(materialId, courseId, userId) {
             const material = this.get(materialId, courseId, userId);

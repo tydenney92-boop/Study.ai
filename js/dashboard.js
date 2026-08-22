@@ -79,7 +79,6 @@ async function loadDashboard() {
 
 function openCourseModal() {
     courseModal.classList.add("open");
-    document.querySelector("#course-name").focus();
 }
 
 function closeCourseModal() {

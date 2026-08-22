@@ -16,6 +16,8 @@ let course = null;
 let units = [];
 let materials = [];
 let selectedFile = null;
+let searchTimer = null;
+let searchRequest = 0;
 
 if (!courseId) {
     StudyAI.courseContext.goToMyCourses("Choose a course to view its materials.");
@@ -54,7 +56,7 @@ function materialCard(material) {
     card.querySelector(".material-icon").textContent =
         material.materialType === "pdf" ? "PDF" :
             material.materialType === "slides" ? "PPT" : "TXT";
-    card.querySelector("h3").textContent = material.originalFilename;
+    card.querySelector("h3").textContent = material.displayName;
     card.querySelector("p").textContent = material.unitName || "No unit";
     card.querySelector(".material-metadata").textContent =
         `${material.materialType.toUpperCase()} • ${formatSize(material.fileSize)}`;
@@ -84,16 +86,14 @@ function materialCard(material) {
 }
 
 function renderMaterials() {
-    const query = searchInput.value.trim().toLowerCase();
     const selectedUnit = unitFilter.value;
     const selectedType = typeFilter.value;
     const filtered = materials.filter(material => {
-        const matchesSearch = material.originalFilename.toLowerCase().includes(query);
         const matchesUnit = selectedUnit === "all" ||
             (selectedUnit === "none" && material.unitId === null) ||
             String(material.unitId) === selectedUnit;
         const matchesType = selectedType === "all" || material.materialType === selectedType;
-        return matchesSearch && matchesUnit && matchesType;
+        return matchesUnit && matchesType;
     });
 
     container.innerHTML = "";
@@ -133,6 +133,21 @@ function renderMaterials() {
         groupMaterials.forEach(material => grid.appendChild(materialCard(material)));
         container.appendChild(section);
     });
+}
+
+async function searchMaterials() {
+    const requestNumber = ++searchRequest;
+    const query = searchInput.value.trim();
+    try {
+        materials = await StudyAI.api.get(
+            `/api/courses/${courseId}/materials?search=${encodeURIComponent(query)}`
+        );
+        if (requestNumber === searchRequest) renderMaterials();
+    } catch (error) {
+        if (requestNumber === searchRequest) {
+            StudyAI.ui.notify(error.message, { type: "error" });
+        }
+    }
 }
 
 function populateUnitSelects() {
@@ -271,7 +286,10 @@ confirmUpload.addEventListener("click", async () => {
     }
 });
 
-searchInput.addEventListener("input", renderMaterials);
+searchInput.addEventListener("input", () => {
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(searchMaterials, 250);
+});
 unitFilter.addEventListener("change", renderMaterials);
 typeFilter.addEventListener("change", renderMaterials);
 loadPage();

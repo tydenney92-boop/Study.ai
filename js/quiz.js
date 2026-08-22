@@ -133,9 +133,9 @@ async function startQuiz() {
 
     if (!courseId || selectedMaterialIds.length === 0) {
 
-        alert(
-            "No course material was selected."
-        );
+        StudyAI.ui.notify("Select at least one course material first.", {
+            type: "error"
+        });
 
         return;
 
@@ -452,9 +452,9 @@ submitButton.addEventListener(
             selectedAnswer === null
         ) {
 
-            alert(
-                "Please select an answer first."
-            );
+            StudyAI.ui.notify("Select an answer before continuing.", {
+                type: "error"
+            });
 
             return;
 

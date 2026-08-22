@@ -37,7 +37,7 @@
             input.disabled = !usable;
             input.checked = usable && selected.has(material.id);
             if (!usable) selected.delete(material.id);
-            label.querySelector("strong").textContent = material.originalFilename;
+            label.querySelector("strong").textContent = material.displayName || material.originalFilename;
             const location = material.unitName
                 ? `Unit ${material.unitNumber}: ${material.unitName}`
                 : "No unit assigned";

@@ -1,6 +1,35 @@
 const express = require("express");
 const { asyncHandler } = require("../utils/async-handler");
-const { positiveInteger } = require("../utils/validation");
+const {
+    positiveInteger,
+    requestObject,
+    requireAtLeastOne,
+    stringField
+} = require("../utils/validation");
+
+function materialChanges(body) {
+    requestObject(body);
+    const changes = {
+        displayName: stringField(body, "displayName", {
+            optional: true,
+            maxLength: 255
+        }),
+        unitId: body.unitId === undefined
+            ? undefined
+            : body.unitId === null || body.unitId === ""
+                ? null
+                : positiveInteger(body.unitId, "unitId")
+    };
+    return requireAtLeastOne(changes);
+}
+
+function safeContentDisposition(filename, download) {
+    const fallback = filename
+        .replace(/[^\x20-\x7e]/g, "_")
+        .replace(/["\\\r\n]/g, "_");
+    return `${download ? "attachment" : "inline"}; filename="${fallback}"; ` +
+        `filename*=UTF-8''${encodeURIComponent(filename)}`;
+}
 
 function normalizedTextResponse(material) {
     return {
@@ -46,7 +75,12 @@ function createCourseMaterialsRouter({ materialService, upload }) {
     });
 
     router.get("/", function(req, res) {
-        res.json(materialService.list(req.courseId, req.user.id));
+        const search = stringField(req.query, "search", {
+            optional: true,
+            allowEmpty: true,
+            maxLength: 200
+        }) || "";
+        res.json(materialService.list(req.courseId, req.user.id, search));
     });
 
     router.post(
@@ -77,6 +111,35 @@ function createCourseMaterialsRouter({ materialService, upload }) {
             req.user.id
         );
         res.json(normalizedTextResponse(material));
+    });
+
+    router.get("/:materialId/file", asyncHandler(async function(req, res) {
+        const materialId = positiveInteger(req.params.materialId, "materialId");
+        const result = await materialService.readFile(
+            materialId,
+            req.courseId,
+            req.user.id
+        );
+        res.set({
+            "Cache-Control": "private, no-store",
+            "Content-Disposition": safeContentDisposition(
+                result.material.originalFilename,
+                req.query.download === "1"
+            ),
+            "X-Content-Type-Options": "nosniff"
+        });
+        res.type(result.material.mimeType || "application/octet-stream");
+        res.send(result.content);
+    }));
+
+    router.patch("/:materialId", function(req, res) {
+        const materialId = positiveInteger(req.params.materialId, "materialId");
+        res.json(materialService.update(
+            materialId,
+            req.courseId,
+            req.user.id,
+            materialChanges(req.body)
+        ));
     });
 
     router.delete("/:materialId", asyncHandler(async function(req, res) {

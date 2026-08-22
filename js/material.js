@@ -7,7 +7,9 @@ const content = document.querySelector("#material-content");
 const status = document.querySelector("#content-status");
 const errorBox = document.querySelector("#material-error");
 const deleteMaterialModal = document.querySelector("#delete-material-modal");
+const editMaterialModal = document.querySelector("#edit-material-modal");
 let loadedMaterial = null;
+let courseUnits = [];
 
 if (!courseId || !materialId) {
     StudyAI.courseContext.goToMyCourses("Choose a material from a course first.");
@@ -71,21 +73,40 @@ async function loadMaterial() {
     }
 
     try {
-        const [course, material] = await Promise.all([
+        const [course, material, units] = await Promise.all([
             StudyAI.api.get(`/api/courses/${courseId}`),
-            StudyAI.api.get(`/api/courses/${courseId}/materials/${materialId}`)
+            StudyAI.api.get(`/api/courses/${courseId}/materials/${materialId}`),
+            StudyAI.api.get(`/api/courses/${courseId}/units`)
         ]);
         loadedMaterial = material;
+        courseUnits = units;
         setLinks(course);
-        document.title = `${material.originalFilename} | Study Signal`;
-        title.textContent = material.originalFilename;
+        document.title = `${material.displayName} | Study Signal`;
+        title.textContent = material.displayName;
         subtitle.textContent = `${course.courseCode} · ${material.unitName || "No unit"}`;
         document.querySelector("#material-type").textContent =
             material.materialType.toUpperCase();
         document.querySelector("#material-unit").textContent = material.unitName || "—";
         document.querySelector("#material-size").textContent = formatFileSize(material.fileSize);
         document.querySelector("#material-date").textContent = formatDate(material.createdAt);
-        document.querySelector("#delete-material-button").hidden = false;
+        document.querySelector("#material-management-actions").hidden = false;
+        document.querySelector("#view-original-link").href = StudyAI.apiUrl(
+            `/api/courses/${courseId}/materials/${materialId}/file`
+        );
+        document.querySelector("#download-original-link").href = StudyAI.apiUrl(
+            `/api/courses/${courseId}/materials/${materialId}/file?download=1`
+        );
+        document.querySelector("#material-status-panel").hidden = false;
+        const extractionLabels = {
+            extracted: "Extracted and AI-ready",
+            no_text: "No extractable text",
+            unsupported: "Unsupported for AI",
+            failed: "Extraction failed"
+        };
+        document.querySelector("#material-extraction-status").textContent =
+            extractionLabels[material.extractionStatus] || "Unknown";
+        document.querySelector("#material-extraction-error").textContent =
+            material.extractionError || "No extraction errors.";
 
         if (material.extractionStatus === "extracted" &&
             material.extractedText && material.extractedText.trim()) {
@@ -131,6 +152,50 @@ async function loadMaterial() {
 }
 
 loadMaterial();
+
+function closeEditMaterialModal() {
+    editMaterialModal.classList.remove("open");
+    document.querySelector("#edit-material-error").textContent = "";
+}
+
+document.querySelector("#edit-material-button").addEventListener("click", () => {
+    if (!loadedMaterial) return;
+    const select = document.querySelector("#edit-material-unit");
+    select.innerHTML = '<option value="">No unit</option>';
+    courseUnits.forEach(unit => {
+        const option = document.createElement("option");
+        option.value = unit.id;
+        option.textContent = `Unit ${unit.unitNumber} — ${unit.name}`;
+        select.appendChild(option);
+    });
+    select.value = loadedMaterial.unitId === null ? "" : String(loadedMaterial.unitId);
+    document.querySelector("#edit-material-name").value = loadedMaterial.displayName;
+    document.querySelector("#original-file-name").textContent = loadedMaterial.originalFilename;
+    editMaterialModal.classList.add("open");
+});
+document.querySelector("#close-edit-material-modal").addEventListener("click", closeEditMaterialModal);
+document.querySelector("#cancel-edit-material").addEventListener("click", closeEditMaterialModal);
+document.querySelector("#edit-material-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    const button = event.currentTarget.querySelector("button[type='submit']");
+    button.disabled = true;
+    try {
+        await StudyAI.api.patch(
+            `/api/courses/${courseId}/materials/${materialId}`,
+            {
+                displayName: document.querySelector("#edit-material-name").value,
+                unitId: document.querySelector("#edit-material-unit").value || null
+            }
+        );
+        closeEditMaterialModal();
+        await loadMaterial();
+        StudyAI.ui.notify("Material details updated.", { type: "success" });
+    } catch (error) {
+        document.querySelector("#edit-material-error").textContent = error.message;
+    } finally {
+        button.disabled = false;
+    }
+});
 
 function closeDeleteMaterialModal() {
     deleteMaterialModal.classList.remove("open");

@@ -3,6 +3,7 @@ function createMaterialsRepository(database) {
         materials.id,
         materials.course_id AS courseId,
         materials.unit_id AS unitId,
+        COALESCE(materials.display_name, materials.original_filename) AS displayName,
         materials.original_filename AS originalFilename,
         materials.stored_filename AS storedFilename,
         materials.material_type AS materialType,
@@ -17,15 +18,24 @@ function createMaterialsRepository(database) {
     `;
 
     return {
-        listOwned(courseId, userId) {
+        listOwned(courseId, userId, search = "") {
+            const escapedSearch = search.replace(/[\\%_]/g, "\\$&");
+            const pattern = `%${escapedSearch}%`;
             return database.prepare(`
                 SELECT ${listFields}
                 FROM materials
                 JOIN courses ON courses.id = materials.course_id
                 LEFT JOIN units ON units.id = materials.unit_id
                 WHERE materials.course_id = ? AND courses.user_id = ?
+                  AND (
+                      ? = ''
+                      OR COALESCE(materials.display_name, materials.original_filename)
+                          LIKE ? ESCAPE '\\'
+                      OR materials.original_filename LIKE ? ESCAPE '\\'
+                      OR materials.extracted_text LIKE ? ESCAPE '\\'
+                  )
                 ORDER BY materials.created_at DESC, materials.id DESC
-            `).all(courseId, userId);
+            `).all(courseId, userId, search, pattern, pattern, pattern);
         },
 
         listStoredFilenamesOwned(courseId, userId) {
@@ -59,7 +69,7 @@ function createMaterialsRepository(database) {
             return database.prepare(`
                 SELECT
                     materials.id,
-                    materials.original_filename AS name,
+                    COALESCE(materials.display_name, materials.original_filename) AS name,
                     materials.extracted_text AS text_content,
                     materials.extraction_status AS extraction_status
                 FROM materials
@@ -75,6 +85,7 @@ function createMaterialsRepository(database) {
                 INSERT INTO materials (
                     course_id,
                     unit_id,
+                    display_name,
                     original_filename,
                     stored_filename,
                     material_type,
@@ -84,10 +95,11 @@ function createMaterialsRepository(database) {
                     upload_status,
                     extraction_error,
                     extraction_status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).run(
                 material.courseId,
                 material.unitId,
+                material.displayName,
                 material.originalFilename,
                 material.storedFilename,
                 material.materialType,
@@ -100,6 +112,33 @@ function createMaterialsRepository(database) {
             );
 
             return Number(result.lastInsertRowid);
+        },
+
+        updateOwned(materialId, courseId, userId, changes) {
+            const current = this.findOwned(materialId, courseId, userId);
+            if (!current) {
+                return undefined;
+            }
+
+            database.prepare(`
+                UPDATE materials
+                SET display_name = ?, unit_id = ?
+                WHERE id = ?
+                  AND course_id = ?
+                  AND EXISTS (
+                      SELECT 1 FROM courses
+                      WHERE courses.id = materials.course_id
+                        AND courses.user_id = ?
+                  )
+            `).run(
+                changes.displayName ?? current.displayName,
+                changes.unitId === undefined ? current.unitId : changes.unitId,
+                materialId,
+                courseId,
+                userId
+            );
+
+            return this.findOwned(materialId, courseId, userId);
         },
 
         deleteOwned(materialId, courseId, userId) {

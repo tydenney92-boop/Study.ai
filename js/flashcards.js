@@ -92,7 +92,7 @@ async function initialize() {
         materials.forEach(material => {
             const option = document.createElement("option");
             option.value = material.id;
-            option.textContent = material.originalFilename;
+            option.textContent = material.displayName || material.originalFilename;
             filterSelect.appendChild(option);
         });
         if (initialMaterialId) {

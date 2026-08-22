@@ -48,6 +48,7 @@ test("course-aware materials can be uploaded, listed, retrieved, and read", asyn
     assert.equal(uploaded.body.courseId, course.id);
     assert.equal(uploaded.body.unitId, unit.id);
     assert.equal(uploaded.body.originalFilename, "My Lecture Notes.txt");
+    assert.equal(uploaded.body.displayName, "My Lecture Notes.txt");
     assert.equal(uploaded.body.materialType, "notes");
     assert.match(uploaded.body.storedFilename, /^[0-9a-f-]{36}\.txt$/);
     assert.notEqual(uploaded.body.storedFilename, uploaded.body.originalFilename);
@@ -74,6 +75,81 @@ test("course-aware materials can be uploaded, listed, retrieved, and read", asyn
         extractionStatus: "no_text",
         extractionError: "This material does not contain enough extractable text."
     });
+});
+
+test("materials can be renamed, moved, searched by text, and securely downloaded", async t => {
+    const context = createTestApp();
+    t.after(context.cleanup);
+    const course = await createCourse(context.app, "MANAGE 101");
+    const firstUnit = await createUnit(context.app, course.id, 1);
+    const secondUnit = await createUnit(context.app, course.id, 2);
+    const uploaded = await request(context.app)
+        .post(`/api/courses/${course.id}/materials`)
+        .field("unitId", String(firstUnit.id))
+        .attach("file", Buffer.from("Mitochondria produce cellular energy for this lecture."), {
+            filename: "week-1.txt",
+            contentType: "text/plain"
+        })
+        .expect(201);
+
+    const updated = await request(context.app)
+        .patch(`/api/courses/${course.id}/materials/${uploaded.body.id}`)
+        .send({ displayName: "Cell Energy Review", unitId: secondUnit.id })
+        .expect(200);
+    assert.equal(updated.body.displayName, "Cell Energy Review");
+    assert.equal(updated.body.originalFilename, "week-1.txt");
+    assert.equal(updated.body.unitId, secondUnit.id);
+
+    const textSearch = await request(context.app)
+        .get(`/api/courses/${course.id}/materials?search=mitochondria`)
+        .expect(200);
+    assert.deepEqual(textSearch.body.map(material => material.id), [uploaded.body.id]);
+    const nameSearch = await request(context.app)
+        .get(`/api/courses/${course.id}/materials?search=Energy%20Review`)
+        .expect(200);
+    assert.equal(nameSearch.body[0].displayName, "Cell Energy Review");
+
+    const inline = await request(context.app)
+        .get(`/api/courses/${course.id}/materials/${uploaded.body.id}/file`)
+        .expect(200);
+    assert.match(inline.headers["content-disposition"], /^inline;/);
+    assert.equal(inline.headers["cache-control"], "private, no-store");
+    assert.equal(inline.text, "Mitochondria produce cellular energy for this lecture.");
+
+    const download = await request(context.app)
+        .get(`/api/courses/${course.id}/materials/${uploaded.body.id}/file?download=1`)
+        .expect(200);
+    assert.match(download.headers["content-disposition"], /^attachment;/);
+
+    await request(context.app)
+        .patch(`/api/courses/${course.id}/materials/${uploaded.body.id}`)
+        .send({ unitId: null })
+        .expect(200)
+        .expect(response => assert.equal(response.body.unitId, null));
+});
+
+test("material management and file access enforce course and user ownership", async t => {
+    const context = createTestApp();
+    t.after(context.cleanup);
+    const course = await createCourse(context.app, "OWNER 101");
+    const wrongCourse = await createCourse(context.app, "OWNER 102");
+    const wrongUnit = await createUnit(context.app, wrongCourse.id, 1);
+    const uploaded = await request(context.app)
+        .post(`/api/courses/${course.id}/materials`)
+        .attach("file", Buffer.from("owned material content"), "owned.txt")
+        .expect(201);
+
+    await request(context.app)
+        .patch(`/api/courses/${course.id}/materials/${uploaded.body.id}`)
+        .send({ unitId: wrongUnit.id })
+        .expect(404);
+    await request(context.app)
+        .patch(`/api/courses/${wrongCourse.id}/materials/${uploaded.body.id}`)
+        .send({ displayName: "Stolen" })
+        .expect(404);
+    await request(context.app)
+        .get(`/api/courses/${wrongCourse.id}/materials/${uploaded.body.id}/file`)
+        .expect(404);
 });
 
 test("material access is rejected across courses and users", async t => {
@@ -107,6 +183,13 @@ test("material access is rejected across courses and users", async t => {
 
     await request(context.app)
         .get(`/api/courses/${privateCourseId}/materials`)
+        .expect(404);
+    await request(context.app)
+        .patch(`/api/courses/${privateCourseId}/materials/${privateMaterialId}`)
+        .send({ displayName: "Not mine" })
+        .expect(404);
+    await request(context.app)
+        .get(`/api/courses/${privateCourseId}/materials/${privateMaterialId}/file`)
         .expect(404);
     await request(context.app)
         .delete(`/api/courses/${privateCourseId}/materials/${privateMaterialId}`)

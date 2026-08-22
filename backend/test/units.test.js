@@ -85,3 +85,56 @@ test("unit routes enforce course ownership and course-unit relationships", async
         .send({ name: "Invalid number", unitNumber: 0 })
         .expect(400);
 });
+
+test("units reorder atomically and deletion preserves materials as unassigned", async t => {
+    const context = createTestApp();
+    t.after(context.cleanup);
+    const course = await createCourse(context.app, "ORDER 101");
+    const units = [];
+    for (const number of [1, 2, 3]) {
+        const response = await request(context.app)
+            .post(`/api/courses/${course.id}/units`)
+            .send({ name: `Unit ${number}`, unitNumber: number })
+            .expect(201);
+        units.push(response.body);
+    }
+    const materialId = Number(context.database.prepare(`
+        INSERT INTO materials (
+            course_id, unit_id, display_name, original_filename,
+            stored_filename, material_type, extracted_text, upload_status
+        ) VALUES (?, ?, 'Movable notes', 'notes.txt', 'notes.txt', 'notes', '', 'ready')
+    `).run(course.id, units[1].id).lastInsertRowid);
+
+    const reordered = await request(context.app)
+        .put(`/api/courses/${course.id}/units/order`)
+        .send({ unitIds: [units[2].id, units[0].id, units[1].id] })
+        .expect(200);
+    assert.deepEqual(reordered.body.map(unit => unit.id), [
+        units[2].id, units[0].id, units[1].id
+    ]);
+    assert.deepEqual(reordered.body.map(unit => unit.unitNumber), [1, 2, 3]);
+
+    await request(context.app)
+        .put(`/api/courses/${course.id}/units/order`)
+        .send({ unitIds: [units[0].id, units[1].id] })
+        .expect(400);
+    const unchanged = await request(context.app)
+        .get(`/api/courses/${course.id}/units`)
+        .expect(200);
+    assert.deepEqual(unchanged.body.map(unit => unit.id), [
+        units[2].id, units[0].id, units[1].id
+    ]);
+
+    await request(context.app)
+        .delete(`/api/courses/${course.id}/units/${units[1].id}`)
+        .expect(204);
+    assert.equal(
+        context.database.prepare("SELECT unit_id AS unitId FROM materials WHERE id = ?")
+            .get(materialId).unitId,
+        null
+    );
+    const remaining = await request(context.app)
+        .get(`/api/courses/${course.id}/units`)
+        .expect(200);
+    assert.deepEqual(remaining.body.map(unit => unit.unitNumber), [1, 2]);
+});

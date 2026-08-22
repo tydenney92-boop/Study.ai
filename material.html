@@ -78,15 +78,6 @@
 
     <div class="sidebar-bottom">
 
-        <a
-            href="#"
-            class="nav-item"
-        >
-            <span>⚙</span>
-            Settings
-        </a>
-
-
         <div class="profile-card">
 
             <div class="profile-avatar">
@@ -150,7 +141,7 @@
                 Loading...
             </p>
 
-            <button class="danger-button material-delete-action" id="delete-material-button" hidden>Delete Material</button>
+            <div class="material-header-actions" id="material-management-actions" hidden><button class="secondary-tool-button" id="edit-material-button">Edit Details</button><a class="secondary-tool-button" id="view-original-link" target="_blank" rel="noopener">View Original</a><a class="secondary-tool-button" id="download-original-link">Download</a><button class="danger-button material-delete-action" id="delete-material-button">Delete Material</button></div>
 
         </div>
 
@@ -215,6 +206,11 @@
         </div>
 
 
+    </section>
+
+    <section class="material-status-panel" id="material-status-panel" hidden>
+        <div><span class="eyebrow">EXTRACTION STATUS</span><strong id="material-extraction-status">—</strong></div>
+        <p id="material-extraction-error"></p>
     </section>
 
 
@@ -385,11 +381,25 @@
     </div>
 </div>
 
+<div class="app-modal-overlay" id="edit-material-modal">
+    <div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="edit-material-modal-title">
+        <div class="app-modal-header"><div><p class="eyebrow">MATERIAL DETAILS</p><h2 id="edit-material-modal-title">Edit Material</h2></div><button class="icon-button" id="close-edit-material-modal" aria-label="Close">×</button></div>
+        <form id="edit-material-form" class="app-form">
+            <label>Display name<input id="edit-material-name" maxlength="255" required></label>
+            <label>Unit<select id="edit-material-unit"><option value="">No unit</option></select></label>
+            <p class="file-metadata-note">Original file: <span id="original-file-name"></span></p>
+            <p class="form-error" id="edit-material-error"></p>
+            <div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-edit-material">Cancel</button><button type="submit" class="primary-button">Save Changes</button></div>
+        </form>
+    </div>
+</div>
+
 
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/course-context.js"></script>
+<script src="js/ui.js"></script>
 <script src="js/material.js"></script>
 
 </body>

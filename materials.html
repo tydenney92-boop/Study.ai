@@ -19,7 +19,7 @@
             <input type="file" id="file-input" hidden accept=".pdf,.txt,.docx,.pptx">
         </header>
         <section class="materials-controls">
-            <div class="search-box"><span>⌕</span><input type="text" id="material-search" placeholder="Search your materials…"></div>
+            <div class="search-box"><span>⌕</span><input type="search" id="material-search" placeholder="Search names and extracted text…" aria-label="Search material names and extracted text"></div>
             <select id="unit-filter"><option value="all">All Units</option></select>
             <select id="type-filter"><option value="all">All Types</option><option value="pdf">PDF</option><option value="notes">Notes</option><option value="slides">Slides</option></select>
         </section>
@@ -29,8 +29,8 @@
     </main>
 
     <div class="upload-modal-overlay" id="upload-modal">
-        <div class="upload-modal">
-            <div class="upload-modal-header"><div><p class="eyebrow">COURSE MATERIAL</p><h2>Upload Material</h2></div><button class="upload-modal-close" id="close-upload-modal" aria-label="Close">×</button></div>
+        <div class="upload-modal" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title">
+            <div class="upload-modal-header"><div><p class="eyebrow">COURSE MATERIAL</p><h2 id="upload-modal-title">Upload Material</h2></div><button class="upload-modal-close" id="close-upload-modal" aria-label="Close">×</button></div>
             <p class="upload-modal-description" id="upload-course-description">Add a file to this course.</p>
             <div class="upload-form-group"><label>File</label><div class="file-drop-zone" id="file-drop-zone" role="button" tabindex="0" aria-label="Choose or drop a course material file"><div class="upload-zone-icon">↑</div><strong>Choose a file or drop it here</strong><span>PDF, TXT, DOCX, or PPTX · max 20 MB</span><button type="button" class="secondary-tool-button" id="modal-file-button">Browse Files</button><div class="selected-file" id="selected-file" aria-live="polite"></div></div></div>
             <div class="upload-form-group"><label for="upload-unit-modal">Unit <span class="optional-label">optional</span></label><select id="upload-unit-modal" class="upload-select"><option value="">No unit</option></select></div>
@@ -39,6 +39,6 @@
         </div>
     </div>
 
-    <script src="js/config.js"></script><script src="js/api.js"></script><script src="js/auth.js"></script><script src="js/course-context.js"></script><script src="js/materials.js"></script>
+    <script src="js/config.js"></script><script src="js/api.js"></script><script src="js/auth.js"></script><script src="js/course-context.js"></script><script src="js/ui.js"></script><script src="js/materials.js"></script>
 </body>
 </html>

@@ -825,6 +825,40 @@ h1 {
 
 }
 
+.unit-management-card { padding: 10px 12px; }
+.unit-main-link {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    padding: 5px 2px;
+}
+.unit-management-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.unit-management-actions .icon-button {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+}
+.unit-management-actions .icon-button:disabled {
+    cursor: not-allowed;
+    opacity: .35;
+}
+.text-button.destructive { color: #b42318; }
+.text-button.destructive:hover { color: #8f1d14; }
+
+@media (max-width: 620px) {
+    .unit-management-card { align-items: flex-start; flex-wrap: wrap; }
+    .unit-main-link { width: calc(100% - 24px); }
+    .unit-management-actions {
+        width: 100%;
+        justify-content: flex-end;
+        padding-left: 18px;
+    }
+}
+
 .secondary-tool-button {
     display: inline-flex;
     align-items: center;
@@ -865,6 +899,43 @@ select {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.app-notification-region {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: grid;
+    gap: 10px;
+    width: min(380px, calc(100vw - 40px));
+}
+
+.app-notification {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 13px 15px;
+    border: 1px solid #d9e1ec;
+    border-left: 4px solid #2563eb;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
+    color: #334155;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.app-notification.success { border-left-color: #16a34a; }
+.app-notification.error { border-left-color: #dc2626; }
+.app-notification button {
+    border: 0;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
 }
 
 .course-meta-line {
@@ -967,7 +1038,8 @@ select {
     font-weight: 600;
 }
 
-.app-form input {
+.app-form input,
+.app-form select {
     width: 100%;
     padding: 11px 12px;
     border: 1px solid #dce2ea;
@@ -977,7 +1049,8 @@ select {
     font: inherit;
 }
 
-.app-form input:focus {
+.app-form input:focus,
+.app-form select:focus {
     border-color: #6680ed;
     outline: 3px solid rgba(79, 107, 237, 0.12);
 }

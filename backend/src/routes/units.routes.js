@@ -5,6 +5,7 @@ const {
     requireAtLeastOne,
     stringField
 } = require("../utils/validation");
+const { AppError } = require("../utils/app-error");
 
 function unitInput(body, partial = false) {
     requestObject(body);
@@ -41,6 +42,28 @@ function createUnitsRouter({ unitsService }) {
             unitInput(req.body)
         );
         res.status(201).json(unit);
+    });
+
+    router.put("/order", function(req, res) {
+        requestObject(req.body);
+        if (!Array.isArray(req.body.unitIds)) {
+            throw new AppError({
+                code: "INVALID_UNIT_ORDER",
+                message: "unitIds must be an array.",
+                status: 400
+            });
+        }
+        const unitIds = req.body.unitIds.map(unitId =>
+            positiveInteger(unitId, "unitId")
+        );
+        if (new Set(unitIds).size !== unitIds.length) {
+            throw new AppError({
+                code: "INVALID_UNIT_ORDER",
+                message: "Each unit may appear only once in the order.",
+                status: 400
+            });
+        }
+        res.json(unitsService.reorder(req.courseId, req.user.id, unitIds));
     });
 
     router.get("/:unitId", function(req, res) {

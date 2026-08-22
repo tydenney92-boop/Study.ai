@@ -20,7 +20,7 @@
     <main class="main-content">
         <header class="topbar">
             <div><a class="back-link" href="index.html#courses">← My Courses</a><p class="eyebrow">MY COURSE · <span id="course-semester">Loading…</span></p><h1 id="course-code-title">Course</h1><p class="subtitle" id="course-name-subtitle">Loading course…</p></div>
-            <div class="header-actions"><button class="secondary-tool-button" id="add-unit-button">+ Add Unit</button><a href="index.html#courses" data-course-page="materials.html" class="primary-button">+ Add Materials</a></div>
+            <div class="header-actions"><button class="secondary-tool-button" id="edit-course-button" hidden>Edit Course</button><button class="secondary-tool-button" id="add-unit-button">+ Add Unit</button><a href="index.html#courses" data-course-page="materials.html" class="primary-button">+ Add Materials</a></div>
         </header>
 
         <section class="stats-grid">
@@ -57,10 +57,32 @@
             <div class="app-modal-header"><div><p class="eyebrow">COURSE UNIT</p><h2 id="unit-modal-title">Add a Unit</h2></div><button class="icon-button" id="close-unit-modal" aria-label="Close">×</button></div>
             <form id="unit-form" class="app-form">
                 <label>Unit name<input id="unit-name" maxlength="200" required placeholder="Cell Biology"></label>
-                <label>Unit number<input id="unit-number" type="number" min="1" required placeholder="1"></label>
+                <label id="unit-number-field">Unit number<input id="unit-number" type="number" min="1" required placeholder="1"></label>
                 <p class="form-error" id="unit-form-error"></p>
-                <div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-unit">Cancel</button><button type="submit" class="primary-button">Create Unit</button></div>
+                <div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-unit">Cancel</button><button type="submit" class="primary-button" id="save-unit-button">Create Unit</button></div>
             </form>
+        </div>
+    </div>
+
+    <div class="app-modal-overlay" id="edit-course-modal">
+        <div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="edit-course-modal-title">
+            <div class="app-modal-header"><div><p class="eyebrow">COURSE DETAILS</p><h2 id="edit-course-modal-title">Edit Course</h2></div><button class="icon-button" id="close-edit-course-modal" aria-label="Close">×</button></div>
+            <form id="edit-course-form" class="app-form">
+                <label>Course name<input id="edit-course-name" maxlength="200" required></label>
+                <label>Course code<input id="edit-course-code" maxlength="50" required></label>
+                <label>Semester<input id="edit-course-semester" maxlength="100"></label>
+                <p class="form-error" id="edit-course-error"></p>
+                <div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-edit-course">Cancel</button><button type="submit" class="primary-button">Save Changes</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-modal-overlay" id="delete-unit-modal">
+        <div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="delete-unit-modal-title">
+            <div class="app-modal-header"><div><p class="eyebrow">REMOVE UNIT</p><h2 id="delete-unit-modal-title">Delete this unit?</h2></div><button class="icon-button" id="close-delete-unit-modal" aria-label="Close">×</button></div>
+            <p>Materials in this unit will remain in the course and move to “No unit.”</p>
+            <p class="form-error" id="delete-unit-error"></p>
+            <div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-delete-unit">Keep Unit</button><button type="button" class="danger-button" id="confirm-delete-unit">Delete Unit</button></div>
         </div>
     </div>
 
@@ -73,6 +95,6 @@
         </div>
     </div>
 
-    <script src="js/config.js"></script><script src="js/api.js"></script><script src="js/auth.js"></script><script src="js/course-context.js"></script><script src="js/course-page.js"></script>
+    <script src="js/config.js"></script><script src="js/api.js"></script><script src="js/auth.js"></script><script src="js/course-context.js"></script><script src="js/ui.js"></script><script src="js/course-page.js"></script>
 </body>
 </html>

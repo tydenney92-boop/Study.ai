@@ -62,6 +62,31 @@ function createUnitService({ coursesService, unitsRepository }) {
             }
         },
 
+        reorder(courseId, userId, orderedUnitIds) {
+            coursesService.requireOwned(courseId, userId);
+            const currentIds = unitsRepository.listOwned(courseId, userId)
+                .map(unit => unit.id)
+                .sort((left, right) => left - right);
+            const requestedIds = [...orderedUnitIds].sort((left, right) => left - right);
+
+            if (
+                currentIds.length !== requestedIds.length ||
+                currentIds.some((unitId, index) => unitId !== requestedIds[index])
+            ) {
+                throw new AppError({
+                    code: "INVALID_UNIT_ORDER",
+                    message: "Unit order must include every unit in this course exactly once.",
+                    status: 400
+                });
+            }
+
+            return unitsRepository.reorderOwned(
+                courseId,
+                userId,
+                orderedUnitIds
+            );
+        },
+
         delete(unitId, courseId, userId) {
             requireOwned(unitId, courseId, userId);
             unitsRepository.deleteOwned(unitId, courseId, userId);

@@ -3,6 +3,7 @@ const migration002 = require("./migrations/002-auth-sessions");
 const migration003 = require("./migrations/003-course-last-opened");
 const migration004 = require("./migrations/004-material-extraction-status");
 const migration005 = require("./migrations/005-generated-content-source-snapshots");
+const migration006 = require("./migrations/006-material-display-name");
 const { tableExists } = require("./schema-helpers");
 const { createVerifiedBackup } = require("./sqlite-backup");
 
@@ -11,7 +12,8 @@ const migrations = [
     migration002,
     migration003,
     migration004,
-    migration005
+    migration005,
+    migration006
 ];
 
 function appliedMigrationIds(database) {
