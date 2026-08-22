@@ -847,6 +847,7 @@
 .answer-sources strong { display: block; margin-bottom: 7px; color: #667085; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
 .answer-sources div { display: flex; flex-wrap: wrap; gap: 6px; }
 .answer-sources span { padding: 4px 7px; border-radius: 999px; background: #e8efff; color: #315bc5; font-size: 9px; font-weight: 600; }
+.answer-support-label { display: inline-flex; margin-top: 7px; padding: 4px 8px; border-radius: 999px; background: #eef4ff; color: #4668b8; font-size: 9px; font-weight: 600; }
 .notes-loading-message .message-content { color: #667085; }
 .message.error-message .message-avatar { background: #b42318; }
 .message.error-message .message-content { border: 1px solid #f1d1ce; background: #fffafa; }

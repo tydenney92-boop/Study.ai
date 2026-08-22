@@ -45,10 +45,13 @@ function createAskNotesService({ aiClient, materialContextService }) {
                     escalated: tier !== "fast"
                 }
             );
-            const answer = validateAskNotesAnswer(parseJsonResponse(response));
+            const result = validateAskNotesAnswer(parseJsonResponse(response));
 
             return {
-                answer,
+                answer: result.supportType === "not_found"
+                    ? "The selected materials do not contain enough information to answer that question safely."
+                    : result.answer,
+                supportType: result.supportType,
                 sources: context.materials.map(material => ({
                     materialId: material.id,
                     name: material.name

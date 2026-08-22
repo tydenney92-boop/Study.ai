@@ -256,10 +256,11 @@ test("flashcards and Ask My Notes use real course material and persisted state",
     await page.locator("#chat-input").fill("How do supply and demand interact?");
     await page.locator("#send-message").click();
     await expect(page.locator(".message.assistant").last()).toContainText("market outcomes");
+    await expect(page.locator(".message.assistant").last()).toContainText("Based on your notes with added explanation.");
     await expect(page.locator(".message.assistant").last()).toContainText("Selected materials");
     await page.locator("#chat-input").fill("What is missing from my notes?");
     await page.locator("#send-message").click();
-    await expect(page.locator(".message.assistant").last()).toContainText("couldn't find that information");
+    await expect(page.locator(".message.assistant").last()).toContainText("do not contain enough information");
     await page.locator("#chat-input").fill("Force service error");
     await page.locator("#send-message").click();
     await expect(page.locator(".message.error-message").last()).toContainText("could not complete");

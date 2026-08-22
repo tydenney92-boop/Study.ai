@@ -7,6 +7,7 @@ const {
     buildStudyGuidePrompt
 } = require("../src/services/ai-prompts");
 const {
+    validateAskNotesAnswer,
     validateFlashcards,
     validateQuiz,
     validateStudyGuide
@@ -49,4 +50,26 @@ test("quiz and flashcard validation reject normalized duplicates", () => {
         { front: "Define demand?", back: "One" },
         { front: "Define demand!", back: "Two" }
     ] }, 2), /duplicate flashcard prompts/);
+});
+
+test("Ask My Notes requires a valid grounding classification", () => {
+    assert.deepEqual(
+        validateAskNotesAnswer({
+            answer: "A supported explanation.",
+            supportType: "grounded_with_explanation",
+            sources: [{ materialId: 999, name: "Invented.txt" }]
+        }),
+        {
+            answer: "A supported explanation.",
+            supportType: "grounded_with_explanation"
+        }
+    );
+    assert.throws(
+        () => validateAskNotesAnswer({ answer: "Missing classification." }),
+        /required schema/
+    );
+    assert.throws(
+        () => validateAskNotesAnswer({ answer: "Invalid.", supportType: "outside_knowledge" }),
+        /required schema/
+    );
 });

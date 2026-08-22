@@ -182,17 +182,26 @@ function validateFlashcards(payload, cardCount) {
 }
 
 function validateAskNotesAnswer(payload) {
+    const allowedSupportTypes = new Set([
+        "grounded",
+        "grounded_with_explanation",
+        "not_found"
+    ]);
     if (
         !payload ||
         typeof payload !== "object" ||
         Array.isArray(payload) ||
         typeof payload.answer !== "string" ||
         payload.answer.trim().length === 0 ||
-        payload.answer.trim().length > 8000
+        payload.answer.trim().length > 8000 ||
+        !allowedSupportTypes.has(payload.supportType)
     ) {
         throw invalidOutput("The AI answer did not match the required schema.");
     }
-    return payload.answer.trim();
+    return {
+        answer: payload.answer.trim(),
+        supportType: payload.supportType
+    };
 }
 
 module.exports = {

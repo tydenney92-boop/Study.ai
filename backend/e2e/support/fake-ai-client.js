@@ -55,8 +55,9 @@ function createFakeAiClient() {
                 const unavailable = /missing from my notes|unsupported answer/i.test(prompt);
                 return JSON.stringify({
                     answer: unavailable
-                        ? "I couldn't find that information in the selected materials."
-                        : "The selected notes explain that supply and demand interact to determine market outcomes."
+                        ? "The selected materials do not contain enough information."
+                        : "The selected notes explain that supply and demand interact to determine market outcomes.",
+                    supportType: unavailable ? "not_found" : "grounded_with_explanation"
                 });
             }
             counts.studyGuide++;

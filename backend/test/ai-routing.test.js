@@ -70,7 +70,9 @@ function capturingClient(responses) {
 }
 
 test("Ask My Notes defaults to fast and deterministically promotes synthesis", async () => {
-    const directClient = capturingClient([JSON.stringify({ answer: "Direct answer." })]);
+    const directClient = capturingClient([JSON.stringify({
+        answer: "Direct answer.", supportType: "grounded"
+    })]);
     const directService = createAskNotesService({
         aiClient: directClient,
         materialContextService: materialContext()
@@ -87,7 +89,9 @@ test("Ask My Notes defaults to fast and deterministically promotes synthesis", a
         escalated: false
     });
 
-    const synthesisClient = capturingClient([JSON.stringify({ answer: "Synthesis answer." })]);
+    const synthesisClient = capturingClient([JSON.stringify({
+        answer: "Synthesis answer.", supportType: "grounded_with_explanation"
+    })]);
     const synthesisService = createAskNotesService({
         aiClient: synthesisClient,
         materialContextService: materialContext()
@@ -110,7 +114,9 @@ test("three Ask My Notes sources or large context select standard", async () => 
         materialContext(3),
         materialContext(1, "x".repeat(30001))
     ]) {
-        const client = capturingClient([JSON.stringify({ answer: "Answer." })]);
+        const client = capturingClient([JSON.stringify({
+            answer: "Answer.", supportType: "grounded"
+        })]);
         const service = createAskNotesService({ aiClient: client, materialContextService: context });
         await service.ask({
             courseId: 1,

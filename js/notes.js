@@ -46,17 +46,30 @@ function addUserMessage(message) {
     scrollToBottom();
 }
 
-function addAssistantMessage(answer, sources) {
+function addAssistantMessage(answer, sources, supportType) {
     const element = document.createElement("div");
     element.className = "message assistant";
-    element.innerHTML = '<div class="message-avatar">S</div><div class="message-content"><p></p><div class="answer-sources"><strong>Selected materials</strong><div></div></div></div>';
+    element.innerHTML = '<div class="message-avatar">S</div><div class="message-content"><p></p></div>';
     element.querySelector("p").textContent = answer;
-    const sourceList = element.querySelector(".answer-sources div");
-    sources.forEach(source => {
-        const chip = document.createElement("span");
-        chip.textContent = source.name;
-        sourceList.appendChild(chip);
-    });
+    const content = element.querySelector(".message-content");
+    if (supportType === "grounded_with_explanation") {
+        const label = document.createElement("div");
+        label.className = "answer-support-label";
+        label.textContent = "Based on your notes with added explanation.";
+        content.appendChild(label);
+    }
+    if (supportType !== "not_found") {
+        const sourceSection = document.createElement("div");
+        sourceSection.className = "answer-sources";
+        sourceSection.innerHTML = "<strong>Selected materials</strong><div></div>";
+        const sourceList = sourceSection.querySelector("div");
+        sources.forEach(source => {
+            const chip = document.createElement("span");
+            chip.textContent = source.name;
+            sourceList.appendChild(chip);
+        });
+        content.appendChild(sourceSection);
+    }
     chatMessages.appendChild(element);
     scrollToBottom();
 }
@@ -98,7 +111,7 @@ async function askQuestion(question, materialIds = selectedMaterialIds(), showUs
             { timeoutMs: 120000 }
         );
         loading.remove();
-        addAssistantMessage(response.answer, response.sources);
+        addAssistantMessage(response.answer, response.sources, response.supportType);
     } catch (error) {
         loading.remove();
         if (error.status === 404) {
