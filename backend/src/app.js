@@ -339,6 +339,9 @@ app.use(
     })
 );
 
+if (typeof options.registerTestRoutes === "function") {
+    options.registerTestRoutes(app);
+}
 
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -10,7 +10,9 @@
     "migrate": "node src/database/migrate.js",
     "claim:development-user": "node src/database/claim-development-user.js",
     "test": "node --test test/*.test.js",
-    "test:watch": "node --test --watch test/*.test.js"
+    "test:watch": "node --test --watch test/*.test.js",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed"
   },
   "keywords": [],
   "author": "",
@@ -31,6 +33,7 @@
     "pdf-parse": "^2.4.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "supertest": "^7.2.2"
   }
 }

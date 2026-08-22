@@ -18,3 +18,7 @@ backend/.env
 
 # Local deployment volumes
 data/
+
+# Browser-test artifacts
+backend/test-results/
+backend/playwright-report/

@@ -809,6 +809,8 @@ h1 {
 
     .main-content {
         margin-left: 70px;
+        width: calc(100% - 70px);
+        max-width: none;
 
         padding: 28px 20px;
     }
@@ -1198,6 +1200,11 @@ select {
 
 @media (max-width: 750px) {
     .sidebar-courses { display: none; }
-    .course-list { grid-template-columns: 1fr; }
+    .dashboard-panel { min-width: 0; }
+    .course-list { grid-template-columns: minmax(0, 1fr); }
+    .course-info { min-width: 0; }
+    .course-info h3 { overflow-wrap: anywhere; }
+    .tool-grid { grid-template-columns: minmax(0, 1fr); }
+    .tool-card { min-width: 0; }
     .primary-button, .secondary-tool-button { min-height: 42px; }
 }
