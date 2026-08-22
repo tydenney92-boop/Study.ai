@@ -28,8 +28,10 @@ Credentials may be provided through the listed environment variables or the
 runtime's workload identity/default AWS credential chain.
 
 For production OpenAI generation, set `AI_ENABLED=true`, `AI_PROVIDER=openai`,
-`OPENAI_API_KEY` as a platform secret, and `OPENAI_MODEL` to the model selected
-for the deployment. The key is read only by the server. For Ollama, set
+`OPENAI_API_KEY` as a platform secret, plus `OPENAI_MODEL_FAST`,
+`OPENAI_MODEL_STANDARD`, and `OPENAI_MODEL_ADVANCED`. The legacy
+`OPENAI_MODEL` can temporarily supply any unset tier. The key is read only by
+the server. For Ollama, set
 `AI_PROVIDER=ollama`, `OLLAMA_BASE_URL`, and `OLLAMA_MODEL`; its URL must be
 reachable from the container. Set `AI_ENABLED=false` to boot without an AI
 provider; generation endpoints then return the stable `AI_DISABLED` 503.
@@ -40,8 +42,10 @@ characters, and 5–20 quiz questions using the existing 5/10/15/20 choices.
 Override these with `AI_RATE_LIMIT_WINDOW_MS`, `AI_RATE_LIMIT_MAX_REQUESTS`,
 `AI_MAX_CONCURRENT_REQUESTS`, `AI_MAX_CONTEXT_CHARACTERS`,
 `AI_QUIZ_MIN_QUESTIONS`, `AI_QUIZ_MAX_QUESTIONS`, and
-`AI_QUIZ_MAX_ATTEMPTS` (default 3). OpenAI SDK retries are disabled so a
-timed-out call is never automatically duplicated.
+`AI_QUIZ_MAX_ATTEMPTS` (default 3). Study Guide and Flashcard validation retries
+default to two attempts and can be changed with `AI_STUDY_GUIDE_MAX_ATTEMPTS`
+and `AI_FLASHCARD_MAX_ATTEMPTS`. OpenAI SDK retries are disabled so a timed-out
+call is never automatically duplicated.
 
 ## SQLite constraints and data safety
 

@@ -160,7 +160,8 @@ const materialContextService = createMaterialContextService({
 const studyGuideService = createStudyGuideService({
     aiClient,
     materialContextService,
-    studyGuidesRepository: repositories.studyGuides
+    studyGuidesRepository: repositories.studyGuides,
+    maxAttempts: config.aiStudyGuideMaxAttempts
 });
 const quizGenerationService = createQuizGenerationService({
     aiClient,
@@ -195,7 +196,8 @@ const flashcardGenerationService = createFlashcardGenerationService({
     flashcardsRepository: repositories.flashcards,
     minCards: config.aiFlashcardMinCards,
     maxCards: config.aiFlashcardMaxCards,
-    defaultCards: config.aiFlashcardDefaultCards
+    defaultCards: config.aiFlashcardDefaultCards,
+    maxAttempts: config.aiFlashcardMaxAttempts
 });
 const askNotesService = createAskNotesService({
     aiClient,

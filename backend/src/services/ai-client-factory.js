@@ -5,6 +5,7 @@ const { AppError } = require("../utils/app-error");
 function createConfiguredAiClient(config) {
     if (!config.aiEnabled) {
         return {
+            provider: "disabled",
             async generate() {
                 throw new AppError({
                     code: "AI_DISABLED",
@@ -24,7 +25,11 @@ function createConfiguredAiClient(config) {
     if (config.aiProvider === "openai") {
         return createOpenAiClient({
             apiKey: config.openAiApiKey,
-            model: config.openAiModel,
+            models: {
+                fast: config.openAiModels?.fast || config.openAiModel,
+                standard: config.openAiModels?.standard || config.openAiModel,
+                advanced: config.openAiModels?.advanced || config.openAiModel
+            },
             timeoutMs: config.aiTimeoutMs
         });
     }

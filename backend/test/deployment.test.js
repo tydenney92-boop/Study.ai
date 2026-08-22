@@ -29,6 +29,7 @@ function validProductionConfig() {
         ollamaModel: "llama3.2",
         openAiApiKey: null,
         openAiModel: null,
+        openAiModels: { fast: null, standard: null, advanced: null },
         aiTimeoutMs: 120000,
         aiRateLimitWindowMs: 600000,
         aiRateLimitMaxRequests: 5,
@@ -37,9 +38,11 @@ function validProductionConfig() {
         aiQuizMinQuestions: 5,
         aiQuizMaxQuestions: 20,
         aiQuizMaxAttempts: 3,
+        aiStudyGuideMaxAttempts: 2,
         aiFlashcardMinCards: 5,
         aiFlashcardMaxCards: 20,
         aiFlashcardDefaultCards: 10,
+        aiFlashcardMaxAttempts: 2,
         secureCookies: true,
         trustProxyHops: 1,
         serveFrontend: true
@@ -66,7 +69,11 @@ test("production accepts OpenAI only with its server-side key and model", () => 
         ollamaBaseUrl: null,
         ollamaModel: null,
         openAiApiKey: "test-server-side-key",
-        openAiModel: "configured-test-model"
+        openAiModels: {
+            fast: "fast-test-model",
+            standard: "standard-test-model",
+            advanced: "advanced-test-model"
+        }
     }));
 
     assert.throws(
@@ -76,10 +83,38 @@ test("production accepts OpenAI only with its server-side key and model", () => 
             ollamaBaseUrl: null,
             ollamaModel: null,
             openAiApiKey: null,
-            openAiModel: null
+            openAiModel: null,
+            openAiModels: { fast: null, standard: null, advanced: null }
         }),
         error => error.message.includes("OPENAI_API_KEY") &&
-            error.message.includes("OPENAI_MODEL")
+            error.message.includes("OPENAI_MODEL_FAST") &&
+            error.message.includes("OPENAI_MODEL_STANDARD") &&
+            error.message.includes("OPENAI_MODEL_ADVANCED")
+    );
+});
+
+test("production OpenAI configuration accepts legacy fallback and rejects partial tiers", () => {
+    assert.doesNotThrow(() => validateProductionConfig({
+        ...validProductionConfig(),
+        aiProvider: "openai",
+        openAiApiKey: "test-server-side-key",
+        openAiModel: "legacy-model",
+        openAiModels: { fast: null, standard: null, advanced: null }
+    }));
+
+    assert.throws(
+        () => validateProductionConfig({
+            ...validProductionConfig(),
+            aiProvider: "openai",
+            openAiApiKey: "test-server-side-key",
+            openAiModel: null,
+            openAiModels: {
+                fast: "fast-test-model",
+                standard: null,
+                advanced: "advanced-test-model"
+            }
+        }),
+        error => error.message.includes("OPENAI_MODEL_STANDARD")
     );
 });
 

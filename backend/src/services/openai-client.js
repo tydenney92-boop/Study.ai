@@ -25,7 +25,14 @@ function normalizedOpenAiError(error) {
     });
 }
 
-function createOpenAiClient({ apiKey, model, timeoutMs, client }) {
+const MODEL_TIERS = new Set(["fast", "standard", "advanced"]);
+
+function createOpenAiClient({ apiKey, model, models, timeoutMs, client }) {
+    const configuredModels = {
+        fast: models?.fast || model,
+        standard: models?.standard || model,
+        advanced: models?.advanced || model
+    };
     const openai = client || new OpenAI({
         apiKey,
         timeout: timeoutMs,
@@ -33,13 +40,21 @@ function createOpenAiClient({ apiKey, model, timeoutMs, client }) {
     });
 
     return {
-        async generate(prompt) {
+        provider: "openai",
+        async generate(prompt, { tier = "standard" } = {}) {
+            if (!MODEL_TIERS.has(tier) || !configuredModels[tier]) {
+                throw new AppError({
+                    code: "AI_CONFIGURATION_ERROR",
+                    message: "The selected AI model tier is not configured.",
+                    status: 503
+                });
+            }
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
             try {
                 const response = await openai.responses.create({
-                    model,
+                    model: configuredModels[tier],
                     input: prompt
                 }, {
                     signal: controller.signal,
@@ -66,4 +81,4 @@ function createOpenAiClient({ apiKey, model, timeoutMs, client }) {
     };
 }
 
-module.exports = { createOpenAiClient, normalizedOpenAiError };
+module.exports = { MODEL_TIERS, createOpenAiClient, normalizedOpenAiError };

@@ -49,9 +49,15 @@ function createQuizGenerationService({
 
             for (let attempt = 1; attempt <= maxAttempts; attempt++) {
                 try {
+                    const escalated = attempt === maxAttempts && lastIssues.length > 0;
                     const generatedResponse = await callAi(
                         aiClient,
-                        buildQuizPrompt(context.courseContent, normalizedCount, lastIssues)
+                        buildQuizPrompt(context.courseContent, normalizedCount, lastIssues),
+                        {
+                            workflow: "quiz_generation",
+                            tier: escalated ? "advanced" : "standard",
+                            escalated
+                        }
                     );
                     const quiz = validateQuiz(
                         parseJsonResponse(generatedResponse),
@@ -59,7 +65,12 @@ function createQuizGenerationService({
                     );
                     const verificationResponse = await callAi(
                         aiClient,
-                        buildQuizVerificationPrompt(quiz, context.courseContent)
+                        buildQuizVerificationPrompt(quiz, context.courseContent),
+                        {
+                            workflow: "quiz_verification",
+                            tier: "standard",
+                            escalated: false
+                        }
                     );
                     const verification = validateVerification(
                         verificationResponse

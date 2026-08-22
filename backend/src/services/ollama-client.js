@@ -2,7 +2,8 @@ const { AppError } = require("../utils/app-error");
 
 function createOllamaClient({ baseUrl, model, timeoutMs }) {
     return {
-        async generate(prompt) {
+        provider: "ollama",
+        async generate(prompt, _options = {}) {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), timeoutMs);
             let response;

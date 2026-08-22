@@ -70,7 +70,21 @@ function validateProductionConfig(config) {
     }
     if (config.aiEnabled === true && config.aiProvider === "openai") {
         required(config.openAiApiKey, "OPENAI_API_KEY", errors);
-        required(config.openAiModel, "OPENAI_MODEL", errors);
+        required(
+            config.openAiModels?.fast || config.openAiModel,
+            "OPENAI_MODEL_FAST or OPENAI_MODEL",
+            errors
+        );
+        required(
+            config.openAiModels?.standard || config.openAiModel,
+            "OPENAI_MODEL_STANDARD or OPENAI_MODEL",
+            errors
+        );
+        required(
+            config.openAiModels?.advanced || config.openAiModel,
+            "OPENAI_MODEL_ADVANCED or OPENAI_MODEL",
+            errors
+        );
     }
     positiveInteger(config.aiTimeoutMs, "AI_TIMEOUT_MS", errors);
     positiveInteger(config.aiRateLimitWindowMs, "AI_RATE_LIMIT_WINDOW_MS", errors);
@@ -80,9 +94,11 @@ function validateProductionConfig(config) {
     positiveInteger(config.aiQuizMinQuestions, "AI_QUIZ_MIN_QUESTIONS", errors);
     positiveInteger(config.aiQuizMaxQuestions, "AI_QUIZ_MAX_QUESTIONS", errors);
     positiveInteger(config.aiQuizMaxAttempts, "AI_QUIZ_MAX_ATTEMPTS", errors);
+    positiveInteger(config.aiStudyGuideMaxAttempts, "AI_STUDY_GUIDE_MAX_ATTEMPTS", errors);
     positiveInteger(config.aiFlashcardMinCards, "AI_FLASHCARD_MIN_CARDS", errors);
     positiveInteger(config.aiFlashcardMaxCards, "AI_FLASHCARD_MAX_CARDS", errors);
     positiveInteger(config.aiFlashcardDefaultCards, "AI_FLASHCARD_DEFAULT_CARDS", errors);
+    positiveInteger(config.aiFlashcardMaxAttempts, "AI_FLASHCARD_MAX_ATTEMPTS", errors);
     if (config.aiQuizMinQuestions > config.aiQuizMaxQuestions) {
         errors.push("AI_QUIZ_MIN_QUESTIONS cannot exceed AI_QUIZ_MAX_QUESTIONS.");
     }

@@ -102,7 +102,7 @@ test("invalid/no-text material context and malformed AI output persist nothing",
         .post("/api/courses/1/flashcards/generate")
         .send({ materialIds: [usableId], cardCount: 5 }).expect(502);
     assert.equal(malformed.body.error.code, "AI_OUTPUT_INVALID");
-    assert.equal(calls, 1);
+    assert.equal(calls, 2);
     assert.equal(context.database.prepare("SELECT COUNT(*) count FROM flashcards").get().count, 0);
     assert.equal(context.database.prepare("SELECT COUNT(*) count FROM flashcard_materials").get().count, 0);
 });

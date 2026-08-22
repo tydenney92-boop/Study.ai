@@ -71,6 +71,11 @@ const config = {
         (isProduction ? null : "llama3.2"),
     openAiApiKey: process.env.OPENAI_API_KEY || null,
     openAiModel: process.env.OPENAI_MODEL || null,
+    openAiModels: {
+        fast: process.env.OPENAI_MODEL_FAST || process.env.OPENAI_MODEL || null,
+        standard: process.env.OPENAI_MODEL_STANDARD || process.env.OPENAI_MODEL || null,
+        advanced: process.env.OPENAI_MODEL_ADVANCED || process.env.OPENAI_MODEL || null
+    },
     aiTimeoutMs:
         numberEnvironment("AI_TIMEOUT_MS", 120000),
     aiRateLimitWindowMs:
@@ -87,12 +92,16 @@ const config = {
         numberEnvironment("AI_QUIZ_MAX_QUESTIONS", 20),
     aiQuizMaxAttempts:
         numberEnvironment("AI_QUIZ_MAX_ATTEMPTS", 3),
+    aiStudyGuideMaxAttempts:
+        numberEnvironment("AI_STUDY_GUIDE_MAX_ATTEMPTS", 2),
     aiFlashcardMinCards:
         numberEnvironment("AI_FLASHCARD_MIN_CARDS", 5),
     aiFlashcardMaxCards:
         numberEnvironment("AI_FLASHCARD_MAX_CARDS", 20),
     aiFlashcardDefaultCards:
-        numberEnvironment("AI_FLASHCARD_DEFAULT_CARDS", 10)
+        numberEnvironment("AI_FLASHCARD_DEFAULT_CARDS", 10),
+    aiFlashcardMaxAttempts:
+        numberEnvironment("AI_FLASHCARD_MAX_ATTEMPTS", 2)
 };
 
 module.exports = isProduction ? validateProductionConfig(config) : config;

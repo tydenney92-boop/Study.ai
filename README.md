@@ -26,7 +26,10 @@ session cookies.
 Local AI defaults to Ollama. Set `AI_PROVIDER=ollama`, `AI_ENABLED=true`,
 `OLLAMA_BASE_URL=http://localhost:11434`, and `OLLAMA_MODEL` to the installed
 local model. OpenAI is also available through the same server-side provider
-boundary; never put `OPENAI_API_KEY` in frontend files.
+boundary; never put `OPENAI_API_KEY` in frontend files. For tiered OpenAI
+routing, configure `OPENAI_MODEL_FAST`, `OPENAI_MODEL_STANDARD`, and
+`OPENAI_MODEL_ADVANCED`. The legacy `OPENAI_MODEL` remains a fallback for any
+unset tier.
 
 See [backend/DEVELOPMENT_DATA.md](backend/DEVELOPMENT_DATA.md) to claim the
 preserved ECON 110 development account.

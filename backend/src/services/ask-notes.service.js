@@ -3,6 +3,21 @@ const { callAi } = require("./ai-call");
 const { buildAskNotesPrompt } = require("./ai-prompts");
 const { parseJsonResponse, validateAskNotesAnswer } = require("./ai-response-validation");
 
+const STANDARD_CONTEXT_CHARACTERS = 30000;
+const STANDARD_MATERIAL_COUNT = 3;
+const SYNTHESIS_PATTERN = /\b(compare|comparison|contrast|relationship|relate|cause|causes|caused|implication|implications|analy[sz]e|analysis|synthesize|synthesis|evaluate|interact|connection|connections|trade-?offs?)\b/i;
+
+function selectAskNotesTier({ question, materialCount, contextLength }) {
+    const multiPart = (question.match(/\?/g) || []).length > 1 ||
+        /\b(and|versus|vs\.?|while)\b.+\b(how|why|what|which)\b/i.test(question);
+    return materialCount >= STANDARD_MATERIAL_COUNT ||
+        contextLength > STANDARD_CONTEXT_CHARACTERS ||
+        SYNTHESIS_PATTERN.test(question) ||
+        multiPart
+        ? "standard"
+        : "fast";
+}
+
 function createAskNotesService({ aiClient, materialContextService }) {
     return {
         async ask({ courseId, userId, materialIds, question }) {
@@ -16,9 +31,19 @@ function createAskNotesService({ aiClient, materialContextService }) {
                 userId,
                 materialIds
             });
+            const tier = selectAskNotesTier({
+                question: validatedQuestion,
+                materialCount: context.materials.length,
+                contextLength: context.courseContent.length
+            });
             const response = await callAi(
                 aiClient,
-                buildAskNotesPrompt(context.courseContent, validatedQuestion)
+                buildAskNotesPrompt(context.courseContent, validatedQuestion),
+                {
+                    workflow: "ask_notes",
+                    tier,
+                    escalated: tier !== "fast"
+                }
             );
             const answer = validateAskNotesAnswer(parseJsonResponse(response));
 
@@ -33,4 +58,9 @@ function createAskNotesService({ aiClient, materialContextService }) {
     };
 }
 
-module.exports = { createAskNotesService };
+module.exports = {
+    STANDARD_CONTEXT_CHARACTERS,
+    STANDARD_MATERIAL_COUNT,
+    createAskNotesService,
+    selectAskNotesTier
+};

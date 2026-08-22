@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createConfiguredAiClient } = require("../src/services/ai-client-factory");
 const { createOpenAiClient } = require("../src/services/openai-client");
+const { createOllamaClient } = require("../src/services/ollama-client");
 const { createAiUsageGuard } = require("../src/services/ai-usage-guard");
 
 test("configured factory retains Ollama and supports OpenAI", () => {
@@ -16,7 +17,11 @@ test("configured factory retains Ollama and supports OpenAI", () => {
         aiEnabled: true,
         aiProvider: "openai",
         openAiApiKey: "test-key-never-sent",
-        openAiModel: "configured-test-model",
+        openAiModels: {
+            fast: "fast-test-model",
+            standard: "standard-test-model",
+            advanced: "advanced-test-model"
+        },
         aiTimeoutMs: 100
     });
 
@@ -48,6 +53,80 @@ test("OpenAI client returns output and explicitly disables automatic retries", a
     });
     assert.equal(capturedOptions.maxRetries, 0);
     assert.ok(capturedOptions.signal instanceof AbortSignal);
+});
+
+test("OpenAI client maps generic tiers to configured model names", async () => {
+    const models = [];
+    const client = createOpenAiClient({
+        models: {
+            fast: "gpt-fast-test",
+            standard: "gpt-standard-test",
+            advanced: "gpt-advanced-test"
+        },
+        timeoutMs: 1000,
+        client: {
+            responses: {
+                async create(request) {
+                    models.push(request.model);
+                    return { output_text: "generated text" };
+                }
+            }
+        }
+    });
+
+    await client.generate("one", { tier: "fast" });
+    await client.generate("two", { tier: "standard" });
+    await client.generate("three", { tier: "advanced" });
+    assert.deepEqual(models, [
+        "gpt-fast-test",
+        "gpt-standard-test",
+        "gpt-advanced-test"
+    ]);
+});
+
+test("OpenAI legacy model safely supplies every tier", async () => {
+    const models = [];
+    const client = createOpenAiClient({
+        model: "legacy-model",
+        timeoutMs: 1000,
+        client: {
+            responses: {
+                async create(request) {
+                    models.push(request.model);
+                    return { output_text: "generated text" };
+                }
+            }
+        }
+    });
+
+    await client.generate("one", { tier: "fast" });
+    await client.generate("two", { tier: "advanced" });
+    assert.deepEqual(models, ["legacy-model", "legacy-model"]);
+});
+
+test("Ollama accepts generic tier metadata while retaining its configured model", async t => {
+    const originalFetch = global.fetch;
+    let requestBody;
+    global.fetch = async (_url, options) => {
+        requestBody = JSON.parse(options.body);
+        return {
+            ok: true,
+            async json() { return { response: "local response" }; }
+        };
+    };
+    t.after(() => { global.fetch = originalFetch; });
+    const client = createOllamaClient({
+        baseUrl: "http://localhost:11434",
+        model: "local-test-model",
+        timeoutMs: 1000
+    });
+
+    assert.equal(
+        await client.generate("prompt", { tier: "advanced", workflow: "quiz_generation" }),
+        "local response"
+    );
+    assert.equal(requestBody.model, "local-test-model");
+    assert.equal(requestBody.prompt, "prompt");
 });
 
 for (const scenario of [

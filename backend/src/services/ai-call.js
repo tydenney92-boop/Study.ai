@@ -1,8 +1,26 @@
 const { AppError } = require("../utils/app-error");
 
-async function callAi(aiClient, prompt) {
+function logAiSelection(aiClient, { workflow, tier, escalated }) {
+    if (!aiClient.provider || aiClient.provider === "disabled") return;
+    console.log(JSON.stringify({
+        level: "info",
+        event: "ai_model_selected",
+        workflow,
+        provider: aiClient.provider,
+        tier,
+        escalated: Boolean(escalated)
+    }));
+}
+
+async function callAi(aiClient, prompt, options = {}) {
+    const selection = {
+        workflow: options.workflow || "unspecified",
+        tier: options.tier || "standard",
+        escalated: Boolean(options.escalated)
+    };
     try {
-        return await aiClient.generate(prompt);
+        logAiSelection(aiClient, selection);
+        return await aiClient.generate(prompt, selection);
     } catch (error) {
         if (error instanceof AppError) {
             throw error;
@@ -18,5 +36,6 @@ async function callAi(aiClient, prompt) {
 }
 
 module.exports = {
-    callAi
+    callAi,
+    logAiSelection
 };
