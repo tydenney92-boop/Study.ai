@@ -8,6 +8,7 @@ function createMaterialService({
     unitsRepository,
     materialsRepository,
     textExtractionService,
+    materialIndexingService,
     fileStorage,
     storageCleanupRepository,
     storageCleanupService
@@ -111,7 +112,14 @@ function createMaterialService({
                 extractionStatus: extractionResult.status
             });
 
-            return materialsRepository.findOwned(materialId, courseId, userId);
+            const material = materialsRepository.findOwned(materialId, courseId, userId);
+            try {
+                materialIndexingService.rebuildMaterial(material);
+            } catch (indexingError) {
+                materialsRepository.deleteOwned(materialId, courseId, userId);
+                throw indexingError;
+            }
+            return material;
         } catch (error) {
             await removeFailedUpload(storedFilename);
             throw error;

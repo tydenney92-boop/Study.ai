@@ -5,6 +5,7 @@ const migration004 = require("./migrations/004-material-extraction-status");
 const migration005 = require("./migrations/005-generated-content-source-snapshots");
 const migration006 = require("./migrations/006-material-display-name");
 const migration007 = require("./migrations/007-storage-cleanup-journal");
+const migration008 = require("./migrations/008-material-chunks");
 const { tableExists } = require("./schema-helpers");
 const { createVerifiedBackup } = require("./sqlite-backup");
 
@@ -15,7 +16,8 @@ const migrations = [
     migration004,
     migration005,
     migration006,
-    migration007
+    migration007,
+    migration008
 ];
 
 function appliedMigrationIds(database) {

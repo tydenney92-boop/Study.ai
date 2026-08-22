@@ -15,6 +15,7 @@ const { createSessionsRepository } = require("./repositories/sessions.repository
 const { createProgressRepository } = require("./repositories/progress.repository");
 const { createFlashcardsRepository } = require("./repositories/flashcards.repository");
 const { createStorageCleanupRepository } = require("./repositories/storage-cleanup.repository");
+const { createMaterialChunksRepository } = require("./repositories/material-chunks.repository");
 const { createCourseService } = require("./services/course.service");
 const { createUnitService } = require("./services/unit.service");
 const { createMaterialService } = require("./services/material.service");
@@ -31,6 +32,10 @@ const { createAskNotesService } = require("./services/ask-notes.service");
 const { createStorageCleanupService } = require("./services/storage-cleanup.service");
 const { SqliteSessionStore } = require("./services/sqlite-session-store");
 const { createTextExtractionService } = require("./services/text-extraction.service");
+const { createDocumentChunker } = require("./services/document-chunking.service");
+const { createMaterialIndexingService } = require("./services/material-indexing.service");
+const { createLexicalRetrievalBackend } = require("./services/lexical-retrieval-backend");
+const { createRetrievalService } = require("./services/retrieval.service");
 const { createConfiguredStorage } = require("./services/storage-factory");
 const { createConfiguredAiClient } = require("./services/ai-client-factory");
 const { createAiUsageGuard } = require("./services/ai-usage-guard");
@@ -115,7 +120,8 @@ const defaultRepositories = {
     sessions: createSessionsRepository(db),
     progress: createProgressRepository(db),
     flashcards: createFlashcardsRepository(db),
-    storageCleanup: createStorageCleanupRepository(db)
+    storageCleanup: createStorageCleanupRepository(db),
+    materialChunks: createMaterialChunksRepository(db)
 };
 const repositories = {
     ...defaultRepositories,
@@ -139,6 +145,20 @@ const unitsService = createUnitService({
     coursesService,
     unitsRepository: repositories.units
 });
+const documentChunker = options.documentChunker || createDocumentChunker();
+const materialIndexingService = createMaterialIndexingService({
+    chunksRepository: repositories.materialChunks,
+    documentChunker
+});
+materialIndexingService.rebuildStale();
+const retrievalBackend = options.retrievalBackend || createLexicalRetrievalBackend({
+    chunksRepository: repositories.materialChunks
+});
+const retrievalService = createRetrievalService({
+    coursesService,
+    materialsRepository: repositories.materials,
+    retrievalBackend
+});
 const textExtractionService =
     options.textExtractionService ||
     createTextExtractionService({ fileStorage });
@@ -148,6 +168,7 @@ const materialService = createMaterialService({
     unitsRepository: repositories.units,
     materialsRepository: repositories.materials,
     textExtractionService,
+    materialIndexingService,
     fileStorage,
     storageCleanupRepository: repositories.storageCleanup,
     storageCleanupService
@@ -215,6 +236,8 @@ const sessionStore = options.sessionStore || new SqliteSessionStore({
     defaultTtlMs: config.sessionTtlMs
 });
 app.locals.sessionStore = sessionStore;
+app.locals.materialIndexingService = materialIndexingService;
+app.locals.retrievalService = retrievalService;
 
 // =========================================
 // MIDDLEWARE

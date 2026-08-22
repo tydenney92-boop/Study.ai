@@ -15,6 +15,9 @@ const sourceSnapshotMigration = require(
 const displayNameMigration = require(
     "../src/database/migrations/006-material-display-name"
 );
+const materialChunksMigration = require(
+    "../src/database/migrations/008-material-chunks"
+);
 
 const legacyMaterials = [
     {
@@ -103,8 +106,9 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
         createBackup: false
     });
 
-    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7]);
+    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7, 8]);
     assert.equal(tableExists(context.database, "storage_cleanup_jobs"), true);
+    assert.equal(tableExists(context.database, "material_chunks"), true);
     assert.equal(tableExists(context.database, "sessions"), true);
     assert.equal(
         context.database.prepare("SELECT COUNT(*) AS count FROM users").get().count,
@@ -359,4 +363,34 @@ test("material display-name migration backfills filenames and is idempotent", t 
         { id: 1, displayName: "Lecture One.pdf" },
         { id: 2, displayName: "Custom Notes" }
     ]);
+});
+
+test("material-chunk migration is idempotent and enforces parent course consistency", t => {
+    const context = temporaryDatabase(t);
+    context.database.exec(`
+        CREATE TABLE courses (id INTEGER PRIMARY KEY);
+        CREATE TABLE materials (
+            id INTEGER PRIMARY KEY,
+            course_id INTEGER NOT NULL,
+            FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+        );
+        INSERT INTO courses VALUES (1), (2);
+        INSERT INTO materials VALUES (10, 1);
+    `);
+    materialChunksMigration.up(context.database);
+    materialChunksMigration.up(context.database);
+    context.database.prepare(`
+        INSERT INTO material_chunks (
+            material_id, course_id, chunk_index, chunk_text,
+            character_count, token_estimate, content_hash, chunking_version
+        ) VALUES (10, 1, 0, 'Chunk text', 10, 3, 'hash', 1)
+    `).run();
+
+    assert.throws(() => context.database.prepare(`
+        INSERT INTO material_chunks (
+            material_id, course_id, chunk_index, chunk_text,
+            character_count, token_estimate, content_hash, chunking_version
+        ) VALUES (10, 2, 1, 'Wrong course', 12, 3, 'hash', 1)
+    `).run(), /must belong to its course/);
+    assert.deepEqual(context.database.pragma("foreign_key_check"), []);
 });
