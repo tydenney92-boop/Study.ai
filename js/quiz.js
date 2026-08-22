@@ -127,6 +127,7 @@ quizLengthButtons.forEach(
                 quizLengthButtons.forEach(function(otherButton) {
                     const isSelected = otherButton === button;
                     otherButton.classList.toggle("selected", isSelected);
+                    otherButton.classList.toggle("is-selected", isSelected);
                     otherButton.setAttribute("aria-pressed", String(isSelected));
                 });
 
@@ -840,7 +841,7 @@ async function initializeQuizMaterials() {
     }
     if (materialId) {
         document.querySelector("#quiz-material-selection-wrap").style.display = "none";
-        document.querySelector("#quiz-settings-step").textContent = "1";
+        document.querySelector("#quiz-settings-step").textContent = "Step 1";
         generateQuizButton.disabled = false;
         return;
     }

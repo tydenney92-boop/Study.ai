@@ -14,7 +14,7 @@
 
     <link rel="stylesheet" href="css/style.css">
 
-    <link rel="stylesheet" href="css/quiz.css">
+    <link rel="stylesheet" href="css/quiz.css?v=20260822">
 
 </head>
 
@@ -61,11 +61,9 @@
                 aria-labelledby="quiz-material-heading"
             >
                 <div class="quiz-step-heading">
-                    <span class="quiz-step-number" aria-hidden="true">1</span>
-                    <div>
-                        <h2 id="quiz-material-heading">Choose your study materials</h2>
-                        <p>Select one or more AI-ready sources for this quiz.</p>
-                    </div>
+                    <span class="quiz-step-label">Step 1</span>
+                    <h2 id="quiz-material-heading">Choose your study materials</h2>
+                    <p>Select one or more AI-ready sources for this quiz.</p>
                 </div>
                 <div id="quiz-material-selection"></div>
                 <div id="quiz-material-assistance"></div>
@@ -76,11 +74,9 @@
                 aria-labelledby="quiz-settings-heading"
             >
                 <div class="quiz-step-heading">
-                    <span class="quiz-step-number" id="quiz-settings-step" aria-hidden="true">2</span>
-                    <div>
-                        <h2 id="quiz-settings-heading">Quiz settings</h2>
-                        <p>Choose how many questions you'd like to practice.</p>
-                    </div>
+                    <span class="quiz-step-label" id="quiz-settings-step">Step 2</span>
+                    <h2 id="quiz-settings-heading">Quiz settings</h2>
+                    <p>Choose how many questions you'd like to practice.</p>
                 </div>
 
                 <div
@@ -90,7 +86,7 @@
                 >
                     <button
                     type="button"
-                    class="quiz-length-button selected"
+                    class="quiz-length-button quiz-count-option selected is-selected"
                     data-question-count="5"
                     aria-pressed="true"
                 >
@@ -107,7 +103,7 @@
 
                 <button
                     type="button"
-                    class="quiz-length-button"
+                    class="quiz-length-button quiz-count-option"
                     data-question-count="10"
                     aria-pressed="false"
                 >
@@ -125,7 +121,7 @@
 
                 <button
                     type="button"
-                    class="quiz-length-button"
+                    class="quiz-length-button quiz-count-option"
                     data-question-count="15"
                     aria-pressed="false"
                 >
@@ -143,7 +139,7 @@
 
                 <button
                     type="button"
-                    class="quiz-length-button"
+                    class="quiz-length-button quiz-count-option"
                     data-question-count="20"
                     aria-pressed="false"
                 >
@@ -160,28 +156,28 @@
 
 
                 </div>
-            </section>
 
-            <div class="quiz-generate-area">
-                <p
-                    class="quiz-setup-status"
-                    id="quiz-setup-status"
-                    role="status"
-                    aria-live="polite"
-                    hidden
-                ></p>
-                <button
-                    type="button"
-                    class="primary-button quiz-generate-button"
-                    id="generate-quiz-button"
-                    disabled
-                >
-                    Generate Quiz
-                </button>
-                <p class="quiz-setup-hint">
-                    Questions are generated only from the materials you select.
-                </p>
-            </div>
+                <div class="quiz-generate-area">
+                    <p
+                        class="quiz-setup-status"
+                        id="quiz-setup-status"
+                        role="status"
+                        aria-live="polite"
+                        hidden
+                    ></p>
+                    <button
+                        type="button"
+                        class="primary-button quiz-generate-button"
+                        id="generate-quiz-button"
+                        disabled
+                    >
+                        Generate Quiz
+                    </button>
+                    <p class="quiz-setup-hint">
+                        Questions are generated only from the materials you select.
+                    </p>
+                </div>
+            </section>
 
 
         </div>
