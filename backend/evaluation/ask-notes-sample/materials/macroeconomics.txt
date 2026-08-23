@@ -1,0 +1,23 @@
+Inflation and Monetary Policy
+
+Inflation is a sustained increase in the general price level, not merely an increase in one product's price. Demand-pull inflation can occur when aggregate demand grows faster than the economy's productive capacity. Cost-push inflation can arise when important production costs increase.
+
+A central bank can respond to persistent inflation by raising its policy interest rate. Higher borrowing costs tend to reduce interest-sensitive consumption and investment, which moderates aggregate demand. Monetary policy operates with variable time lags, so its full effect is not immediate.
+
+Real gross domestic product values final production using constant prices. Nominal gross domestic product uses current prices and can therefore rise because production increased, prices increased, or both.
+
+Unemployment and the Business Cycle
+
+The unemployment rate is the number of unemployed people divided by the labor force. A person must be without a job, available for work, and actively seeking work to be counted as unemployed in the standard measure. Discouraged workers who stop searching are not included in the labor force, which is one reason the headline rate does not capture every form of labor-market weakness.
+
+Cyclical unemployment rises during recessions as aggregate spending and production decline. Frictional unemployment reflects normal job search and matching. Structural unemployment can persist when worker skills or locations do not align with available jobs.
+
+Fiscal Policy
+
+Expansionary fiscal policy increases government purchases, reduces taxes, or combines both in an effort to support aggregate demand. The final effect depends on multiplier responses, financing conditions, monetary-policy reactions, and the state of the economy. Automatic stabilizers such as progressive taxes and unemployment benefits change without a new legislative vote.
+
+Budget deficits add to public debt when government outlays exceed revenue. Debt sustainability depends on interest costs, economic growth, the existing debt level, and future primary balances rather than on the deficit in a single year alone.
+
+Long-Run Economic Growth
+
+Growth in real output per person ultimately depends on productivity. Physical capital, human capital, technology, institutions, and the allocation of resources can all affect productivity. Diminishing returns mean that adding capital alone cannot sustain the same growth rate indefinitely without technological or organizational improvement.

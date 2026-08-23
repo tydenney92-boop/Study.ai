@@ -41,6 +41,7 @@ function validProductionConfig() {
         retrievalMode: "lexical",
         retrievalHybridSemanticWeight: 0.65,
         retrievalMinimumSimilarity: 0.15,
+        askNotesRetrievalTopK: 6,
         aiTimeoutMs: 120000,
         aiRateLimitWindowMs: 600000,
         aiRateLimitMaxRequests: 5,
@@ -158,6 +159,13 @@ test("production validates all AI safeguard limits", () => {
         error => error.message.includes("AI_RATE_LIMIT_MAX_REQUESTS") &&
             error.message.includes("cannot exceed")
     );
+});
+
+test("production validates the bounded Ask My Notes retrieval limit", () => {
+    assert.throws(() => validateProductionConfig({
+        ...validProductionConfig(),
+        askNotesRetrievalTopK: 21
+    }), error => error.message.includes("AI_ASK_NOTES_RETRIEVAL_TOP_K cannot exceed 20"));
 });
 
 test("production validates flashcard generation limits", () => {

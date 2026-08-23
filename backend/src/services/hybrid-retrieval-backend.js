@@ -34,14 +34,19 @@ function createHybridRetrievalBackend({ lexicalBackend, semanticBackend, semanti
                 lexicalBackend.retrieve({ ...input, limit: candidateLimit }),
                 semanticBackend.retrieve({ ...input, limit: candidateLimit })
             ]);
-            return combineHybridResults({
+            return attachRetrievalMetadata(combineHybridResults({
                 lexical,
                 semantic,
                 semanticWeight,
                 limit: input.limit
+            }), {
+                mode: "hybrid",
+                requestedMode: "hybrid",
+                fallbackOccurred: false
             });
         }
     };
 }
 
 module.exports = { combineHybridResults, createHybridRetrievalBackend, normalizeScores };
+const { attachRetrievalMetadata } = require("./retrieval-result");

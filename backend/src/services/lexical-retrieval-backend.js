@@ -77,7 +77,10 @@ function createLexicalRetrievalBackend({ chunksRepository }) {
                 userId,
                 materialIds
             });
-            return rankLexicalChunks({ candidates, materialIds, query, limit });
+            return attachRetrievalMetadata(
+                rankLexicalChunks({ candidates, materialIds, query, limit }),
+                { mode: "lexical", requestedMode: "lexical", fallbackOccurred: false }
+            );
         }
     };
 }
@@ -89,3 +92,4 @@ module.exports = {
     normalizeLexicalText,
     rankLexicalChunks
 };
+const { attachRetrievalMetadata } = require("./retrieval-result");

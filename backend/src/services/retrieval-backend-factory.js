@@ -1,6 +1,7 @@
 const { createLexicalRetrievalBackend } = require("./lexical-retrieval-backend");
 const { createSemanticRetrievalBackend } = require("./semantic-retrieval-backend");
 const { createHybridRetrievalBackend } = require("./hybrid-retrieval-backend");
+const { attachRetrievalMetadata } = require("./retrieval-result");
 
 function createFallbackBackend({ primary, fallback, output = console }) {
     return {
@@ -18,7 +19,12 @@ function createFallbackBackend({ primary, fallback, output = console }) {
                     errorCode: error.code || "EMBEDDING_RETRIEVAL_FAILED"
                 }));
             }
-            return fallback.retrieve(input);
+            const results = await fallback.retrieve(input);
+            return attachRetrievalMetadata([...results], {
+                mode: fallback.mode,
+                requestedMode: primary.mode,
+                fallbackOccurred: true
+            });
         }
     };
 }

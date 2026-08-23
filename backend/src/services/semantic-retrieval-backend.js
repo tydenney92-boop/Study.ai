@@ -86,7 +86,11 @@ function createSemanticRetrievalBackend({
                         (Number(process.hrtime.bigint() - started) / 1e6).toFixed(1)
                     )
                 }));
-                return results;
+                return attachRetrievalMetadata(results, {
+                    mode: "semantic",
+                    requestedMode: "semantic",
+                    fallbackOccurred: false
+                });
             } catch (error) {
                 output.log(JSON.stringify({
                     level: "error",
@@ -112,3 +116,4 @@ module.exports = {
     createSemanticRetrievalBackend,
     rankSemanticChunks
 };
+const { attachRetrievalMetadata } = require("./retrieval-result");

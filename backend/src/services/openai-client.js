@@ -27,7 +27,7 @@ function normalizedOpenAiError(error) {
 
 const MODEL_TIERS = new Set(["fast", "standard", "advanced"]);
 
-function createOpenAiClient({ apiKey, model, models, timeoutMs, client }) {
+function createOpenAiClient({ apiKey, model, models, timeoutMs, client, onUsage }) {
     const configuredModels = {
         fast: models?.fast || model,
         standard: models?.standard || model,
@@ -67,6 +67,15 @@ function createOpenAiClient({ apiKey, model, models, timeoutMs, client }) {
                         code: "AI_OUTPUT_INVALID",
                         message: "The AI service returned an invalid response.",
                         status: 502
+                    });
+                }
+
+                if (typeof onUsage === "function") {
+                    onUsage({
+                        model: configuredModels[tier],
+                        inputTokens: response.usage?.input_tokens || 0,
+                        outputTokens: response.usage?.output_tokens || 0,
+                        totalTokens: response.usage?.total_tokens || 0
                     });
                 }
 

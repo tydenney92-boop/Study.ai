@@ -80,6 +80,22 @@ function createMaterialsRepository(database) {
             `).all(...materialIds, courseId, userId);
         },
 
+        findContextMetadataByIds(courseId, userId, materialIds) {
+            if (materialIds.length === 0) return [];
+            const placeholders = materialIds.map(() => "?").join(",");
+            return database.prepare(`
+                SELECT materials.id,
+                       COALESCE(materials.display_name, materials.original_filename) AS name,
+                       materials.extraction_status AS extraction_status,
+                       length(trim(COALESCE(materials.extracted_text, ''))) AS text_length
+                FROM materials
+                JOIN courses ON courses.id = materials.course_id
+                WHERE materials.id IN (${placeholders})
+                  AND materials.course_id = ?
+                  AND courses.user_id = ?
+            `).all(...materialIds, courseId, userId);
+        },
+
         create(material) {
             const result = database.prepare(`
                 INSERT INTO materials (

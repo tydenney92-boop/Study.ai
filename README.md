@@ -61,6 +61,18 @@ Compare lexical, semantic, and hybrid ranking without paid calls using
 `OPENAI_EMBEDDING_MODEL` are set. Normal unit and browser tests always use fake
 clients and never contact OpenAI or Ollama.
 
+For a real-course Ask My Notes comparison harness, including private manifest
+format and the explicitly gated paid command, see
+[docs/RAG_EVALUATION.md](docs/RAG_EVALUATION.md).
+
+Ask My Notes uses this retrieval interface to supply a bounded set of relevant
+chunks instead of concatenating complete selected documents. Configure the
+conservative result limit with `AI_ASK_NOTES_RETRIEVAL_TOP_K` (default 6,
+maximum 20). When semantic retrieval is configured, embedding failures fall
+back to lexical retrieval. No-match retrieval returns the grounded not-found
+response without calling the generative AI provider. Study Guides, Quizzes, and
+Flashcards continue using their existing full selected-material context.
+
 See [backend/DEVELOPMENT_DATA.md](backend/DEVELOPMENT_DATA.md) to claim the
 preserved ECON 110 development account.
 

@@ -20,7 +20,10 @@ function createRetrievalService({ coursesService, materialsRepository, retrieval
                     field: "materialIds"
                 });
             }
-            const ownedMaterials = materialsRepository.findContextByIds(
+            const findOwnedMaterials = materialsRepository.findContextMetadataByIds ||
+                materialsRepository.findContextByIds;
+            const ownedMaterials = findOwnedMaterials.call(
+                materialsRepository,
                 courseId,
                 userId,
                 uniqueIds

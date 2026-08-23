@@ -26,6 +26,7 @@ function createTestApp(options = {}) {
         textExtractionService: options.textExtractionService,
         embeddingClient: options.embeddingClient,
         embeddingOutput: options.embeddingOutput,
+        askNotesOutput: options.askNotesOutput,
         retrievalBackend: options.retrievalBackend,
         aiUsageGuard: options.aiUsageGuard,
         aiClient: options.aiClient || {

@@ -61,7 +61,7 @@ function addAssistantMessage(answer, sources, supportType) {
     if (supportType !== "not_found") {
         const sourceSection = document.createElement("div");
         sourceSection.className = "answer-sources";
-        sourceSection.innerHTML = "<strong>Selected materials</strong><div></div>";
+        sourceSection.innerHTML = "<strong>Retrieved supporting materials</strong><div></div>";
         const sourceList = sourceSection.querySelector("div");
         sources.forEach(source => {
             const chip = document.createElement("span");

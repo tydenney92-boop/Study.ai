@@ -22,3 +22,4 @@ data/
 # Browser-test artifacts
 backend/test-results/
 backend/playwright-report/
+backend/evaluation-output/

@@ -254,19 +254,27 @@ test("flashcards and Ask My Notes use real course material and persisted state",
     await page.locator("#confirm-delete-card").click();
     await expect(page.locator("#card-total")).toHaveText("4");
 
+    await uploadTextMaterial(page, courseId, {
+        filename: "irrelevant-biology.txt",
+        content: "Mitochondria produce cellular energy through respiration."
+    });
+
     await page.goto(`/notes.html?courseId=${courseId}`);
     await expect(page.locator("#notes-back-link")).toHaveAttribute("href", `course.html?courseId=${courseId}`);
     await expect(page.locator("#chat-disclaimer")).toHaveCount(0);
     await page.locator(".material-choice", { hasText: "market-notes.txt" }).locator("input").check();
+    await page.locator(".material-choice", { hasText: "irrelevant-biology.txt" }).locator("input").check();
     await page.locator("#chat-input").fill("How do supply and demand interact?");
     await page.locator("#send-message").click();
     await expect(page.locator(".message.assistant").last()).toContainText("market outcomes");
     await expect(page.locator(".message.assistant").last()).toContainText("Based on your notes with added explanation.");
-    await expect(page.locator(".message.assistant").last()).toContainText("Selected materials");
+    await expect(page.locator(".message.assistant").last()).toContainText("Retrieved supporting materials");
+    await expect(page.locator(".message.assistant").last()).toContainText("market-notes.txt");
+    await expect(page.locator(".message.assistant").last()).not.toContainText("irrelevant-biology.txt");
     await page.locator("#chat-input").fill("What is missing from my notes?");
     await page.locator("#send-message").click();
     await expect(page.locator(".message.assistant").last()).toContainText("do not contain enough information");
-    await page.locator("#chat-input").fill("Force service error");
+    await page.locator("#chat-input").fill("Force service error about supply");
     await page.locator("#send-message").click();
     await expect(page.locator(".message.error-message").last()).toContainText("could not complete");
     await expect(page.locator(".message.error-message").last().getByRole("button", { name: "Try Again" })).toBeVisible();

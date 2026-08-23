@@ -18,7 +18,9 @@ function selectAskNotesTier({ question, materialCount, contextLength }) {
         : "fast";
 }
 
-function createAskNotesService({ aiClient, materialContextService }) {
+const NOT_FOUND_ANSWER = "The selected materials do not contain enough information to answer that question safely.";
+
+function createAskNotesService({ aiClient, retrievalContextService }) {
     return {
         async ask({ courseId, userId, materialIds, question }) {
             const validatedQuestion = stringField(
@@ -26,14 +28,22 @@ function createAskNotesService({ aiClient, materialContextService }) {
                 "question",
                 { maxLength: 1000 }
             );
-            const context = materialContextService.resolve({
+            const context = await retrievalContextService.resolve({
                 courseId,
                 userId,
-                materialIds
+                materialIds,
+                question: validatedQuestion
             });
+            if (context.chunks.length === 0) {
+                return {
+                    answer: NOT_FOUND_ANSWER,
+                    supportType: "not_found",
+                    sources: []
+                };
+            }
             const tier = selectAskNotesTier({
                 question: validatedQuestion,
-                materialCount: context.materials.length,
+                materialCount: context.materialIds.length,
                 contextLength: context.courseContent.length
             });
             const response = await callAi(
@@ -49,12 +59,12 @@ function createAskNotesService({ aiClient, materialContextService }) {
 
             return {
                 answer: result.supportType === "not_found"
-                    ? "The selected materials do not contain enough information to answer that question safely."
+                    ? NOT_FOUND_ANSWER
                     : result.answer,
                 supportType: result.supportType,
-                sources: context.materials.map(material => ({
-                    materialId: material.id,
-                    name: material.name
+                sources: context.sources.map(source => ({
+                    materialId: source.materialId,
+                    name: source.name
                 }))
             };
         }
@@ -64,6 +74,7 @@ function createAskNotesService({ aiClient, materialContextService }) {
 module.exports = {
     STANDARD_CONTEXT_CHARACTERS,
     STANDARD_MATERIAL_COUNT,
+    NOT_FOUND_ANSWER,
     createAskNotesService,
     selectAskNotesTier
 };

@@ -54,7 +54,12 @@ async function createUnit(page, name) {
     await expect(page.locator("#course-units-list")).toContainText(name);
 }
 
-async function uploadTextMaterial(page, courseId, { unitLabel, filename = "market-notes.txt", empty = false } = {}) {
+async function uploadTextMaterial(page, courseId, {
+    unitLabel,
+    filename = "market-notes.txt",
+    empty = false,
+    content
+} = {}) {
     await page.goto(`/materials.html?courseId=${courseId}&upload=1`);
     await expect(page.locator("#upload-modal")).toHaveClass(/active/);
     if (unitLabel) await page.locator("#upload-unit-modal").selectOption({ label: unitLabel });
@@ -62,7 +67,9 @@ async function uploadTextMaterial(page, courseId, { unitLabel, filename = "marke
     await page.locator("#file-input").setInputFiles({
         name: filename,
         mimeType: "text/plain",
-        buffer: require("node:fs").readFileSync(fixture)
+        buffer: content === undefined
+            ? require("node:fs").readFileSync(fixture)
+            : Buffer.from(content)
     });
     await page.locator("#confirm-upload").click();
     await expect(page).toHaveURL(/material\.html\?courseId=\d+&materialId=\d+$/);

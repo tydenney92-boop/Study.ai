@@ -1,0 +1,23 @@
+Policy Tradeoffs
+
+Opportunity cost is the value of the best alternative forgone when a choice is made. A policy's opportunity cost includes the highest-value benefit society gives up by committing scarce resources to that policy.
+
+Tax incidence describes how a tax burden is divided between buyers and sellers. The less price-elastic side of a market generally bears more of the burden because that side changes its quantity less in response to the tax-created price wedge.
+
+Correlation between two policy outcomes does not by itself prove that one caused the other. Credible causal analysis must consider confounding variables and the counterfactual outcome that would have occurred without the policy.
+
+Cost-Benefit Analysis
+
+A cost-benefit analysis attempts to compare a policy's social benefits with its social costs. Analysts must specify whose outcomes count, the time horizon, and how future effects are discounted. Transfers between groups should not automatically be counted as a net social benefit or cost, although distributional consequences may still matter for the decision.
+
+Sensitivity analysis shows how conclusions change when uncertain assumptions change. A policy that appears beneficial only under one narrow assumption is less robust than a policy whose estimated benefits exceed costs across a reasonable range of inputs.
+
+Public Goods and Collective Action
+
+A pure public good is nonrival and nonexcludable. Nonrivalry means one person's use does not substantially reduce availability to others, while nonexcludability means it is difficult to prevent nonpayers from benefiting. These properties create a free-rider problem and can lead private markets to supply less than the efficient amount.
+
+Common resources are rival but difficult to exclude. Unregulated access can create overuse because each user considers a private benefit while spreading part of the cost across everyone. Property rights, usage limits, community governance, or carefully designed fees are possible responses.
+
+Evidence and Program Evaluation
+
+Random assignment can make treatment and comparison groups similar on average before an intervention, strengthening causal inference. When experiments are unavailable, researchers may use natural experiments, difference-in-differences, regression discontinuity, or other designs whose credibility depends on assumptions that should be examined rather than merely asserted.

@@ -30,6 +30,7 @@ const { createProgressService } = require("./services/progress.service");
 const { createFlashcardService } = require("./services/flashcard.service");
 const { createFlashcardGenerationService } = require("./services/flashcard-generation.service");
 const { createAskNotesService } = require("./services/ask-notes.service");
+const { createAskNotesRetrievalContextService } = require("./services/ask-notes-retrieval-context.service");
 const { createStorageCleanupService } = require("./services/storage-cleanup.service");
 const { SqliteSessionStore } = require("./services/sqlite-session-store");
 const { createTextExtractionService } = require("./services/text-extraction.service");
@@ -244,7 +245,13 @@ const flashcardGenerationService = createFlashcardGenerationService({
 });
 const askNotesService = createAskNotesService({
     aiClient,
-    materialContextService
+    retrievalContextService: createAskNotesRetrievalContextService({
+        materialContextService,
+        retrievalService,
+        topK: config.askNotesRetrievalTopK,
+        maxContextCharacters: config.aiMaxContextCharacters,
+        output: options.askNotesOutput || console
+    })
 });
 const authService = createAuthService({
     usersRepository: repositories.users,

@@ -56,6 +56,22 @@ function materialContext(materialCount = 1, content = "Course source text.") {
     };
 }
 
+function retrievalContext(materialCount = 1, content = "Course source text.") {
+    return {
+        async resolve() {
+            return {
+                courseContent: content,
+                materialIds: Array.from({ length: materialCount }, (_, index) => index + 1),
+                chunks: [{ chunkId: 1, text: content }],
+                sources: Array.from({ length: materialCount }, (_, index) => ({
+                    materialId: index + 1,
+                    name: `Source ${index + 1}.txt`
+                }))
+            };
+        }
+    };
+}
+
 function capturingClient(responses) {
     const calls = [];
     return {
@@ -75,7 +91,7 @@ test("Ask My Notes defaults to fast and deterministically promotes synthesis", a
     })]);
     const directService = createAskNotesService({
         aiClient: directClient,
-        materialContextService: materialContext()
+        retrievalContextService: retrievalContext()
     });
     await directService.ask({
         courseId: 1,
@@ -94,7 +110,7 @@ test("Ask My Notes defaults to fast and deterministically promotes synthesis", a
     })]);
     const synthesisService = createAskNotesService({
         aiClient: synthesisClient,
-        materialContextService: materialContext()
+        retrievalContextService: retrievalContext()
     });
     await synthesisService.ask({
         courseId: 1,
@@ -111,13 +127,13 @@ test("Ask My Notes defaults to fast and deterministically promotes synthesis", a
 
 test("three Ask My Notes sources or large context select standard", async () => {
     for (const context of [
-        materialContext(3),
-        materialContext(1, "x".repeat(30001))
+        retrievalContext(3),
+        retrievalContext(1, "x".repeat(30001))
     ]) {
         const client = capturingClient([JSON.stringify({
             answer: "Answer.", supportType: "grounded"
         })]);
-        const service = createAskNotesService({ aiClient: client, materialContextService: context });
+        const service = createAskNotesService({ aiClient: client, retrievalContextService: context });
         await service.ask({
             courseId: 1,
             userId: 1,

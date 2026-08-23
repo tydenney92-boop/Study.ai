@@ -58,6 +58,10 @@ configured batch/total limits and zero automatic retries. Leave
 `EMBEDDINGS_ENABLED=false` and `RETRIEVAL_MODE=lexical` to retain the free H1
 behavior.
 
+Ask My Notes retrieves at most six ranked chunks by default. Override this with
+`AI_ASK_NOTES_RETRIEVAL_TOP_K` up to 20; the existing
+`AI_MAX_CONTEXT_CHARACTERS` limit still caps the final retrieved context.
+
 ## SQLite constraints and data safety
 
 The first deployment supports exactly one application replica with SQLite on a

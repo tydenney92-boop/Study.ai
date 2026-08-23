@@ -15,7 +15,9 @@
     "test:e2e:headed": "playwright test --headed",
     "index:embeddings": "node scripts/index-embeddings.js",
     "eval:retrieval": "node scripts/evaluate-retrieval.js",
-    "eval:retrieval:openai": "node scripts/evaluate-retrieval-openai.js"
+    "eval:retrieval:openai": "node scripts/evaluate-retrieval-openai.js",
+    "eval:ask-notes": "node scripts/evaluate-ask-notes.js",
+    "eval:ask-notes:openai": "node scripts/evaluate-ask-notes-openai.js"
   },
   "keywords": [],
   "author": "",

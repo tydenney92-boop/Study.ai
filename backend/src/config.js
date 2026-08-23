@@ -91,6 +91,8 @@ const config = {
         numberEnvironment("RETRIEVAL_HYBRID_SEMANTIC_WEIGHT", 0.65),
     retrievalMinimumSimilarity:
         numberEnvironment("RETRIEVAL_MINIMUM_SIMILARITY", 0.15),
+    askNotesRetrievalTopK:
+        numberEnvironment("AI_ASK_NOTES_RETRIEVAL_TOP_K", 6),
     aiTimeoutMs:
         numberEnvironment("AI_TIMEOUT_MS", 120000),
     aiRateLimitWindowMs:
