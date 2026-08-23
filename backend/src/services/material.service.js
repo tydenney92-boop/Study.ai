@@ -9,9 +9,11 @@ function createMaterialService({
     materialsRepository,
     textExtractionService,
     materialIndexingService,
+    embeddingIndexingService,
     fileStorage,
     storageCleanupRepository,
-    storageCleanupService
+    storageCleanupService,
+    output = console
 }) {
     function requireLegacyCourse(userId) {
         const course = coursesRepository.findLegacyOwned(userId);
@@ -118,6 +120,18 @@ function createMaterialService({
             } catch (indexingError) {
                 materialsRepository.deleteOwned(materialId, courseId, userId);
                 throw indexingError;
+            }
+            if (embeddingIndexingService?.enabled) {
+                try {
+                    await embeddingIndexingService.indexMaterial(material.id);
+                } catch (embeddingError) {
+                    output.log(JSON.stringify({
+                        level: "warn",
+                        event: "material_embedding_deferred",
+                        materialId: material.id,
+                        errorCode: embeddingError.code || "EMBEDDING_INDEX_FAILED"
+                    }));
+                }
             }
             return material;
         } catch (error) {

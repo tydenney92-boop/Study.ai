@@ -31,6 +31,36 @@ routing, configure `OPENAI_MODEL_FAST`, `OPENAI_MODEL_STANDARD`, and
 `OPENAI_MODEL_ADVANCED`. The legacy `OPENAI_MODEL` remains a fallback for any
 unset tier.
 
+### Optional retrieval embeddings
+
+H1 lexical retrieval remains the default. H2 can persist OpenAI embeddings for
+material chunks and select `semantic` or `hybrid` ranking without changing the
+stable retrieval-service interface. Embeddings are never enabled automatically.
+
+Set `EMBEDDINGS_ENABLED=true`, `EMBEDDINGS_PROVIDER=openai`,
+`OPENAI_API_KEY`, and `OPENAI_EMBEDDING_MODEL` on the server. Then choose
+`RETRIEVAL_MODE=semantic` or `RETRIEVAL_MODE=hybrid`. Optional controls include
+`OPENAI_EMBEDDING_DIMENSIONS`, `EMBEDDING_VERSION`,
+`EMBEDDING_INDEX_BATCH_SIZE`, `EMBEDDING_INDEX_MAX_CHUNKS`,
+`RETRIEVAL_HYBRID_SEMANTIC_WEIGHT`, and `RETRIEVAL_MINIMUM_SIMILARITY`.
+Changing the model, version, or chunk content marks the stored vector stale.
+
+New uploads receive bounded best-effort embedding indexing when enabled; an
+embedding-provider outage never removes the uploaded material or its lexical
+chunks. Existing chunks are indexed only through the explicit bounded command:
+
+```sh
+cd backend
+npm run index:embeddings
+```
+
+Compare lexical, semantic, and hybrid ranking without paid calls using
+`npm run eval:retrieval`. A deliberately paid smoke evaluation is available as
+`npm run eval:retrieval:openai`, but it refuses to run unless
+`RUN_OPENAI_EMBEDDING_EVAL=1`, `OPENAI_API_KEY`, and
+`OPENAI_EMBEDDING_MODEL` are set. Normal unit and browser tests always use fake
+clients and never contact OpenAI or Ollama.
+
 See [backend/DEVELOPMENT_DATA.md](backend/DEVELOPMENT_DATA.md) to claim the
 preserved ECON 110 development account.
 

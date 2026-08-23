@@ -19,33 +19,24 @@ function lexicalTerms(value) {
         .filter(term => term && !STOP_WORDS.has(term));
 }
 
-function createLexicalRetrievalBackend({ chunksRepository }) {
-    return {
-        retrieve({ courseId, userId, materialIds, query, limit }) {
-            const queryTerms = [...new Set(lexicalTerms(query))];
-            if (queryTerms.length === 0) return [];
-            const candidates = chunksRepository.listCandidates({
-                courseId,
-                userId,
-                materialIds
-            });
-            if (candidates.length === 0) return [];
-
-            const prepared = candidates.map(chunk => {
+function rankLexicalChunks({ candidates, materialIds, query, limit }) {
+    const queryTerms = [...new Set(lexicalTerms(query))];
+    if (queryTerms.length === 0 || candidates.length === 0) return [];
+    const prepared = candidates.map(chunk => {
                 const normalized = normalizeLexicalText(chunk.text);
                 const terms = lexicalTerms(chunk.text);
                 const frequencies = new Map();
                 terms.forEach(term => frequencies.set(term, (frequencies.get(term) || 0) + 1));
                 return { chunk, normalized, frequencies, termCount: Math.max(terms.length, 1) };
             });
-            const documentFrequency = new Map(queryTerms.map(term => [
+    const documentFrequency = new Map(queryTerms.map(term => [
                 term,
                 prepared.filter(item => item.frequencies.has(term)).length
             ]));
-            const normalizedQuery = normalizeLexicalText(query);
-            const materialOrder = new Map(materialIds.map((id, index) => [id, index]));
+    const normalizedQuery = normalizeLexicalText(query);
+    const materialOrder = new Map(materialIds.map((id, index) => [id, index]));
 
-            return prepared.map(item => {
+    return prepared.map(item => {
                 let score = 0;
                 let matched = 0;
                 for (const term of queryTerms) {
@@ -75,6 +66,18 @@ function createLexicalRetrievalBackend({ chunksRepository }) {
                 )
                 .slice(0, limit)
                 .map(({ _materialOrder, ...result }) => result);
+}
+
+function createLexicalRetrievalBackend({ chunksRepository }) {
+    return {
+        mode: "lexical",
+        retrieve({ courseId, userId, materialIds, query, limit }) {
+            const candidates = chunksRepository.listCandidates({
+                courseId,
+                userId,
+                materialIds
+            });
+            return rankLexicalChunks({ candidates, materialIds, query, limit });
         }
     };
 }
@@ -83,5 +86,6 @@ module.exports = {
     STOP_WORDS,
     createLexicalRetrievalBackend,
     lexicalTerms,
-    normalizeLexicalText
+    normalizeLexicalText,
+    rankLexicalChunks
 };

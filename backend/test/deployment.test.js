@@ -30,6 +30,17 @@ function validProductionConfig() {
         openAiApiKey: null,
         openAiModel: null,
         openAiModels: { fast: null, standard: null, advanced: null },
+        embeddingsEnabled: false,
+        embeddingsProvider: "openai",
+        openAiEmbeddingModel: null,
+        openAiEmbeddingDimensions: null,
+        embeddingVersion: 1,
+        embeddingTimeoutMs: 30000,
+        embeddingIndexBatchSize: 32,
+        embeddingIndexMaxChunks: 100,
+        retrievalMode: "lexical",
+        retrievalHybridSemanticWeight: 0.65,
+        retrievalMinimumSimilarity: 0.15,
         aiTimeoutMs: 120000,
         aiRateLimitWindowMs: 600000,
         aiRateLimitMaxRequests: 5,
@@ -116,6 +127,24 @@ test("production OpenAI configuration accepts legacy fallback and rejects partia
         }),
         error => error.message.includes("OPENAI_MODEL_STANDARD")
     );
+});
+
+test("production embeddings are optional but fail closed when enabled incompletely", () => {
+    assert.doesNotThrow(() => validateProductionConfig(validProductionConfig()));
+    assert.doesNotThrow(() => validateProductionConfig({
+        ...validProductionConfig(),
+        embeddingsEnabled: true,
+        openAiApiKey: "server-only-test-key",
+        openAiEmbeddingModel: "configured-embedding-model",
+        retrievalMode: "hybrid"
+    }));
+    assert.throws(() => validateProductionConfig({
+        ...validProductionConfig(),
+        embeddingsEnabled: true,
+        openAiApiKey: null,
+        openAiEmbeddingModel: null
+    }), error => error.message.includes("OPENAI_API_KEY") &&
+        error.message.includes("OPENAI_EMBEDDING_MODEL"));
 });
 
 test("production validates all AI safeguard limits", () => {

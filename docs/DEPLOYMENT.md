@@ -47,6 +47,17 @@ default to two attempts and can be changed with `AI_STUDY_GUIDE_MAX_ATTEMPTS`
 and `AI_FLASHCARD_MAX_ATTEMPTS`. OpenAI SDK retries are disabled so a timed-out
 call is never automatically duplicated.
 
+Retrieval embeddings are separate from generation and remain off by default.
+To opt in, set `EMBEDDINGS_ENABLED=true`, `EMBEDDINGS_PROVIDER=openai`,
+`OPENAI_API_KEY`, `OPENAI_EMBEDDING_MODEL`, and choose
+`RETRIEVAL_MODE=semantic` or `hybrid`. `AI_ENABLED=false` does not disable an
+explicitly enabled embedding configuration. Run `npm run index:embeddings`
+repeatedly as a bounded maintenance task for existing chunks; normal startup
+does not call the embedding provider for the full corpus. Provider requests use
+configured batch/total limits and zero automatic retries. Leave
+`EMBEDDINGS_ENABLED=false` and `RETRIEVAL_MODE=lexical` to retain the free H1
+behavior.
+
 ## SQLite constraints and data safety
 
 The first deployment supports exactly one application replica with SQLite on a

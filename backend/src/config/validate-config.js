@@ -64,6 +64,18 @@ function validateProductionConfig(config) {
     if (config.aiProvider && !["ollama", "openai"].includes(config.aiProvider)) {
         errors.push("AI_PROVIDER must be ollama or openai.");
     }
+    if (config.embeddingsProvider && config.embeddingsProvider !== "openai") {
+        errors.push("EMBEDDINGS_PROVIDER currently supports only openai.");
+    }
+    if (config.retrievalMode &&
+        !["lexical", "semantic", "hybrid"].includes(config.retrievalMode)) {
+        errors.push("RETRIEVAL_MODE must be lexical, semantic, or hybrid.");
+    }
+    if (config.embeddingsEnabled === true) {
+        required(config.embeddingsProvider, "EMBEDDINGS_PROVIDER", errors);
+        required(config.openAiApiKey, "OPENAI_API_KEY", errors);
+        required(config.openAiEmbeddingModel, "OPENAI_EMBEDDING_MODEL", errors);
+    }
     if (config.aiEnabled === true && config.aiProvider === "ollama") {
         required(config.ollamaBaseUrl, "OLLAMA_BASE_URL", errors);
         required(config.ollamaModel, "OLLAMA_MODEL", errors);
@@ -99,6 +111,28 @@ function validateProductionConfig(config) {
     positiveInteger(config.aiFlashcardMaxCards, "AI_FLASHCARD_MAX_CARDS", errors);
     positiveInteger(config.aiFlashcardDefaultCards, "AI_FLASHCARD_DEFAULT_CARDS", errors);
     positiveInteger(config.aiFlashcardMaxAttempts, "AI_FLASHCARD_MAX_ATTEMPTS", errors);
+    positiveInteger(config.embeddingVersion, "EMBEDDING_VERSION", errors);
+    positiveInteger(config.embeddingTimeoutMs, "EMBEDDING_TIMEOUT_MS", errors);
+    positiveInteger(config.embeddingIndexBatchSize, "EMBEDDING_INDEX_BATCH_SIZE", errors);
+    positiveInteger(config.embeddingIndexMaxChunks, "EMBEDDING_INDEX_MAX_CHUNKS", errors);
+    if (config.openAiEmbeddingDimensions !== null &&
+        config.openAiEmbeddingDimensions !== undefined) {
+        positiveInteger(
+            config.openAiEmbeddingDimensions,
+            "OPENAI_EMBEDDING_DIMENSIONS",
+            errors
+        );
+    }
+    if (!Number.isFinite(config.retrievalHybridSemanticWeight) ||
+        config.retrievalHybridSemanticWeight < 0 ||
+        config.retrievalHybridSemanticWeight > 1) {
+        errors.push("RETRIEVAL_HYBRID_SEMANTIC_WEIGHT must be between 0 and 1.");
+    }
+    if (!Number.isFinite(config.retrievalMinimumSimilarity) ||
+        config.retrievalMinimumSimilarity < -1 ||
+        config.retrievalMinimumSimilarity > 1) {
+        errors.push("RETRIEVAL_MINIMUM_SIMILARITY must be between -1 and 1.");
+    }
     if (config.aiQuizMinQuestions > config.aiQuizMaxQuestions) {
         errors.push("AI_QUIZ_MIN_QUESTIONS cannot exceed AI_QUIZ_MAX_QUESTIONS.");
     }

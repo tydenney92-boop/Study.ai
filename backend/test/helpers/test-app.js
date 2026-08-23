@@ -24,6 +24,9 @@ function createTestApp(options = {}) {
         extendRepositories: options.extendRepositories,
         fileStorage: options.fileStorage,
         textExtractionService: options.textExtractionService,
+        embeddingClient: options.embeddingClient,
+        embeddingOutput: options.embeddingOutput,
+        retrievalBackend: options.retrievalBackend,
         aiUsageGuard: options.aiUsageGuard,
         aiClient: options.aiClient || {
             async generate() {

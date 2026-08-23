@@ -76,6 +76,21 @@ const config = {
         standard: process.env.OPENAI_MODEL_STANDARD || process.env.OPENAI_MODEL || null,
         advanced: process.env.OPENAI_MODEL_ADVANCED || process.env.OPENAI_MODEL || null
     },
+    embeddingsEnabled: booleanEnvironment("EMBEDDINGS_ENABLED", false),
+    embeddingsProvider: process.env.EMBEDDINGS_PROVIDER || "openai",
+    openAiEmbeddingModel: process.env.OPENAI_EMBEDDING_MODEL || null,
+    openAiEmbeddingDimensions: process.env.OPENAI_EMBEDDING_DIMENSIONS === undefined
+        ? null
+        : numberEnvironment("OPENAI_EMBEDDING_DIMENSIONS", null),
+    embeddingVersion: numberEnvironment("EMBEDDING_VERSION", 1),
+    embeddingTimeoutMs: numberEnvironment("EMBEDDING_TIMEOUT_MS", 30000),
+    embeddingIndexBatchSize: numberEnvironment("EMBEDDING_INDEX_BATCH_SIZE", 32),
+    embeddingIndexMaxChunks: numberEnvironment("EMBEDDING_INDEX_MAX_CHUNKS", 100),
+    retrievalMode: process.env.RETRIEVAL_MODE || "lexical",
+    retrievalHybridSemanticWeight:
+        numberEnvironment("RETRIEVAL_HYBRID_SEMANTIC_WEIGHT", 0.65),
+    retrievalMinimumSimilarity:
+        numberEnvironment("RETRIEVAL_MINIMUM_SIMILARITY", 0.15),
     aiTimeoutMs:
         numberEnvironment("AI_TIMEOUT_MS", 120000),
     aiRateLimitWindowMs:

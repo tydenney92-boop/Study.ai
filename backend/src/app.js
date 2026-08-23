@@ -16,6 +16,7 @@ const { createProgressRepository } = require("./repositories/progress.repository
 const { createFlashcardsRepository } = require("./repositories/flashcards.repository");
 const { createStorageCleanupRepository } = require("./repositories/storage-cleanup.repository");
 const { createMaterialChunksRepository } = require("./repositories/material-chunks.repository");
+const { createMaterialChunkEmbeddingsRepository } = require("./repositories/material-chunk-embeddings.repository");
 const { createCourseService } = require("./services/course.service");
 const { createUnitService } = require("./services/unit.service");
 const { createMaterialService } = require("./services/material.service");
@@ -34,7 +35,9 @@ const { SqliteSessionStore } = require("./services/sqlite-session-store");
 const { createTextExtractionService } = require("./services/text-extraction.service");
 const { createDocumentChunker } = require("./services/document-chunking.service");
 const { createMaterialIndexingService } = require("./services/material-indexing.service");
-const { createLexicalRetrievalBackend } = require("./services/lexical-retrieval-backend");
+const { createEmbeddingIndexingService } = require("./services/embedding-indexing.service");
+const { createConfiguredEmbeddingClient } = require("./services/embedding-client-factory");
+const { createConfiguredRetrievalBackend } = require("./services/retrieval-backend-factory");
 const { createRetrievalService } = require("./services/retrieval.service");
 const { createConfiguredStorage } = require("./services/storage-factory");
 const { createConfiguredAiClient } = require("./services/ai-client-factory");
@@ -121,7 +124,8 @@ const defaultRepositories = {
     progress: createProgressRepository(db),
     flashcards: createFlashcardsRepository(db),
     storageCleanup: createStorageCleanupRepository(db),
-    materialChunks: createMaterialChunksRepository(db)
+    materialChunks: createMaterialChunksRepository(db),
+    materialChunkEmbeddings: createMaterialChunkEmbeddingsRepository(db)
 };
 const repositories = {
     ...defaultRepositories,
@@ -151,8 +155,24 @@ const materialIndexingService = createMaterialIndexingService({
     documentChunker
 });
 materialIndexingService.rebuildStale();
-const retrievalBackend = options.retrievalBackend || createLexicalRetrievalBackend({
-    chunksRepository: repositories.materialChunks
+const embeddingClient = options.embeddingClient !== undefined
+    ? options.embeddingClient
+    : createConfiguredEmbeddingClient(config);
+const embeddingOutput = options.embeddingOutput || console;
+const embeddingIndexingService = createEmbeddingIndexingService({
+    repository: repositories.materialChunkEmbeddings,
+    embeddingClient,
+    embeddingVersion: config.embeddingVersion,
+    batchSize: config.embeddingIndexBatchSize,
+    maxChunks: config.embeddingIndexMaxChunks,
+    output: embeddingOutput
+});
+const retrievalBackend = options.retrievalBackend || createConfiguredRetrievalBackend({
+    config,
+    chunksRepository: repositories.materialChunks,
+    embeddingsRepository: repositories.materialChunkEmbeddings,
+    embeddingClient,
+    output: embeddingOutput
 });
 const retrievalService = createRetrievalService({
     coursesService,
@@ -169,9 +189,11 @@ const materialService = createMaterialService({
     materialsRepository: repositories.materials,
     textExtractionService,
     materialIndexingService,
+    embeddingIndexingService,
     fileStorage,
     storageCleanupRepository: repositories.storageCleanup,
-    storageCleanupService
+    storageCleanupService,
+    output: embeddingOutput
 });
 const materialContextService = createMaterialContextService({
     coursesService,
@@ -237,6 +259,8 @@ const sessionStore = options.sessionStore || new SqliteSessionStore({
 });
 app.locals.sessionStore = sessionStore;
 app.locals.materialIndexingService = materialIndexingService;
+app.locals.embeddingIndexingService = embeddingIndexingService;
+app.locals.embeddingClient = embeddingClient;
 app.locals.retrievalService = retrievalService;
 
 // =========================================

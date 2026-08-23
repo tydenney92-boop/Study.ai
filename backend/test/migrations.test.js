@@ -18,6 +18,9 @@ const displayNameMigration = require(
 const materialChunksMigration = require(
     "../src/database/migrations/008-material-chunks"
 );
+const chunkEmbeddingsMigration = require(
+    "../src/database/migrations/009-material-chunk-embeddings"
+);
 
 const legacyMaterials = [
     {
@@ -106,9 +109,10 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
         createBackup: false
     });
 
-    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7, 8]);
+    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
     assert.equal(tableExists(context.database, "storage_cleanup_jobs"), true);
     assert.equal(tableExists(context.database, "material_chunks"), true);
+    assert.equal(tableExists(context.database, "material_chunk_embeddings"), true);
     assert.equal(tableExists(context.database, "sessions"), true);
     assert.equal(
         context.database.prepare("SELECT COUNT(*) AS count FROM users").get().count,
@@ -393,4 +397,44 @@ test("material-chunk migration is idempotent and enforces parent course consiste
         ) VALUES (10, 2, 1, 'Wrong course', 12, 3, 'hash', 1)
     `).run(), /must belong to its course/);
     assert.deepEqual(context.database.pragma("foreign_key_check"), []);
+});
+
+test("chunk-embedding migration is idempotent, versioned, and cascades with chunks", t => {
+    const context = temporaryDatabase(t);
+    context.database.exec(`
+        CREATE TABLE courses (id INTEGER PRIMARY KEY);
+        CREATE TABLE materials (
+            id INTEGER PRIMARY KEY,
+            course_id INTEGER NOT NULL,
+            FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+        );
+        INSERT INTO courses VALUES (1);
+        INSERT INTO materials VALUES (10, 1);
+    `);
+    materialChunksMigration.up(context.database);
+    chunkEmbeddingsMigration.up(context.database);
+    chunkEmbeddingsMigration.up(context.database);
+    const chunkId = context.database.prepare(`
+        INSERT INTO material_chunks (
+            material_id, course_id, chunk_index, chunk_text,
+            character_count, token_estimate, content_hash, chunking_version
+        ) VALUES (10, 1, 0, 'Chunk text', 10, 3, 'hash', 1)
+    `).run().lastInsertRowid;
+    context.database.prepare(`
+        INSERT INTO material_chunk_embeddings (
+            chunk_id, provider, model, embedding_version, dimensions,
+            vector_json, source_content_hash
+        ) VALUES (?, 'openai', 'embedding-model', 1, 2, '[0.1,0.2]', 'hash')
+    `).run(chunkId);
+
+    assert.throws(() => context.database.prepare(`
+        INSERT INTO material_chunk_embeddings (
+            chunk_id, provider, model, embedding_version, dimensions,
+            vector_json, source_content_hash
+        ) VALUES (?, 'openai', 'other-model', 1, 2, '[0.1,0.2]', 'hash')
+    `).run(chunkId), /UNIQUE/);
+    context.database.prepare("DELETE FROM materials WHERE id = 10").run();
+    assert.equal(context.database.prepare(
+        "SELECT COUNT(*) AS count FROM material_chunk_embeddings"
+    ).get().count, 0);
 });

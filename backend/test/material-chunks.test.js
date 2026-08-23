@@ -76,6 +76,38 @@ test("chunking prefers paragraph and sentence boundaries with whole-unit overlap
         /Repeated Header|Repeated Footer/);
 });
 
+test("chunking safely splits oversized paragraphs and preserves short documents", () => {
+    const chunker = createDocumentChunker({
+        targetCharacters: 100,
+        maxCharacters: 140,
+        overlapCharacters: 20,
+        minimumCharacters: 30
+    });
+    const oversizedParagraph = Array.from(
+        { length: 80 },
+        (_, index) => `concept${index + 1}`
+    ).join(" ");
+    const oversizedChunks = chunker.chunk(oversizedParagraph);
+
+    assert.ok(oversizedChunks.length > 1);
+    assert.deepEqual(
+        oversizedChunks.map(chunk => chunk.chunkIndex),
+        oversizedChunks.map((_, index) => index)
+    );
+    oversizedChunks.forEach(chunk => {
+        assert.ok(chunk.text.length > 0);
+        assert.ok(chunk.text.length <= 140);
+    });
+    assert.match(oversizedChunks[0].text, /^concept1\b/);
+    assert.match(oversizedChunks.at(-1).text, /\bconcept80$/);
+
+    const shortText = "Scarcity requires choices between competing uses of limited resources.";
+    const shortChunks = chunker.chunk(shortText);
+    assert.equal(shortChunks.length, 1);
+    assert.equal(shortChunks[0].text, shortText);
+    assert.equal(shortChunks[0].characterCount, shortText.length);
+});
+
 test("startup-style stale rebuild indexes existing extracted materials idempotently", t => {
     const context = createTestApp();
     t.after(context.cleanup);
@@ -228,6 +260,15 @@ test("lexical retrieval ranks relevant chunks across materials and respects limi
     assert.equal(ranked[0].materialId, biology.body.id);
     assert.equal(ranked[0].materialName, "biology.txt");
     assert.ok(ranked[0].score > 0);
+
+    const normalizedQuery = retrieval.retrieveRelevantChunks({
+        courseId: 1,
+        userId: 1,
+        materialIds: [economics.body.id, biology.body.id],
+        query: "CHLÓROPHYLL!!! photosynthesis???",
+        limit: 5
+    });
+    assert.equal(normalizedQuery[0].materialId, biology.body.id);
 
     const limited = retrieval.retrieveRelevantChunks({
         courseId: 1,
