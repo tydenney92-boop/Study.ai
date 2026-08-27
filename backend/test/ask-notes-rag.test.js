@@ -160,6 +160,67 @@ test("Ask My Notes falls back from semantic to lexical and logs only safe retrie
     assert.doesNotMatch(serialized, /PRIVATE SOURCE|opportunity cost\?|Fallback answer|provider failed/);
 });
 
+test("lexical Ask My Notes tolerates single and multiple typos plus deterministic synonyms", async t => {
+    const prompts = [];
+    const context = createTestApp({
+        config: { retrievalMode: "lexical", aiRateLimitMaxRequests: 20 },
+        aiClient: {
+            async generate(prompt) {
+                prompts.push(prompt);
+                return '{"answer":"Supported tutor response.","supportType":"grounded_with_explanation"}';
+            }
+        }
+    });
+    t.after(context.cleanup);
+    const materialId = addMaterial(context, {
+        originalFilename: "Market structure.txt",
+        extractedText: "Elasticity measures responsiveness. A monopoly faces the market demand curve. Marginal cost is the cost of one additional unit."
+    });
+
+    for (const question of [
+        "Explain elastcity simply.",
+        "How do monoply and margnal cost relate?",
+        "What does price responsiveness mean?"
+    ]) {
+        const response = await request(context.app).post("/api/courses/1/ask").send({
+            materialIds: [materialId], question
+        }).expect(200);
+        assert.equal(response.body.supportType, "grounded_with_explanation");
+        assert.deepEqual(response.body.sources, [{
+            materialId,
+            name: "Market structure.txt"
+        }]);
+    }
+    assert.equal(prompts.length, 3);
+});
+
+test("semantic retrieval failure uses typo-tolerant lexical fallback without extra AI calls", async t => {
+    let calls = 0;
+    const context = createTestApp({
+        config: { embeddingsEnabled: true, retrievalMode: "semantic" },
+        embeddingClient: {
+            provider: "openai", model: "fake", dimensions: 3,
+            async embed() { throw new Error("semantic unavailable"); }
+        },
+        aiClient: {
+            async generate() {
+                calls++;
+                return '{"answer":"Elasticity explained.","supportType":"grounded_with_explanation"}';
+            }
+        }
+    });
+    t.after(context.cleanup);
+    const materialId = addMaterial(context, {
+        originalFilename: "Elasticity.txt",
+        extractedText: "Elasticity describes how responsive quantity is to a change in price."
+    });
+    const response = await request(context.app).post("/api/courses/1/ask").send({
+        materialIds: [materialId], question: "Why does elastcity matter?"
+    }).expect(200);
+    assert.equal(response.body.supportType, "grounded_with_explanation");
+    assert.equal(calls, 1);
+});
+
 test("Ask My Notes supplies ranked chunks instead of the whole selected document", async t => {
     const prompts = [];
     const output = captureOutput();

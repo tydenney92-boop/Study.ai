@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What to Study | Study Signal</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand"><div class="brand-icon">S</div><span>Study Signal</span></div>
+        <nav class="sidebar-nav">
+            <a href="index.html" class="nav-item"><span>⌂</span>Dashboard</a>
+            <a href="index.html#courses" class="nav-item"><span>▣</span>My Courses</a>
+            <a href="progress.html" class="nav-item"><span>◔</span>Progress</a>
+        </nav>
+        <div class="sidebar-bottom"><div class="profile-card"><div class="profile-avatar"></div><div><strong></strong><small>Student</small></div></div></div>
+    </aside>
+    <main class="main-content recommendations-page">
+        <header class="topbar">
+            <div>
+                <a id="recommendations-back" class="back-link" href="index.html#courses">← Course</a>
+                <p class="eyebrow">STUDY SIGNALS</p>
+                <h1 id="recommendations-title">What to Study</h1>
+                <p class="subtitle">Priorities based only on your saved course materials and study activity.</p>
+            </div>
+        </header>
+
+        <section id="recommendations-summary" class="recommendations-summary" aria-label="Recommendation evidence">
+            <div><strong id="recommendation-attempts">—</strong><span>Quiz attempts</span></div>
+            <div><strong id="recommendation-reviews">—</strong><span>Card reviews</span></div>
+            <div><strong id="recommendation-exam-sources">—</strong><span>Exam-related sources</span></div>
+        </section>
+
+        <div id="recommendations-note" class="recommendations-note" hidden></div>
+        <p id="recommendations-error" class="form-error"></p>
+        <section id="recommendations-loading" class="dashboard-panel friendly-empty">Analyzing your saved study evidence…</section>
+        <section id="recommendations-empty" class="dashboard-panel recommendations-empty" hidden>
+            <div class="tool-icon orange">✦</div>
+            <h2>Build your first study signal</h2>
+            <p id="recommendations-empty-copy">Add course materials and complete study activity to get evidence-backed priorities.</p>
+            <div class="empty-actions">
+                <a id="recommendations-empty-primary" class="primary-button" href="index.html#courses">Add Materials</a>
+                <a id="recommendations-empty-secondary" class="secondary-tool-button" href="index.html#courses">Take a Practice Quiz</a>
+            </div>
+        </section>
+        <section id="recommendations-content" class="recommendations-grid" hidden>
+            <article class="dashboard-panel recommendation-section focus-first">
+                <div class="panel-header"><div><p class="eyebrow">HIGHEST PRIORITY</p><h2>Focus First</h2><p>Strongest evidence of weakness or exam relevance.</p></div></div>
+                <div id="focus-first-list" class="recommendation-list"></div>
+            </article>
+            <article class="dashboard-panel recommendation-section review-next">
+                <div class="panel-header"><div><p class="eyebrow">NEXT UP</p><h2>Review Next</h2><p>Useful next steps with moderate or limited evidence.</p></div></div>
+                <div id="review-next-list" class="recommendation-list"></div>
+            </article>
+            <article class="dashboard-panel recommendation-section keep-fresh">
+                <div class="panel-header"><div><p class="eyebrow">MAINTAIN</p><h2>Keep Fresh</h2><p>Areas performing well enough for a brief revisit.</p></div></div>
+                <div id="keep-fresh-list" class="recommendation-list"></div>
+            </article>
+        </section>
+    </main>
+    <script src="js/config.js"></script><script src="js/api.js"></script><script src="js/auth.js"></script><script src="js/course-context.js"></script><script src="js/recommendations.js"></script>
+</body>
+</html>

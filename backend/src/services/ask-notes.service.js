@@ -62,10 +62,12 @@ function createAskNotesService({ aiClient, retrievalContextService }) {
                     ? NOT_FOUND_ANSWER
                     : result.answer,
                 supportType: result.supportType,
-                sources: context.sources.map(source => ({
-                    materialId: source.materialId,
-                    name: source.name
-                }))
+                sources: result.supportType === "not_found"
+                    ? []
+                    : context.sources.map(source => ({
+                        materialId: source.materialId,
+                        name: source.name
+                    }))
             };
         }
     };

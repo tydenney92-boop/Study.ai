@@ -70,3 +70,16 @@ test("stabilized frontend uses explicit study-guide generation and accurate stat
     assert.match(notes, /Each question is answered independently/);
     assert.match(flashcards, /StudyAI\.api\.patch/);
 });
+
+test("course recommendations preserve context and Ask My Notes hides unsupported sources", () => {
+    const course = read("course.html");
+    const recommendations = read("js/recommendations.js");
+    const notes = read("js/notes.js");
+    const login = read("js/login.js");
+
+    assert.match(course, /data-course-page="recommendations\.html"/);
+    assert.match(recommendations, /\/api\/courses\/\$\{recommendationCourseId\}\/recommendations/);
+    assert.match(recommendations, /course\.html/);
+    assert.match(notes, /supportType !== "not_found"/);
+    assert.match(login, /recommendations\.html/);
+});

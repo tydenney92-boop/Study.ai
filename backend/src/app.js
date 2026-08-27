@@ -17,6 +17,7 @@ const { createFlashcardsRepository } = require("./repositories/flashcards.reposi
 const { createStorageCleanupRepository } = require("./repositories/storage-cleanup.repository");
 const { createMaterialChunksRepository } = require("./repositories/material-chunks.repository");
 const { createMaterialChunkEmbeddingsRepository } = require("./repositories/material-chunk-embeddings.repository");
+const { createRecommendationsRepository } = require("./repositories/recommendations.repository");
 const { createCourseService } = require("./services/course.service");
 const { createUnitService } = require("./services/unit.service");
 const { createMaterialService } = require("./services/material.service");
@@ -31,6 +32,7 @@ const { createFlashcardService } = require("./services/flashcard.service");
 const { createFlashcardGenerationService } = require("./services/flashcard-generation.service");
 const { createAskNotesService } = require("./services/ask-notes.service");
 const { createAskNotesRetrievalContextService } = require("./services/ask-notes-retrieval-context.service");
+const { createRecommendationsService } = require("./services/recommendations.service");
 const { createStorageCleanupService } = require("./services/storage-cleanup.service");
 const { SqliteSessionStore } = require("./services/sqlite-session-store");
 const { createTextExtractionService } = require("./services/text-extraction.service");
@@ -54,6 +56,7 @@ const { createQuizAttemptsRouter } = require("./routes/quiz-attempts.routes");
 const { createProgressRouter, createCourseProgressRouter } = require("./routes/progress.routes");
 const { createFlashcardsRouter } = require("./routes/flashcards.routes");
 const { createAskNotesRouter } = require("./routes/ask-notes.routes");
+const { createRecommendationsRouter } = require("./routes/recommendations.routes");
 const { createStorageCleanupRouter } = require("./routes/storage-cleanup.routes");
 const {
     createCourseMaterialsRouter,
@@ -126,7 +129,8 @@ const defaultRepositories = {
     flashcards: createFlashcardsRepository(db),
     storageCleanup: createStorageCleanupRepository(db),
     materialChunks: createMaterialChunksRepository(db),
-    materialChunkEmbeddings: createMaterialChunkEmbeddingsRepository(db)
+    materialChunkEmbeddings: createMaterialChunkEmbeddingsRepository(db),
+    recommendations: createRecommendationsRepository(db)
 };
 const repositories = {
     ...defaultRepositories,
@@ -253,6 +257,10 @@ const askNotesService = createAskNotesService({
         output: options.askNotesOutput || console
     })
 });
+const recommendationsService = createRecommendationsService({
+    coursesService,
+    recommendationsRepository: repositories.recommendations
+});
 const authService = createAuthService({
     usersRepository: repositories.users,
     passwordRounds: config.passwordRounds
@@ -358,6 +366,10 @@ app.use(
 app.use(
     "/api/courses/:courseId/ask",
     createAskNotesRouter({ askNotesService, aiUsageGuard })
+);
+app.use(
+    "/api/courses/:courseId/recommendations",
+    createRecommendationsRouter({ recommendationsService })
 );
 app.use(
     "/api/courses",

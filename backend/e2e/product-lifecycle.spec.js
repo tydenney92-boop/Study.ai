@@ -286,6 +286,42 @@ test("flashcards and Ask My Notes use real course material and persisted state",
     await expect(page.getByRole("link", { name: "+ Add Materials" })).toHaveAttribute("href", `materials.html?courseId=${emptyCourseId}&upload=1`);
 });
 
+test("course study recommendations use persisted evidence and preserve course links", async ({ page }) => {
+    await signup(page, "Recommend");
+    const courseId = await createCourse(page, { code: "SIGNAL 301" });
+    const materialId = await uploadTextMaterial(page, courseId, {
+        filename: "midterm-review.txt",
+        content: "The midterm review topics include elasticity and tax incidence. Elasticity measures responsiveness to price changes."
+    });
+    const created = await api(page, "POST", `/api/courses/${courseId}/flashcards`, {
+        front: "How does elasticity affect tax incidence?",
+        back: "The less elastic side bears more of a tax."
+    });
+    expect(created.status).toBe(201);
+    await api(
+        page,
+        "POST",
+        `/api/courses/${courseId}/flashcards/${created.body.id}/reviews`,
+        { outcome: "still_learning" }
+    );
+
+    await page.goto(`/course.html?courseId=${courseId}`);
+    await page.getByRole("link", { name: /What to Study/ }).click();
+    await expect(page).toHaveURL(new RegExp(`recommendations\\.html\\?courseId=${courseId}$`));
+    await expect(page.locator("#recommendations-title")).toContainText("SIGNAL 301");
+    await expect(page.locator("#focus-first-list")).toContainText("elasticity");
+    await expect(page.locator("#focus-first-list")).toContainText("Still Learning");
+    await expect(page.locator("#recommendation-exam-sources")).toHaveText("1");
+    await expect(page.locator("#recommendations-back")).toHaveAttribute(
+        "href",
+        `course.html?courseId=${courseId}`
+    );
+    const response = await api(page, "GET", `/api/courses/${courseId}/recommendations`);
+    expect(response.body.sections.focusFirst[0].action.href).toContain(`courseId=${courseId}`);
+    expect(response.body.sections.focusFirst[0].evidence).not.toContain("invented");
+    expect(materialId).toBeGreaterThan(0);
+});
+
 test("two browser contexts remain isolated across data and destructive APIs", async ({ browser }) => {
     const contextA = await browser.newContext();
     const contextB = await browser.newContext();
@@ -327,7 +363,8 @@ test("critical authenticated pages remain usable at a narrow viewport", async ({
     const pages = [
         "/index.html", `/course.html?courseId=${courseId}`,
         `/materials.html?courseId=${courseId}`, `/quiz.html?courseId=${courseId}&materialId=${materialId}`,
-        `/flashcards.html?courseId=${courseId}`, `/notes.html?courseId=${courseId}`
+        `/flashcards.html?courseId=${courseId}`, `/notes.html?courseId=${courseId}`,
+        `/recommendations.html?courseId=${courseId}`
     ];
     for (const url of pages) {
         await page.goto(url);

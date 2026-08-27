@@ -827,6 +827,89 @@ h1 {
 
 }
 
+/* =========================================
+   STUDY RECOMMENDATIONS
+========================================= */
+
+.recommendations-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin: 24px 0;
+}
+
+.recommendations-summary > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 18px 20px;
+    border: 1px solid #e6eaf0;
+    border-radius: 14px;
+    background: white;
+}
+
+.recommendations-summary strong { font-size: 25px; color: #172033; }
+.recommendations-summary span { color: #7b8495; font-size: 13px; }
+
+.recommendations-note {
+    margin-bottom: 18px;
+    padding: 13px 16px;
+    border: 1px solid #dbe5f6;
+    border-radius: 12px;
+    background: #f6f9ff;
+    color: #52627a;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.recommendations-grid {
+    display: grid;
+    gap: 18px;
+}
+
+.recommendation-section { border-top: 3px solid #dce5f5; }
+.recommendation-section.focus-first { border-top-color: #ef9a66; }
+.recommendation-section.keep-fresh { border-top-color: #7bc59b; }
+.recommendation-list { display: grid; gap: 12px; }
+
+.recommendation-card {
+    padding: 18px;
+    border: 1px solid #e6eaf0;
+    border-radius: 12px;
+    background: #fbfcfe;
+}
+
+.recommendation-card-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.recommendation-card h3 { margin: 0; color: #172033; font-size: 16px; line-height: 1.35; }
+.recommendation-reason { margin: 9px 0 12px; color: #606b7d; line-height: 1.5; }
+.recommendation-evidence { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.recommendation-evidence span, .evidence-level {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #eef2f8;
+    color: #637086;
+    font-size: 11px;
+    font-weight: 700;
+}
+.evidence-level { flex: 0 0 auto; text-transform: capitalize; }
+.evidence-strong { background: #e9f7ef; color: #247447; }
+.evidence-moderate { background: #eef4ff; color: #3565a8; }
+.evidence-limited { background: #f5f1e9; color: #806b42; }
+.recommendations-empty { text-align: center; padding: 48px 28px; }
+.recommendations-empty .tool-icon { margin: 0 auto 14px; }
+.recommendations-empty p { max-width: 560px; margin: 10px auto 22px; color: #697386; }
+
+@media (max-width: 700px) {
+    .recommendations-summary { grid-template-columns: 1fr; }
+    .recommendation-card-heading { flex-direction: column; gap: 8px; }
+}
+
 .unit-management-card { padding: 10px 12px; }
 .unit-main-link {
     display: block;

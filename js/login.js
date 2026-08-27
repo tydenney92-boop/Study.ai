@@ -16,7 +16,7 @@ loginForm.addEventListener("submit", async event => {
         const allowedPages = new Set([
             "index.html", "course.html", "materials.html", "material.html",
             "study-guide.html", "quiz.html", "flashcards.html", "notes.html",
-            "progress.html", "history.html"
+            "progress.html", "history.html", "recommendations.html"
         ]);
         const parsedReturn = requested ? new URL(requested, window.location.href) : null;
         const page = parsedReturn?.pathname.split("/").pop();

@@ -154,7 +154,7 @@ test("Ask My Notes preserves the grounded answer-not-found response", async t =>
         "The selected materials do not contain enough information to answer that question safely."
     );
     assert.equal(response.body.supportType, "not_found");
-    assert.equal(response.body.sources[0].materialId, materialId);
+    assert.deepEqual(response.body.sources, []);
 });
 
 test("Ask My Notes rejects invalid questions and material contexts before AI", async t => {

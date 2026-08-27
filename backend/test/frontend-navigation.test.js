@@ -54,6 +54,10 @@ test("course-wide and material-specific tool origins return correctly", () => {
         courseWide.url("notes.html", { courseId: 7 }),
         "notes.html?courseId=7"
     );
+    assert.equal(
+        courseWide.url("recommendations.html", { courseId: 7 }),
+        "recommendations.html?courseId=7"
+    );
 });
 
 test("missing course context redirects to canonical My Courses", () => {
