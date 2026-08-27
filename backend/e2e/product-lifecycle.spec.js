@@ -271,6 +271,16 @@ test("flashcards and Ask My Notes use real course material and persisted state",
     await expect(page.locator(".message.assistant").last()).toContainText("Retrieved supporting materials");
     await expect(page.locator(".message.assistant").last()).toContainText("market-notes.txt");
     await expect(page.locator(".message.assistant").last()).not.toContainText("irrelevant-biology.txt");
+    await page.locator("#chat-input").fill("Explain that more simply.");
+    await page.locator("#send-message").click();
+    await expect(page.locator(".message.assistant").last()).toContainText("market outcomes");
+    await expect(page).toHaveURL(/conversationId=\d+/);
+    const conversationUrl = page.url();
+    await page.reload();
+    await expect(page).toHaveURL(conversationUrl);
+    await expect(page.locator(".message.user")).toHaveCount(2);
+    await expect(page.locator(".message.assistant")).toHaveCount(2);
+    await expect(page.locator("#conversation-select")).not.toHaveValue("");
     await page.locator("#chat-input").fill("What is missing from my notes?");
     await page.locator("#send-message").click();
     await expect(page.locator(".message.assistant").last()).toContainText("do not contain enough information");
@@ -278,6 +288,10 @@ test("flashcards and Ask My Notes use real course material and persisted state",
     await page.locator("#send-message").click();
     await expect(page.locator(".message.error-message").last()).toContainText("could not complete");
     await expect(page.locator(".message.error-message").last().getByRole("button", { name: "Try Again" })).toBeVisible();
+    await page.locator("#new-conversation-button").click();
+    await expect(page.locator(".message.user")).toHaveCount(0);
+    await expect(page.locator(".suggestion-row")).toBeVisible();
+    await expect(page).toHaveURL(/conversationId=\d+/);
 
     const emptyCourseId = await createCourse(page, { name: "Empty Notes", code: "EMPTY 101" });
     await uploadTextMaterial(page, emptyCourseId, { filename: "empty.txt", empty: true });

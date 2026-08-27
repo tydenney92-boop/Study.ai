@@ -67,7 +67,8 @@ test("stabilized frontend uses explicit study-guide generation and accurate stat
     assert.match(auth, /window\.location\.hash/);
     assert.match(materials, /\/api\/client-config/);
     assert.match(materials, /No matching materials/);
-    assert.match(notes, /Each question is answered independently/);
+    assert.match(notes, /Recent student questions help interpret follow-ups/);
+    assert.match(notes, /id="new-conversation-button"/);
     assert.match(flashcards, /StudyAI\.api\.patch/);
 });
 

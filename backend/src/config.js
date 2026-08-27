@@ -93,6 +93,10 @@ const config = {
         numberEnvironment("RETRIEVAL_MINIMUM_SIMILARITY", 0.15),
     askNotesRetrievalTopK:
         numberEnvironment("AI_ASK_NOTES_RETRIEVAL_TOP_K", 6),
+    askNotesHistoryMaxTurns:
+        numberEnvironment("AI_ASK_NOTES_HISTORY_MAX_TURNS", 6),
+    askNotesHistoryMaxCharacters:
+        numberEnvironment("AI_ASK_NOTES_HISTORY_MAX_CHARACTERS", 4000),
     aiTimeoutMs:
         numberEnvironment("AI_TIMEOUT_MS", 120000),
     aiRateLimitWindowMs:

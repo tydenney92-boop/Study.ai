@@ -116,8 +116,21 @@ function validateProductionConfig(config) {
     positiveInteger(config.embeddingIndexBatchSize, "EMBEDDING_INDEX_BATCH_SIZE", errors);
     positiveInteger(config.embeddingIndexMaxChunks, "EMBEDDING_INDEX_MAX_CHUNKS", errors);
     positiveInteger(config.askNotesRetrievalTopK, "AI_ASK_NOTES_RETRIEVAL_TOP_K", errors);
+    positiveInteger(config.askNotesHistoryMaxTurns, "AI_ASK_NOTES_HISTORY_MAX_TURNS", errors);
+    positiveInteger(
+        config.askNotesHistoryMaxCharacters,
+        "AI_ASK_NOTES_HISTORY_MAX_CHARACTERS",
+        errors
+    );
     if (Number.isInteger(config.askNotesRetrievalTopK) && config.askNotesRetrievalTopK > 20) {
         errors.push("AI_ASK_NOTES_RETRIEVAL_TOP_K cannot exceed 20.");
+    }
+    if (Number.isInteger(config.askNotesHistoryMaxTurns) && config.askNotesHistoryMaxTurns > 20) {
+        errors.push("AI_ASK_NOTES_HISTORY_MAX_TURNS cannot exceed 20.");
+    }
+    if (Number.isInteger(config.askNotesHistoryMaxCharacters) &&
+        config.askNotesHistoryMaxCharacters > 20000) {
+        errors.push("AI_ASK_NOTES_HISTORY_MAX_CHARACTERS cannot exceed 20000.");
     }
     if (config.openAiEmbeddingDimensions !== null &&
         config.openAiEmbeddingDimensions !== undefined) {

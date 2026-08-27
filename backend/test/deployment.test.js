@@ -42,6 +42,8 @@ function validProductionConfig() {
         retrievalHybridSemanticWeight: 0.65,
         retrievalMinimumSimilarity: 0.15,
         askNotesRetrievalTopK: 6,
+        askNotesHistoryMaxTurns: 6,
+        askNotesHistoryMaxCharacters: 4000,
         aiTimeoutMs: 120000,
         aiRateLimitWindowMs: 600000,
         aiRateLimitMaxRequests: 5,
@@ -166,6 +168,15 @@ test("production validates the bounded Ask My Notes retrieval limit", () => {
         ...validProductionConfig(),
         askNotesRetrievalTopK: 21
     }), error => error.message.includes("AI_ASK_NOTES_RETRIEVAL_TOP_K cannot exceed 20"));
+});
+
+test("production validates bounded Ask My Notes conversation history", () => {
+    assert.throws(() => validateProductionConfig({
+        ...validProductionConfig(),
+        askNotesHistoryMaxTurns: 21,
+        askNotesHistoryMaxCharacters: 20001
+    }), error => error.message.includes("AI_ASK_NOTES_HISTORY_MAX_TURNS cannot exceed 20") &&
+        error.message.includes("AI_ASK_NOTES_HISTORY_MAX_CHARACTERS cannot exceed 20000"));
 });
 
 test("production validates flashcard generation limits", () => {

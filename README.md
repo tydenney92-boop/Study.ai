@@ -73,6 +73,13 @@ back to lexical retrieval. No-match retrieval returns the grounded not-found
 response without calling the generative AI provider. Study Guides, Quizzes, and
 Flashcards continue using their existing full selected-material context.
 
+Ask My Notes conversations persist in SQLite and restore after refresh. Follow-up
+resolution uses only recent student questions as intent context; prior assistant
+answers never become retrieval evidence. Bound this context with
+`AI_ASK_NOTES_HISTORY_MAX_TURNS` (default 6, maximum 20) and
+`AI_ASK_NOTES_HISTORY_MAX_CHARACTERS` (default 4000, maximum 20000). These
+settings do not add a second AI request.
+
 See [backend/DEVELOPMENT_DATA.md](backend/DEVELOPMENT_DATA.md) to claim the
 preserved ECON 110 development account.
 

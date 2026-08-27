@@ -18,6 +18,7 @@ const { createStorageCleanupRepository } = require("./repositories/storage-clean
 const { createMaterialChunksRepository } = require("./repositories/material-chunks.repository");
 const { createMaterialChunkEmbeddingsRepository } = require("./repositories/material-chunk-embeddings.repository");
 const { createRecommendationsRepository } = require("./repositories/recommendations.repository");
+const { createAskNotesConversationsRepository } = require("./repositories/ask-notes-conversations.repository");
 const { createCourseService } = require("./services/course.service");
 const { createUnitService } = require("./services/unit.service");
 const { createMaterialService } = require("./services/material.service");
@@ -33,6 +34,8 @@ const { createFlashcardGenerationService } = require("./services/flashcard-gener
 const { createAskNotesService } = require("./services/ask-notes.service");
 const { createAskNotesRetrievalContextService } = require("./services/ask-notes-retrieval-context.service");
 const { createRecommendationsService } = require("./services/recommendations.service");
+const { createAskNotesConversationService } = require("./services/ask-notes-conversation.service");
+const { createAskNotesFollowUpService } = require("./services/ask-notes-follow-up.service");
 const { createStorageCleanupService } = require("./services/storage-cleanup.service");
 const { SqliteSessionStore } = require("./services/sqlite-session-store");
 const { createTextExtractionService } = require("./services/text-extraction.service");
@@ -130,7 +133,8 @@ const defaultRepositories = {
     storageCleanup: createStorageCleanupRepository(db),
     materialChunks: createMaterialChunksRepository(db),
     materialChunkEmbeddings: createMaterialChunkEmbeddingsRepository(db),
-    recommendations: createRecommendationsRepository(db)
+    recommendations: createRecommendationsRepository(db),
+    askNotesConversations: createAskNotesConversationsRepository(db)
 };
 const repositories = {
     ...defaultRepositories,
@@ -247,6 +251,15 @@ const flashcardGenerationService = createFlashcardGenerationService({
     defaultCards: config.aiFlashcardDefaultCards,
     maxAttempts: config.aiFlashcardMaxAttempts
 });
+const askNotesConversationService = createAskNotesConversationService({
+    coursesService,
+    conversationsRepository: repositories.askNotesConversations,
+    historyMaxTurns: config.askNotesHistoryMaxTurns
+});
+const askNotesFollowUpService = createAskNotesFollowUpService({
+    maxTurns: config.askNotesHistoryMaxTurns,
+    maxCharacters: config.askNotesHistoryMaxCharacters
+});
 const askNotesService = createAskNotesService({
     aiClient,
     retrievalContextService: createAskNotesRetrievalContextService({
@@ -255,7 +268,9 @@ const askNotesService = createAskNotesService({
         topK: config.askNotesRetrievalTopK,
         maxContextCharacters: config.aiMaxContextCharacters,
         output: options.askNotesOutput || console
-    })
+    }),
+    conversationService: askNotesConversationService,
+    followUpService: askNotesFollowUpService
 });
 const recommendationsService = createRecommendationsService({
     coursesService,
@@ -365,7 +380,11 @@ app.use(
 );
 app.use(
     "/api/courses/:courseId/ask",
-    createAskNotesRouter({ askNotesService, aiUsageGuard })
+    createAskNotesRouter({
+        askNotesService,
+        conversationService: askNotesConversationService,
+        aiUsageGuard
+    })
 );
 app.use(
     "/api/courses/:courseId/recommendations",

@@ -21,6 +21,9 @@ const materialChunksMigration = require(
 const chunkEmbeddingsMigration = require(
     "../src/database/migrations/009-material-chunk-embeddings"
 );
+const askNotesConversationsMigration = require(
+    "../src/database/migrations/010-ask-notes-conversations"
+);
 
 const legacyMaterials = [
     {
@@ -109,10 +112,11 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
         createBackup: false
     });
 
-    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     assert.equal(tableExists(context.database, "storage_cleanup_jobs"), true);
     assert.equal(tableExists(context.database, "material_chunks"), true);
     assert.equal(tableExists(context.database, "material_chunk_embeddings"), true);
+    assert.equal(tableExists(context.database, "ask_notes_conversations"), true);
     assert.equal(tableExists(context.database, "sessions"), true);
     assert.equal(
         context.database.prepare("SELECT COUNT(*) AS count FROM users").get().count,
@@ -437,4 +441,50 @@ test("chunk-embedding migration is idempotent, versioned, and cascades with chun
     assert.equal(context.database.prepare(
         "SELECT COUNT(*) AS count FROM material_chunk_embeddings"
     ).get().count, 0);
+});
+
+test("Ask My Notes conversation migration is idempotent and cascades owned history", t => {
+    const context = temporaryDatabase(t);
+    context.database.exec(`
+        CREATE TABLE users (id INTEGER PRIMARY KEY);
+        CREATE TABLE courses (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            UNIQUE (id, user_id),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        CREATE TABLE materials (
+            id INTEGER PRIMARY KEY,
+            course_id INTEGER NOT NULL,
+            FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+        );
+        INSERT INTO users VALUES (1);
+        INSERT INTO courses VALUES (3, 1);
+        INSERT INTO materials VALUES (7, 3);
+    `);
+    askNotesConversationsMigration.up(context.database);
+    askNotesConversationsMigration.up(context.database);
+    const conversationId = context.database.prepare(`
+        INSERT INTO ask_notes_conversations (user_id, course_id) VALUES (1, 3)
+    `).run().lastInsertRowid;
+    const messageId = context.database.prepare(`
+        INSERT INTO ask_notes_messages (conversation_id, role, content)
+        VALUES (?, 'user', 'Explain elasticity')
+    `).run(conversationId).lastInsertRowid;
+    context.database.prepare(`
+        INSERT INTO ask_notes_message_materials (
+            message_id, relationship, source_order, material_id, material_name
+        ) VALUES (?, 'selection', 0, 7, 'Lecture.txt')
+    `).run(messageId);
+
+    context.database.prepare("DELETE FROM materials WHERE id = 7").run();
+    assert.deepEqual(context.database.prepare(`
+        SELECT material_id AS materialId, material_name AS name
+        FROM ask_notes_message_materials
+    `).get(), { materialId: null, name: "Lecture.txt" });
+    context.database.prepare("DELETE FROM courses WHERE id = 3").run();
+    assert.equal(context.database.prepare(
+        "SELECT COUNT(*) AS count FROM ask_notes_conversations"
+    ).get().count, 0);
+    assert.deepEqual(context.database.pragma("foreign_key_check"), []);
 });

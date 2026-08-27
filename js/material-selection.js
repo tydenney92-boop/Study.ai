@@ -13,6 +13,7 @@
         showFileType = false
     }) {
         const selected = new Set(initialMaterialIds.map(Number));
+        const inputs = new Map();
         const updateAction = () => {
             if (actionButton) actionButton.disabled = selected.size === 0;
         };
@@ -45,6 +46,7 @@
             label.innerHTML = '<input type="checkbox"><span><strong></strong><small></small></span>';
             const input = label.querySelector("input");
             input.value = material.id;
+            inputs.set(material.id, input);
             const usable = material.extractionStatus === "extracted";
             input.disabled = !usable;
             input.checked = usable && selected.has(material.id);
@@ -82,7 +84,21 @@
         ).length;
         return {
             getSelectedIds: () => [...selected],
-            getUsableCount: () => usableCount
+            getUsableCount: () => usableCount,
+            setSelectedIds(nextIds) {
+                selected.clear();
+                const requested = new Set(nextIds.map(Number));
+                inputs.forEach((input, materialId) => {
+                    input.checked = !input.disabled && requested.has(materialId);
+                    if (input.checked) selected.add(materialId);
+                    input.closest(".material-choice")?.classList.toggle(
+                        "selected",
+                        input.checked
+                    );
+                });
+                updateAction();
+                container.dispatchEvent(new Event("change", { bubbles: true }));
+            }
         };
     }
 

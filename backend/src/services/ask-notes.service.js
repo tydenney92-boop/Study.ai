@@ -20,22 +20,51 @@ function selectAskNotesTier({ question, materialCount, contextLength }) {
 
 const NOT_FOUND_ANSWER = "The selected materials do not contain enough information to answer that question safely.";
 
-function createAskNotesService({ aiClient, retrievalContextService }) {
+function createAskNotesService({
+    aiClient,
+    retrievalContextService,
+    conversationService = {
+        context() { return []; },
+        appendTurn(input) { return { conversationId: input.conversationId }; }
+    },
+    followUpService = {
+        resolve(question) {
+            return { isFollowUp: false, retrievalQuery: question, intentContext: [] };
+        }
+    }
+}) {
     return {
-        async ask({ courseId, userId, materialIds, question }) {
+        async ask({ courseId, userId, materialIds, question, conversationId = null }) {
             const validatedQuestion = stringField(
                 { question },
                 "question",
                 { maxLength: 1000 }
             );
+            const history = conversationService.context(
+                conversationId,
+                courseId,
+                userId
+            );
+            const resolution = followUpService.resolve(validatedQuestion, history);
             const context = await retrievalContextService.resolve({
                 courseId,
                 userId,
                 materialIds,
-                question: validatedQuestion
+                question: resolution.retrievalQuery
             });
             if (context.chunks.length === 0) {
+                const saved = conversationService.appendTurn({
+                    conversationId,
+                    courseId,
+                    userId,
+                    question: validatedQuestion,
+                    answer: NOT_FOUND_ANSWER,
+                    supportType: "not_found",
+                    selectedMaterials: context.materials,
+                    sources: []
+                });
                 return {
+                    conversationId: saved.conversationId,
                     answer: NOT_FOUND_ANSWER,
                     supportType: "not_found",
                     sources: []
@@ -48,7 +77,11 @@ function createAskNotesService({ aiClient, retrievalContextService }) {
             });
             const response = await callAi(
                 aiClient,
-                buildAskNotesPrompt(context.courseContent, validatedQuestion),
+                buildAskNotesPrompt(
+                    context.courseContent,
+                    validatedQuestion,
+                    resolution.intentContext
+                ),
                 {
                     workflow: "ask_notes",
                     tier,
@@ -57,17 +90,30 @@ function createAskNotesService({ aiClient, retrievalContextService }) {
             );
             const result = validateAskNotesAnswer(parseJsonResponse(response));
 
+            const sources = result.supportType === "not_found"
+                ? []
+                : context.sources.map(source => ({
+                    materialId: source.materialId,
+                    name: source.name
+                }));
+            const saved = conversationService.appendTurn({
+                conversationId,
+                courseId,
+                userId,
+                question: validatedQuestion,
+                answer: result.supportType === "not_found" ? NOT_FOUND_ANSWER : result.answer,
+                supportType: result.supportType,
+                selectedMaterials: context.materials,
+                sources
+            });
+
             return {
+                conversationId: saved.conversationId,
                 answer: result.supportType === "not_found"
                     ? NOT_FOUND_ANSWER
                     : result.answer,
                 supportType: result.supportType,
-                sources: result.supportType === "not_found"
-                    ? []
-                    : context.sources.map(source => ({
-                        materialId: source.materialId,
-                        name: source.name
-                    }))
+                sources
             };
         }
     };
