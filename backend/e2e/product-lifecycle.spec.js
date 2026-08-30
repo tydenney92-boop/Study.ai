@@ -57,6 +57,71 @@ test("authentication, canonical navigation, session persistence, and recent cour
     await expect(page.getByRole("link", { name: "Progress" })).toHaveClass(/active/);
 });
 
+test("semester sidebar groups courses, persists folders, and keeps one active destination", async ({ page }) => {
+    await signup(page, "Semesters");
+    const fallId = await createCourse(page, {
+        name: "Market Economics",
+        code: "ECON 310",
+        semester: "Fall 2026"
+    });
+    await createCourse(page, {
+        name: "Strategy",
+        code: "STRAT 300",
+        semester: "Winter 2027"
+    });
+    await createCourse(page, {
+        name: "Independent Study",
+        code: "IND 100",
+        semester: "To be announced"
+    });
+
+    await page.goto("/index.html");
+    const folders = page.locator(".sidebar-semester-folder");
+    await expect(folders).toHaveCount(3);
+    await expect(folders.locator(".sidebar-semester-label")).toHaveText([
+        "Winter 2027",
+        "Fall 2026",
+        "Other / Unassigned"
+    ]);
+    await expect(page.locator(".sidebar-course-link")).toHaveCount(3);
+    await expect(page.getByRole("link", { name: "Dashboard" })).toHaveClass(/active/);
+    await expect(page.locator(".sidebar .active")).toHaveCount(1);
+
+    const winter = folders.filter({ hasText: "Winter 2027" });
+    const fall = folders.filter({ hasText: "Fall 2026" });
+    await expect(winter.locator(".sidebar-semester-toggle")).toHaveAttribute("aria-expanded", "true");
+    await winter.locator(".sidebar-semester-toggle").click();
+    await expect(winter.locator(".sidebar-semester-toggle")).toHaveAttribute("aria-expanded", "false");
+    await page.reload();
+    await expect(page.locator(".sidebar-semester-folder", { hasText: "Winter 2027" })
+        .locator(".sidebar-semester-toggle")).toHaveAttribute("aria-expanded", "false");
+
+    const reloadedFall = page.locator(".sidebar-semester-folder", { hasText: "Fall 2026" });
+    await reloadedFall.locator(".sidebar-semester-toggle").click();
+    await reloadedFall.getByRole("link", { name: /ECON 310/ }).click();
+    await expect(page).toHaveURL(new RegExp(`course\\.html\\?courseId=${fallId}$`));
+    await expect(page.locator(".sidebar-course-link.active")).toContainText("ECON 310");
+    await expect(page.locator(".sidebar-semester-folder", { hasText: "Fall 2026" })
+        .locator(".sidebar-semester-toggle")).toHaveAttribute("aria-expanded", "true");
+    await expect(page.locator(".sidebar .active")).toHaveCount(1);
+
+    await page.locator('.sidebar-nav a[href="index.html#courses"]').click();
+    await expect(page.locator('.sidebar-nav a[href="index.html#courses"]')).toHaveClass(/active/);
+    await expect(page.locator(".sidebar .active")).toHaveCount(1);
+    await page.locator('.sidebar-nav a[href="progress.html"]').click();
+    await expect(page.locator('.sidebar-nav a[href="progress.html"]')).toHaveClass(/active/);
+    await expect(page.locator(".sidebar .active")).toHaveCount(1);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobileToggle = page.locator(".sidebar-semesters-mobile-toggle");
+    await expect(mobileToggle).toBeVisible();
+    await mobileToggle.click();
+    await expect(page.locator(".sidebar-courses-panel")).toBeVisible();
+    await expect(page.locator(".sidebar-semester-toggle").first()).toBeVisible();
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow).toBeLessThanOrEqual(1);
+});
+
 test("course, unit, and material management works through the UI", async ({ page }) => {
     await signup(page, "Manage");
     const courseId = await createCourse(page, { name: "Biology", code: "BIO 101" });

@@ -1254,11 +1254,21 @@ select {
 .add-course-card strong { font-size: 13px; }
 .add-course-card small { color: #8490a3; font-size: 11px; }
 
-.sidebar-courses { margin: 22px 6px 0; padding-top: 16px; border-top: 1px solid #edf0f4; }
+.sidebar-courses { min-height: 0; margin: 22px 6px 0; padding-top: 16px; border-top: 1px solid #edf0f4; }
 .sidebar-courses-heading { display: flex; align-items: center; justify-content: space-between; margin: 0 7px 8px; color: #98a2b3; font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .sidebar-courses-heading a { color: #4f6bed; font-size: 17px; line-height: 1; }
-.sidebar-course-list { display: grid; gap: 3px; max-height: 210px; overflow-y: auto; padding-right: 3px; }
-.sidebar-course-link { display: grid; gap: 2px; padding: 9px 10px; border-radius: 8px; color: #697386; }
+.sidebar-semesters-mobile-toggle { display: none; }
+.sidebar-course-list { display: grid; gap: 4px; max-height: 260px; overflow-x: hidden; overflow-y: auto; padding-right: 3px; }
+.sidebar-semester-folder { min-width: 0; }
+.sidebar-semester-toggle { display: flex; width: 100%; min-width: 0; align-items: center; gap: 6px; padding: 6px 7px; border: 0; border-radius: 7px; background: transparent; color: #667085; font: inherit; font-size: 11px; font-weight: 600; text-align: left; cursor: pointer; }
+.sidebar-semester-toggle:hover { background: #f5f7fb; color: #344054; }
+.sidebar-semester-chevron { flex: 0 0 auto; color: #98a2b3; font-size: 16px; line-height: 1; transition: transform .16s ease; }
+.sidebar-semester-toggle[aria-expanded="true"] .sidebar-semester-chevron { transform: rotate(90deg); }
+.sidebar-semester-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-semester-count { min-width: 16px; margin-left: auto; color: #98a2b3; font-size: 9px; font-weight: 500; text-align: right; }
+.sidebar-semester-courses { display: grid; gap: 2px; padding: 2px 0 3px 12px; }
+.sidebar-semester-courses[hidden] { display: none; }
+.sidebar-course-link { display: grid; min-width: 0; gap: 2px; padding: 7px 9px; border-radius: 8px; color: #697386; }
 .sidebar-course-link:hover { background: #f5f7fb; }
 .sidebar-course-link.active { background: #edf3ff; color: #2458cf; box-shadow: inset 3px 0 #4f6bed; }
 .sidebar-course-link strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
@@ -1282,7 +1292,15 @@ select {
 .danger-zone p { margin: 7px 0 14px; color: #7b8495; font-size: 12px; }
 
 @media (max-width: 750px) {
-    .sidebar-courses { display: none; }
+    .sidebar-courses { margin: 10px 0 0; padding-top: 10px; }
+    .sidebar-semesters-mobile-toggle { display: flex; width: 50px; height: 42px; align-items: center; justify-content: center; border: 0; border-radius: 9px; background: transparent; color: #697386; font-size: 18px; cursor: pointer; }
+    .sidebar-semesters-mobile-toggle:hover,
+    .sidebar-courses.mobile-open .sidebar-semesters-mobile-toggle { background: #eef4ff; color: #2563eb; }
+    .sidebar-courses-panel { position: fixed; z-index: 30; top: 170px; left: 64px; display: none; width: min(230px, calc(100vw - 76px)); max-height: calc(100vh - 190px); padding: 14px; overflow: hidden; border: 1px solid #e2e7ef; border-radius: 12px; background: #fff; box-shadow: 0 16px 40px rgba(23, 32, 51, .16); }
+    .sidebar-courses.mobile-open .sidebar-courses-panel { display: block; }
+    .sidebar-course-list { max-height: calc(100vh - 265px); }
+    .sidebar-course-link strong { font-size: 12px; }
+    .sidebar-course-link span { font-size: 11px; }
     .dashboard-panel { min-width: 0; }
     .course-list { grid-template-columns: minmax(0, 1fr); }
     .course-info { min-width: 0; }
