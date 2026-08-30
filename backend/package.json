@@ -17,7 +17,8 @@
     "eval:retrieval": "node scripts/evaluate-retrieval.js",
     "eval:retrieval:openai": "node scripts/evaluate-retrieval-openai.js",
     "eval:ask-notes": "node scripts/evaluate-ask-notes.js",
-    "eval:ask-notes:openai": "node scripts/evaluate-ask-notes-openai.js"
+    "eval:ask-notes:openai": "node scripts/evaluate-ask-notes-openai.js",
+    "test:ocr:openai": "node scripts/test-openai-ocr.js"
   },
   "keywords": [],
   "author": "",

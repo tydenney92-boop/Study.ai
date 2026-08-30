@@ -30,6 +30,16 @@ function validProductionConfig() {
         openAiApiKey: null,
         openAiModel: null,
         openAiModels: { fast: null, standard: null, advanced: null },
+        ocrEnabled: false,
+        ocrProvider: "openai",
+        openAiOcrModel: null,
+        ocrMaxImageBytes: 8 * 1024 * 1024,
+        ocrMaxPdfPages: 10,
+        ocrMaxTotalBytes: 30 * 1024 * 1024,
+        ocrTimeoutMs: 60000,
+        ocrMaxConcurrentRequests: 1,
+        ocrRateLimitWindowMs: 3600000,
+        ocrRateLimitMaxRequests: 10,
         embeddingsEnabled: false,
         embeddingsProvider: "openai",
         openAiEmbeddingModel: null,
@@ -148,6 +158,23 @@ test("production embeddings are optional but fail closed when enabled incomplete
         openAiEmbeddingModel: null
     }), error => error.message.includes("OPENAI_API_KEY") &&
         error.message.includes("OPENAI_EMBEDDING_MODEL"));
+});
+
+test("production OCR is optional and fails closed when enabled incompletely", () => {
+    assert.doesNotThrow(() => validateProductionConfig(validProductionConfig()));
+    assert.doesNotThrow(() => validateProductionConfig({
+        ...validProductionConfig(),
+        ocrEnabled: true,
+        openAiApiKey: "server-only-ocr-key",
+        openAiOcrModel: "configured-vision-model"
+    }));
+    assert.throws(() => validateProductionConfig({
+        ...validProductionConfig(),
+        ocrEnabled: true,
+        openAiApiKey: null,
+        openAiOcrModel: null
+    }), error => error.message.includes("OPENAI_API_KEY") &&
+        error.message.includes("OPENAI_MODEL_OCR"));
 });
 
 test("production validates all AI safeguard limits", () => {

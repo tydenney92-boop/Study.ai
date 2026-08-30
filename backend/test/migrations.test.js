@@ -24,6 +24,9 @@ const chunkEmbeddingsMigration = require(
 const askNotesConversationsMigration = require(
     "../src/database/migrations/010-ask-notes-conversations"
 );
+const extractionMethodMigration = require(
+    "../src/database/migrations/011-material-extraction-method"
+);
 
 const legacyMaterials = [
     {
@@ -112,7 +115,7 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
         createBackup: false
     });
 
-    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
     assert.equal(tableExists(context.database, "storage_cleanup_jobs"), true);
     assert.equal(tableExists(context.database, "material_chunks"), true);
     assert.equal(tableExists(context.database, "material_chunk_embeddings"), true);
@@ -487,4 +490,28 @@ test("Ask My Notes conversation migration is idempotent and cascades owned histo
         "SELECT COUNT(*) AS count FROM ask_notes_conversations"
     ).get().count, 0);
     assert.deepEqual(context.database.pragma("foreign_key_check"), []);
+});
+
+test("material extraction-method migration backfills native text and is idempotent", t => {
+    const context = temporaryDatabase(t);
+    context.database.exec(`
+        CREATE TABLE materials (
+            id INTEGER PRIMARY KEY,
+            extraction_status TEXT NOT NULL
+        );
+        INSERT INTO materials VALUES (1, 'extracted'), (2, 'no_text'), (3, 'failed');
+    `);
+    extractionMethodMigration.up(context.database);
+    extractionMethodMigration.up(context.database);
+    assert.equal(getColumnNames(context.database, "materials").includes("extraction_method"), true);
+    assert.deepEqual(context.database.prepare(`
+        SELECT id, extraction_method AS method FROM materials ORDER BY id
+    `).all(), [
+        { id: 1, method: "native" },
+        { id: 2, method: null },
+        { id: 3, method: null }
+    ]);
+    assert.throws(() => context.database.prepare(`
+        UPDATE materials SET extraction_method = 'invented' WHERE id = 1
+    `).run(), /CHECK/);
 });

@@ -3,12 +3,16 @@ const os = require("node:os");
 const path = require("node:path");
 const { createApp } = require("../../src/app");
 const { createFakeAiClient } = require("./fake-ai-client");
+const { createFakeOcrProvider } = require("./fake-ocr-provider");
 
 const port = Number(process.env.E2E_PORT || 4173);
 const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "study-signal-e2e-"));
 const fakeAiClient = createFakeAiClient();
+const fakeOcrProvider = createFakeOcrProvider();
 const app = createApp({
     aiClient: fakeAiClient,
+    ocrProvider: fakeOcrProvider,
+    ocrOutput: { log() {} },
     config: {
         environment: "test",
         isProduction: false,
@@ -29,11 +33,13 @@ const app = createApp({
         secureCookies: false,
         trustProxyHops: 0,
         aiEnabled: true,
+        ocrEnabled: true,
         aiRateLimitMaxRequests: 1000,
         aiMaxConcurrentRequests: 4
     },
     registerTestRoutes(testApp) {
         testApp.get("/api/e2e/ai-counts", (req, res) => res.json(fakeAiClient.counts));
+        testApp.get("/api/e2e/ocr-counts", (req, res) => res.json({ total: fakeOcrProvider.count }));
         testApp.post("/api/e2e/ai-counts/reset", (req, res) => {
             fakeAiClient.reset();
             res.json(fakeAiClient.counts);

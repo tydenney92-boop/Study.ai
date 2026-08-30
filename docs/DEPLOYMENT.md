@@ -47,6 +47,18 @@ default to two attempts and can be changed with `AI_STUDY_GUIDE_MAX_ATTEMPTS`
 and `AI_FLASHCARD_MAX_ATTEMPTS`. OpenAI SDK retries are disabled so a timed-out
 call is never automatically duplicated.
 
+OCR is separate from normal AI generation and remains disabled unless
+`OCR_ENABLED=true`. To enable image and scanned-PDF transcription, set
+`OCR_PROVIDER=openai`, `OPENAI_API_KEY`, and `OPENAI_MODEL_OCR`. The model must
+accept image input and return text; `gpt-4o-mini` is the documented cost-focused
+starting choice. OCR does not require `AI_PROVIDER=openai` and can coexist with
+local Ollama generation. Provider retries are disabled. Configure cost bounds
+with `OCR_MAX_IMAGE_BYTES`, `OCR_MAX_PDF_PAGES`, `OCR_MAX_TOTAL_BYTES`,
+`OCR_TIMEOUT_MS`, `OCR_MAX_CONCURRENT_REQUESTS`, `OCR_RATE_LIMIT_WINDOW_MS`,
+and `OCR_RATE_LIMIT_MAX_REQUESTS`. Keep OCR disabled in production until the
+server-side key, model, spend limits, and representative handwriting tests are
+approved.
+
 Retrieval embeddings are separate from generation and remain off by default.
 To opt in, set `EMBEDDINGS_ENABLED=true`, `EMBEDDINGS_PROVIDER=openai`,
 `OPENAI_API_KEY`, `OPENAI_EMBEDDING_MODEL`, and choose

@@ -58,7 +58,8 @@ function materialCard(material) {
     `;
     card.querySelector(".material-icon").textContent =
         material.materialType === "pdf" ? "PDF" :
-            material.materialType === "slides" ? "PPT" : "TXT";
+            material.materialType === "slides" ? "PPT" :
+                material.materialType === "image" ? "IMG" : "TXT";
     card.querySelector("h3").textContent = material.displayName;
     card.querySelector("p").textContent = material.unitName || "No unit";
     card.querySelector(".material-metadata").textContent =
@@ -73,6 +74,10 @@ function materialCard(material) {
         extractionBadge.hidden = false;
         extractionBadge.textContent = statusLabels[material.extractionStatus];
         extractionBadge.classList.add(material.extractionStatus);
+    } else if (material.extractionMethod === "ocr") {
+        extractionBadge.hidden = false;
+        extractionBadge.textContent = "Text extracted with OCR";
+        extractionBadge.classList.add("ocr");
     }
 
     const openMaterial = () => {
@@ -111,7 +116,7 @@ function renderMaterials() {
             emptyAction.dataset.action = "clear";
         } else {
             emptyTitle.textContent = "No materials yet";
-            emptyMessage.textContent = "Upload the first PDF, TXT, DOCX, or PPTX for this course.";
+            emptyMessage.textContent = "Upload the first document, screenshot, or note photo for this course.";
             emptyAction.textContent = "Upload Material";
             emptyAction.dataset.action = "upload";
         }
@@ -204,8 +209,10 @@ async function loadPage() {
         units = loadedUnits;
         materials = loadedMaterials;
         const megabytes = clientConfig.maxUploadBytes / (1024 * 1024);
+        const limit = `${Number.isInteger(megabytes) ? megabytes : megabytes.toFixed(1)} MB`;
         document.querySelector("#upload-file-help").textContent =
-            `PDF, TXT, DOCX, or PPTX · max ${Number.isInteger(megabytes) ? megabytes : megabytes.toFixed(1)} MB`;
+            `PDF, TXT, DOCX, PPTX, PNG, or JPEG · max ${limit}` +
+            (clientConfig.ocrEnabled ? " · image text recognition enabled" : " · image text recognition unavailable");
         document.title = `${course.courseCode} Materials | Study Signal`;
         document.querySelector("#materials-course-name").textContent =
             `${course.courseCode} · ${course.courseName}`;

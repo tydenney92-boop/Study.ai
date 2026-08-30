@@ -48,6 +48,8 @@ const { createRetrievalService } = require("./services/retrieval.service");
 const { createConfiguredStorage } = require("./services/storage-factory");
 const { createConfiguredAiClient } = require("./services/ai-client-factory");
 const { createAiUsageGuard } = require("./services/ai-usage-guard");
+const { createConfiguredOcrProvider } = require("./services/ocr-provider-factory");
+const { createOcrService } = require("./services/ocr.service");
 const { ALLOWED_EXTENSIONS } = require("./services/material-type");
 const { createRequireAuthentication } = require("./middleware/require-authentication");
 const { registerHealthRoutes } = require("./routes/health.routes");
@@ -112,6 +114,36 @@ const aiUsageGuard = options.aiUsageGuard || createAiUsageGuard({
     windowMs: config.aiRateLimitWindowMs,
     maxRequests: config.aiRateLimitMaxRequests,
     maxConcurrentRequests: config.aiMaxConcurrentRequests
+});
+const ocrOutput = options.ocrOutput || console;
+const ocrProvider = options.ocrProvider !== undefined
+    ? options.ocrProvider
+    : createConfiguredOcrProvider(config, {
+        client: options.ocrOpenAiClient,
+        onUsage: options.onOcrUsage || (usage => ocrOutput.log(JSON.stringify({
+            level: "info",
+            event: "ocr_usage",
+            provider: usage.provider,
+            model: usage.model,
+            inputTokens: usage.inputTokens,
+            outputTokens: usage.outputTokens,
+            totalTokens: usage.totalTokens
+        })))
+    });
+const ocrUsageGuard = options.ocrUsageGuard || createAiUsageGuard({
+    windowMs: config.ocrRateLimitWindowMs,
+    maxRequests: config.ocrRateLimitMaxRequests,
+    maxConcurrentRequests: config.ocrMaxConcurrentRequests,
+    namespace: "OCR",
+    operationLabel: "Text recognition"
+});
+const ocrService = createOcrService({
+    provider: ocrProvider,
+    usageGuard: ocrUsageGuard,
+    maxImageBytes: config.ocrMaxImageBytes,
+    maxPdfPages: config.ocrMaxPdfPages,
+    maxTotalBytes: config.ocrMaxTotalBytes,
+    output: ocrOutput
 });
 
 app.locals.database = db;
@@ -190,7 +222,7 @@ const retrievalService = createRetrievalService({
 });
 const textExtractionService =
     options.textExtractionService ||
-    createTextExtractionService({ fileStorage });
+    createTextExtractionService({ fileStorage, ocrService });
 const materialService = createMaterialService({
     coursesRepository: repositories.courses,
     coursesService,
@@ -292,6 +324,7 @@ app.locals.materialIndexingService = materialIndexingService;
 app.locals.embeddingIndexingService = embeddingIndexingService;
 app.locals.embeddingClient = embeddingClient;
 app.locals.retrievalService = retrievalService;
+app.locals.ocrService = ocrService;
 
 // =========================================
 // MIDDLEWARE
@@ -353,7 +386,11 @@ if (config.serveFrontend) {
 app.use("/api", requireAuthentication);
 
 app.get("/api/client-config", function(req, res) {
-    res.json({ maxUploadBytes: config.maxUploadBytes });
+    res.json({
+        maxUploadBytes: config.maxUploadBytes,
+        ocrEnabled: config.ocrEnabled,
+        ocrMaxImageBytes: config.ocrMaxImageBytes
+    });
 });
 
 app.use(

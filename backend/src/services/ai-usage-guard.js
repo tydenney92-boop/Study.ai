@@ -1,6 +1,13 @@
 const { AppError } = require("../utils/app-error");
 
-function createAiUsageGuard({ windowMs, maxRequests, maxConcurrentRequests, now = Date.now }) {
+function createAiUsageGuard({
+    windowMs,
+    maxRequests,
+    maxConcurrentRequests,
+    now = Date.now,
+    namespace = "AI",
+    operationLabel = "AI generation"
+}) {
     const users = new Map();
     let activeRequests = 0;
 
@@ -13,8 +20,8 @@ function createAiUsageGuard({ windowMs, maxRequests, maxConcurrentRequests, now 
 
         if (entry.count >= maxRequests) {
             throw new AppError({
-                code: "AI_RATE_LIMIT_EXCEEDED",
-                message: "AI generation limit reached. Please try again later.",
+                code: `${namespace}_RATE_LIMIT_EXCEEDED`,
+                message: `${operationLabel} limit reached. Please try again later.`,
                 status: 429,
                 details: { retryAfterMs: Math.max(0, entry.resetAt - timestamp) }
             });
@@ -30,8 +37,8 @@ function createAiUsageGuard({ windowMs, maxRequests, maxConcurrentRequests, now 
 
             if (activeRequests >= maxConcurrentRequests) {
                 throw new AppError({
-                    code: "AI_CONCURRENCY_LIMIT_EXCEEDED",
-                    message: "AI generation is busy. Please try again shortly.",
+                    code: `${namespace}_CONCURRENCY_LIMIT_EXCEEDED`,
+                    message: `${operationLabel} is busy. Please try again shortly.`,
                     status: 503
                 });
             }

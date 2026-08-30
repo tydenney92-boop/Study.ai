@@ -73,6 +73,7 @@ test("course-aware materials can be uploaded, listed, retrieved, and read", asyn
         originalFilename: "My Lecture Notes.txt",
         extractedText: "Lecture notes",
         extractionStatus: "no_text",
+        extractionMethod: "native",
         extractionError: "This material does not contain enough extractable text."
     });
 });
@@ -331,7 +332,7 @@ test("failed extraction removes the uploaded file", async t => {
     await request(context.app)
         .post("/api/courses/1/materials")
         .field("unitId", "1")
-        .attach("file", Buffer.from("not actually a PDF"), "broken.pdf")
+        .attach("file", Buffer.from("%PDF-not actually a PDF"), "broken.pdf")
         .expect(500);
 
     assert.deepEqual(uploadFiles(context), []);

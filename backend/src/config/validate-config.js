@@ -64,6 +64,14 @@ function validateProductionConfig(config) {
     if (config.aiProvider && !["ollama", "openai"].includes(config.aiProvider)) {
         errors.push("AI_PROVIDER must be ollama or openai.");
     }
+    if (config.ocrProvider && config.ocrProvider !== "openai") {
+        errors.push("OCR_PROVIDER currently supports only openai.");
+    }
+    if (config.ocrEnabled === true) {
+        required(config.ocrProvider, "OCR_PROVIDER", errors);
+        required(config.openAiApiKey, "OPENAI_API_KEY", errors);
+        required(config.openAiOcrModel, "OPENAI_MODEL_OCR", errors);
+    }
     if (config.embeddingsProvider && config.embeddingsProvider !== "openai") {
         errors.push("EMBEDDINGS_PROVIDER currently supports only openai.");
     }
@@ -111,6 +119,13 @@ function validateProductionConfig(config) {
     positiveInteger(config.aiFlashcardMaxCards, "AI_FLASHCARD_MAX_CARDS", errors);
     positiveInteger(config.aiFlashcardDefaultCards, "AI_FLASHCARD_DEFAULT_CARDS", errors);
     positiveInteger(config.aiFlashcardMaxAttempts, "AI_FLASHCARD_MAX_ATTEMPTS", errors);
+    positiveInteger(config.ocrMaxImageBytes, "OCR_MAX_IMAGE_BYTES", errors);
+    positiveInteger(config.ocrMaxPdfPages, "OCR_MAX_PDF_PAGES", errors);
+    positiveInteger(config.ocrMaxTotalBytes, "OCR_MAX_TOTAL_BYTES", errors);
+    positiveInteger(config.ocrTimeoutMs, "OCR_TIMEOUT_MS", errors);
+    positiveInteger(config.ocrMaxConcurrentRequests, "OCR_MAX_CONCURRENT_REQUESTS", errors);
+    positiveInteger(config.ocrRateLimitWindowMs, "OCR_RATE_LIMIT_WINDOW_MS", errors);
+    positiveInteger(config.ocrRateLimitMaxRequests, "OCR_RATE_LIMIT_MAX_REQUESTS", errors);
     positiveInteger(config.embeddingVersion, "EMBEDDING_VERSION", errors);
     positiveInteger(config.embeddingTimeoutMs, "EMBEDDING_TIMEOUT_MS", errors);
     positiveInteger(config.embeddingIndexBatchSize, "EMBEDDING_INDEX_BATCH_SIZE", errors);
@@ -160,6 +175,9 @@ function validateProductionConfig(config) {
     }
     if (config.aiFlashcardMinCards > config.aiFlashcardMaxCards) {
         errors.push("AI_FLASHCARD_MIN_CARDS cannot exceed AI_FLASHCARD_MAX_CARDS.");
+    }
+    if (config.ocrMaxImageBytes > config.ocrMaxTotalBytes) {
+        errors.push("OCR_MAX_IMAGE_BYTES cannot exceed OCR_MAX_TOTAL_BYTES.");
     }
     if (
         config.aiFlashcardDefaultCards < config.aiFlashcardMinCards ||

@@ -21,16 +21,17 @@ function normalizeText(text) {
         .trim();
 }
 
-function extractionResult(text, { preserveText = false } = {}) {
+function extractionResult(text, { preserveText = false, method = "native", noTextError } = {}) {
     const normalized = normalizeText(text);
     const usefulCharacters = normalized.replace(/\s/g, "").length;
     const extracted = usefulCharacters >= MIN_USABLE_TEXT_CHARACTERS;
     return {
         text: preserveText ? String(text || "") : normalized,
         status: extracted ? "extracted" : "no_text",
+        method,
         error: extracted
             ? null
-            : "This material does not contain enough extractable text."
+            : noTextError || "This material does not contain enough extractable text."
     };
 }
 
@@ -173,11 +174,28 @@ async function extractPptx(buffer) {
     return extractionResult(sections.join("\n\n"));
 }
 
-function createTextExtractionService({ fileStorage, pdfParserFactory } = {}) {
+function safeOcrFailure(error) {
+    return {
+        text: "",
+        status: "failed",
+        method: "ocr",
+        error: error instanceof AppError && error.expose
+            ? error.message
+            : "Text recognition could not process this material."
+    };
+}
+
+function imageMimeType(extension, providedMimeType) {
+    if (extension === ".png") return "image/png";
+    if (extension === ".jpg" || extension === ".jpeg") return "image/jpeg";
+    return providedMimeType;
+}
+
+function createTextExtractionService({ fileStorage, pdfParserFactory, ocrService } = {}) {
     const createParser = pdfParserFactory || (options => new PDFParse(options));
 
     return {
-        async extract({ storedFilename, originalFilename, materialType }) {
+        async extract({ storedFilename, originalFilename, materialType, mimeType, userId }) {
             const buffer = await fileStorage.read(storedFilename);
             const extension = path.extname(originalFilename || storedFilename).toLowerCase();
 
@@ -185,9 +203,71 @@ function createTextExtractionService({ fileStorage, pdfParserFactory } = {}) {
                 const parser = createParser({ data: buffer });
                 try {
                     const result = await parser.getText();
-                    return extractionResult(result.text, { preserveText: true });
+                    const native = extractionResult(result.text, { preserveText: true });
+                    if (native.status === "extracted") return native;
+                    if (!ocrService?.enabled) {
+                        return {
+                            ...native,
+                            method: null,
+                            error: "No readable PDF text was found, and OCR is not enabled."
+                        };
+                    }
+                    try {
+                        if (Number(result.total) > ocrService.maxPdfPages) {
+                            return safeOcrFailure(new AppError({
+                                code: "OCR_PDF_PAGE_LIMIT",
+                                message: `Scanned PDFs are limited to ${ocrService.maxPdfPages} pages for text recognition.`
+                            }));
+                        }
+                        const screenshots = await parser.getScreenshot({
+                            first: ocrService.maxPdfPages,
+                            desiredWidth: 1600,
+                            imageDataUrl: false,
+                            imageBuffer: true
+                        });
+                        const pages = await ocrService.extractPdfPages({
+                            userId,
+                            pages: screenshots.pages,
+                            filename: originalFilename,
+                            totalPages: Number(result.total || screenshots.total || screenshots.pages.length)
+                        });
+                        const ordered = pages
+                            .sort((left, right) => left.pageNumber - right.pageNumber)
+                            .map(page => `Page ${page.pageNumber}\n${page.text}`)
+                            .join("\n\n");
+                        return extractionResult(ordered, {
+                            method: "ocr",
+                            noTextError: "OCR could not find enough readable text in this PDF."
+                        });
+                    } catch (error) {
+                        return safeOcrFailure(error);
+                    }
                 } finally {
                     await parser.destroy();
+                }
+            }
+            if (materialType === "image") {
+                if (!ocrService?.enabled) {
+                    return {
+                        text: "",
+                        status: "unsupported",
+                        method: null,
+                        error: "OCR is not enabled for this deployment. The original image is still available."
+                    };
+                }
+                try {
+                    const text = await ocrService.extractImage({
+                        userId,
+                        buffer,
+                        mimeType: imageMimeType(extension, mimeType),
+                        filename: originalFilename
+                    });
+                    return extractionResult(text, {
+                        method: "ocr",
+                        noTextError: "OCR could not find enough readable text in this image."
+                    });
+                } catch (error) {
+                    return safeOcrFailure(error);
                 }
             }
             if (extension === ".txt") return extractTxt(buffer);
@@ -211,5 +291,6 @@ module.exports = {
     extractTxt,
     extractDocx,
     extractPptx,
-    normalizeText
+    normalizeText,
+    extractionResult
 };

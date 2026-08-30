@@ -1,6 +1,6 @@
 const { AppError } = require("../utils/app-error");
 const { positiveInteger } = require("../utils/validation");
-const { materialTypeFor } = require("./material-type");
+const { materialTypeFor, validateMaterialUpload } = require("./material-type");
 
 function createMaterialService({
     coursesRepository,
@@ -83,11 +83,14 @@ function createMaterialService({
             }
 
             const materialType = materialTypeFor(file.originalname);
+            validateMaterialUpload(file);
             storedFilename = await fileStorage.persist(file);
             const extraction = await textExtractionService.extract({
                 storedFilename,
                 originalFilename: file.originalname,
-                materialType
+                materialType,
+                mimeType: file.mimetype,
+                userId
             });
             const extractionResult = typeof extraction === "string"
                 ? {
@@ -111,7 +114,8 @@ function createMaterialService({
                 mimeType: file.mimetype,
                 uploadStatus: "ready",
                 extractionError: extractionResult.error,
-                extractionStatus: extractionResult.status
+                extractionStatus: extractionResult.status,
+                extractionMethod: extractionResult.method || null
             });
 
             const material = materialsRepository.findOwned(materialId, courseId, userId);

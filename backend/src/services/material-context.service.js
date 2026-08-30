@@ -54,7 +54,7 @@ function createMaterialContextService({
         if (emptyMaterial) {
             throw new AppError({
                 code: "MATERIAL_HAS_NO_TEXT",
-                message: "This material does not contain extractable text yet. Try a typed PDF, DOCX, PPTX, or TXT file.",
+                message: "This material does not contain usable extracted text yet. Try a typed document or a clearer PNG/JPEG note image.",
                 status: 422,
                 details: {
                     materialId: emptyMaterial.id,

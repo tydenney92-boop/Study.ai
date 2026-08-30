@@ -31,6 +31,34 @@ routing, configure `OPENAI_MODEL_FAST`, `OPENAI_MODEL_STANDARD`, and
 `OPENAI_MODEL_ADVANCED`. The legacy `OPENAI_MODEL` remains a fallback for any
 unset tier.
 
+### Optional image and scanned-PDF OCR
+
+PNG and JPEG uploads are accepted as course materials. OCR is disabled by
+default; without it, the original image remains downloadable but is honestly
+marked unavailable for AI study tools. Enable the provider independently with
+`OCR_ENABLED=true`, `OCR_PROVIDER=openai`, server-only `OPENAI_API_KEY`, and an
+explicit `OPENAI_MODEL_OCR`. A cost-effective starting configuration is
+`gpt-4o-mini`, but the application never hard-codes that model.
+
+Native PDF text extraction always runs first. Only PDFs with insufficient text
+enter the OCR fallback. Default safeguards are 8 MB per rendered/input image,
+10 pages per scanned PDF, 30 MB total rendered bytes, a 60-second provider
+timeout, one concurrent OCR material, and ten OCR materials per authenticated
+user per hour. Configure these with `OCR_MAX_IMAGE_BYTES`, `OCR_MAX_PDF_PAGES`,
+`OCR_MAX_TOTAL_BYTES`, `OCR_TIMEOUT_MS`, `OCR_MAX_CONCURRENT_REQUESTS`,
+`OCR_RATE_LIMIT_WINDOW_MS`, and `OCR_RATE_LIMIT_MAX_REQUESTS`.
+
+Normal tests use fake OCR. The deliberately paid smoke command refuses to run
+unless explicitly gated:
+
+```sh
+cd backend
+RUN_OPENAI_OCR_SMOKE=1 OPENAI_API_KEY=... OPENAI_MODEL_OCR=gpt-4o-mini npm run test:ocr:openai
+```
+
+It sends one small repository fixture and reports only request/token counts,
+latency, and extracted character count—not the key or image/transcription.
+
 ### Optional retrieval embeddings
 
 H1 lexical retrieval remains the default. H2 can persist OpenAI embeddings for

@@ -234,6 +234,11 @@
     color: #ea580c;
 }
 
+.material-icon.image {
+    background: #f0fdf4;
+    color: #15803d;
+}
+
 
 .material-info {
     min-width: 0;
@@ -256,6 +261,11 @@
 
 .material-info .extraction-badge[hidden] {
     display: none;
+}
+
+.material-info .extraction-badge.ocr {
+    background: #ecfdf3;
+    color: #027a48;
 }
 
 

@@ -12,6 +12,7 @@ function createMaterialsRepository(database) {
         materials.upload_status AS uploadStatus,
         materials.extraction_error AS extractionError,
         materials.extraction_status AS extractionStatus,
+        materials.extraction_method AS extractionMethod,
         materials.created_at AS createdAt,
         units.name AS unitName,
         units.unit_number AS unitNumber
@@ -110,8 +111,9 @@ function createMaterialsRepository(database) {
                     mime_type,
                     upload_status,
                     extraction_error,
-                    extraction_status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    extraction_status,
+                    extraction_method
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).run(
                 material.courseId,
                 material.unitId,
@@ -124,7 +126,8 @@ function createMaterialsRepository(database) {
                 material.mimeType,
                 material.uploadStatus,
                 material.extractionError,
-                material.extractionStatus
+                material.extractionStatus,
+                material.extractionMethod
             );
 
             return Number(result.lastInsertRowid);

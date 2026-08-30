@@ -38,6 +38,7 @@ function normalizedTextResponse(material) {
         originalFilename: material.originalFilename,
         extractedText: material.extractedText,
         extractionStatus: material.extractionStatus,
+        extractionMethod: material.extractionMethod,
         extractionError: material.extractionError
     };
 }

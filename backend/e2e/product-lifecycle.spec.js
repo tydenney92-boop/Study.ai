@@ -365,6 +365,30 @@ test("flashcards and Ask My Notes use real course material and persisted state",
     await expect(page.getByRole("link", { name: "+ Add Materials" })).toHaveAttribute("href", `materials.html?courseId=${emptyCourseId}&upload=1`);
 });
 
+test("image notes are OCR-extracted and participate in Ask My Notes", async ({ page }) => {
+    await signup(page, "Ocr");
+    const courseId = await createCourse(page, { code: "OCR 101" });
+    await page.goto(`/materials.html?courseId=${courseId}&upload=1`);
+    const { PNG_FIXTURE } = require("../test/helpers/image-fixtures");
+    await page.locator("#file-input").setInputFiles({
+        name: "photo-notes.png",
+        mimeType: "image/png",
+        buffer: PNG_FIXTURE
+    });
+    await page.locator("#confirm-upload").click();
+    await expect(page).toHaveURL(/material\.html\?courseId=\d+&materialId=\d+$/);
+    await expect(page.locator("#material-extraction-status"))
+        .toHaveText("Extracted with OCR and AI-ready");
+
+    await page.goto(`/notes.html?courseId=${courseId}`);
+    await page.locator(".material-choice", { hasText: "photo-notes.png" }).locator("input").check();
+    await page.locator("#chat-input").fill("How do supply and demand interact?");
+    await page.locator("#send-message").click();
+    await expect(page.locator(".message.assistant").last()).toContainText("market outcomes");
+    await expect(page.locator(".message.assistant").last()).toContainText("photo-notes.png");
+    expect((await api(page, "GET", "/api/e2e/ocr-counts")).body.total).toBe(1);
+});
+
 test("course study recommendations use persisted evidence and preserve course links", async ({ page }) => {
     await signup(page, "Recommend");
     const courseId = await createCourse(page, { code: "SIGNAL 301" });

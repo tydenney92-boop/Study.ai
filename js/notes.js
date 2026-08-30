@@ -258,7 +258,7 @@ async function initializeNotes() {
             document.querySelector("#notes-status-label").textContent = "No usable materials";
             document.querySelector("#notes-material-selection").insertAdjacentHTML(
                 "afterbegin",
-                `<div class="notes-material-empty"><strong>No usable extracted text</strong><span>Upload a typed PDF, DOCX, PPTX, or TXT file to ask grounded questions.</span><a class="primary-button compact-action" href="materials.html?courseId=${encodeURIComponent(notesCourseId)}&upload=1">+ Add Materials</a></div>`
+                `<div class="notes-material-empty"><strong>No usable extracted text</strong><span>Upload a document or a readable note image to ask grounded questions.</span><a class="primary-button compact-action" href="materials.html?courseId=${encodeURIComponent(notesCourseId)}&upload=1">+ Add Materials</a></div>`
             );
         }
         document.querySelector("#notes-material-selection").addEventListener("change", updateInputState);

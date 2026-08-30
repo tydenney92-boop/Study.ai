@@ -104,7 +104,9 @@ async function loadMaterial() {
             failed: "Extraction failed"
         };
         document.querySelector("#material-extraction-status").textContent =
-            extractionLabels[material.extractionStatus] || "Unknown";
+            material.extractionStatus === "extracted" && material.extractionMethod === "ocr"
+                ? "Extracted with OCR and AI-ready"
+                : extractionLabels[material.extractionStatus] || "Unknown";
         document.querySelector("#material-extraction-error").textContent =
             material.extractionError || "No extraction errors.";
 
@@ -116,15 +118,15 @@ async function loadMaterial() {
             const statusContent = {
                 no_text: {
                     label: "No extractable text",
-                    message: "This file does not contain enough readable text. Scanned PDFs require OCR, which is not currently supported."
+                    message: material.extractionError || "This file does not contain enough readable text."
                 },
                 unsupported: {
                     label: "Unsupported format",
-                    message: "Legacy DOC and PPT files are stored but cannot be used with AI. Re-upload as DOCX, PPTX, PDF, or TXT."
+                    message: material.extractionError || "This file is not currently usable with AI."
                 },
                 failed: {
                     label: "Extraction failed",
-                    message: material.extractionError || "Text extraction failed. Try re-uploading a valid PDF, TXT, DOCX, or PPTX file."
+                    message: material.extractionError || "Text extraction failed. Try re-uploading a supported file."
                 }
             }[material.extractionStatus] || {
                 label: "No text available",
@@ -139,7 +141,7 @@ async function loadMaterial() {
             content.querySelector("p").textContent = statusContent.message;
             status.textContent = statusContent.label;
             disableStudyActions(
-                "This material does not contain extractable text yet. Try a typed PDF, DOCX, PPTX, or TXT file."
+                "This material does not contain usable extracted text yet. Try another document or a clearer image."
             );
         }
     } catch (error) {

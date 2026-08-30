@@ -861,7 +861,7 @@ async function initializeQuizMaterials() {
             document.querySelector("#quiz-material-assistance").innerHTML = `
                 <div class="quiz-material-assistance friendly-empty">
                     <strong>No AI-ready materials</strong>
-                    <span>Upload a typed PDF, DOCX, PPTX, or TXT file to generate a quiz.</span>
+                    <span>Upload a document or a readable note image to generate a quiz.</span>
                     <a class="primary-button compact-action" href="materials.html?courseId=${encodeURIComponent(courseId)}">+ Add Materials</a>
                 </div>`;
         }
