@@ -142,7 +142,7 @@ test("course rendering uses a safe accent and does not crash when the color help
     const pageErrors = [];
     page.on("pageerror", error => pageErrors.push(error.message));
     await signup(page, "ColorFallback");
-    await page.route("**/js/course-colors.js", route => route.abort());
+    await page.route("**/js/course-colors.js*", route => route.abort());
 
     const courseId = await createCourse(page, {
         name: "Fallback Course",
@@ -156,6 +156,70 @@ test("course rendering uses a safe accent and does not crash when the color help
     await expect(page.locator(".topbar.course-accent-context")).toHaveAttribute("data-course-color", "#2F7F7A");
     expect(pageErrors).toEqual([]);
     expect(pageErrors.some(message => message.includes("applyCourseColor"))).toBe(false);
+});
+
+test("major rendered pages resolve the centralized ink and teal theme without legacy blue overrides", async ({ page }) => {
+    const pageErrors = [];
+    const consoleErrors = [];
+    page.on("pageerror", error => pageErrors.push(error.message));
+    page.on("console", message => {
+        if (message.type() === "error") consoleErrors.push(message.text());
+    });
+
+    async function expectTheme(primarySelector, { sidebar = true } = {}) {
+        const theme = await page.evaluate(selector => {
+            const primary = document.querySelector(selector);
+            const navigation = document.querySelector(".sidebar");
+            const rootStyles = getComputedStyle(document.documentElement);
+            return {
+                ink: rootStyles.getPropertyValue("--color-ink").trim(),
+                primary: rootStyles.getPropertyValue("--color-primary").trim(),
+                background: getComputedStyle(document.body).backgroundColor,
+                primaryBackground: primary ? getComputedStyle(primary).backgroundColor : null,
+                sidebarBackground: navigation ? getComputedStyle(navigation).backgroundColor : null,
+                overflow: document.documentElement.scrollWidth - window.innerWidth
+            };
+        }, primarySelector);
+        expect(theme.ink.toLowerCase()).toBe("#172033");
+        expect(theme.primary.toLowerCase()).toBe("#2f7f7a");
+        expect(theme.background).toBe("rgb(247, 248, 250)");
+        expect(["rgb(47, 127, 122)", "rgb(170, 180, 189)"]).toContain(theme.primaryBackground);
+        expect(theme.primaryBackground).not.toBe("rgb(37, 99, 235)");
+        if (sidebar) expect(theme.sidebarBackground).toBe("rgb(23, 32, 51)");
+        expect(theme.overflow).toBeLessThanOrEqual(1);
+    }
+
+    await page.goto("/login.html");
+    await expectTheme(".auth-submit", { sidebar: false });
+    await page.goto("/signup.html");
+    await expectTheme(".auth-submit", { sidebar: false });
+
+    await signup(page, "Theme");
+    const courseId = await createCourse(page, { code: "THEME 101", name: "Visual Systems" });
+    await createUnit(page, "Theme Unit");
+    const materialId = await uploadTextMaterial(page, courseId, { unitLabel: "Unit 1 — Theme Unit" });
+    const pages = [
+        ["/index.html#courses", "#add-course-button"],
+        [`/course.html?courseId=${courseId}`, ".header-actions .primary-button"],
+        [`/materials.html?courseId=${courseId}`, "#upload-button"],
+        [`/quiz.html?courseId=${courseId}&materialId=${materialId}`, "#generate-quiz-button", false],
+        [`/study-guide.html?courseId=${courseId}&materialId=${materialId}`, "#generate-guide-button"],
+        [`/flashcards.html?courseId=${courseId}`, "#generate-cards-button"],
+        [`/notes.html?courseId=${courseId}`, "#send-message"],
+        [`/recommendations.html?courseId=${courseId}`, "#recommendations-empty-primary"],
+        [`/progress.html?courseId=${courseId}`, "#progress-empty-action"]
+    ];
+    for (const [url, primarySelector, hasSidebar = true] of pages) {
+        await page.goto(url);
+        await expect(page.locator("body")).toBeVisible();
+        await expect.poll(() => page.evaluate(() =>
+            typeof window.StudySignalCourseColors?.applyCourseColor
+        )).toBe("function");
+        await expectTheme(primarySelector, { sidebar: hasSidebar });
+    }
+
+    expect(pageErrors).toEqual([]);
+    expect(consoleErrors).toEqual([]);
 });
 
 test("semester sidebar groups courses, persists folders, and keeps one active destination", async ({ page }) => {

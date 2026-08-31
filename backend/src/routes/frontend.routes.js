@@ -8,15 +8,26 @@ const FRONTEND_PAGES = [
 ];
 
 function registerFrontendRoutes(app, { frontendDirectory }) {
-    app.use("/css", express.static(path.join(frontendDirectory, "css"), {
-        dotfiles: "deny", fallthrough: false, maxAge: "1h"
-    }));
-    app.use("/js", express.static(path.join(frontendDirectory, "js"), {
-        dotfiles: "deny", fallthrough: false, maxAge: "1h"
-    }));
-    app.get("/", (req, res) => res.sendFile(path.join(frontendDirectory, "index.html")));
+    const staticOptions = {
+        dotfiles: "deny",
+        etag: true,
+        fallthrough: false,
+        lastModified: true,
+        maxAge: 0,
+        setHeaders(response) {
+            response.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+        }
+    };
+    const sendPage = page => (req, res) => {
+        res.setHeader("Cache-Control", "no-cache");
+        res.sendFile(path.join(frontendDirectory, page));
+    };
+
+    app.use("/css", express.static(path.join(frontendDirectory, "css"), staticOptions));
+    app.use("/js", express.static(path.join(frontendDirectory, "js"), staticOptions));
+    app.get("/", sendPage("index.html"));
     for (const page of FRONTEND_PAGES) {
-        app.get(`/${page}`, (req, res) => res.sendFile(path.join(frontendDirectory, page)));
+        app.get(`/${page}`, sendPage(page));
     }
 }
 

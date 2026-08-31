@@ -5,6 +5,10 @@
     if (!root) return;
 
     root.StudySignalCourseColors = api;
+    root.StudyAI = root.StudyAI || {};
+    // Compatibility alias for cached pre-helper page scripts. The canonical API
+    // remains StudySignalCourseColors; both names reference the same object.
+    root.StudyAI.courseColors = api;
 })(typeof window !== "undefined" ? window : null, function createCourseColorApi() {
     const COURSE_COLOR_PALETTE = Object.freeze([
         { name: "blue", value: "#3F6F8A" },

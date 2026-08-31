@@ -38,6 +38,8 @@ window.StudySignalCourseColors = window.StudySignalCourseColors || Object.freeze
 
 window.StudyAI = {
 
+    courseColors: window.StudySignalCourseColors,
+
     apiUrl: function(path) {
 
         return STUDY_AI_API_BASE_URL + path;

@@ -84,3 +84,22 @@ test("course recommendations preserve context and Ask My Notes hides unsupported
     assert.match(notes, /supportType !== "not_found"/);
     assert.match(login, /recommendations\.html/);
 });
+
+test("active styles centralize the Study Signal theme and version the current visual assets", () => {
+    const shared = read("css/style.css");
+    const themedCss = [
+        "css/style.css", "css/auth.css", "css/history.css", "css/material.css",
+        "css/materials.css", "css/progress.css", "css/quiz.css", "css/study-tools.css"
+    ].map(read).join("\n");
+    const htmlFiles = fs.readdirSync(root).filter(file => file.endsWith(".html"));
+    const html = htmlFiles.map(read).join("\n");
+
+    assert.match(shared, /--color-ink:\s*#172033/i);
+    assert.match(shared, /--color-primary:\s*#2f7f7a/i);
+    assert.match(shared, /--color-primary-hover:\s*#256a66/i);
+    assert.match(shared, /--color-surface-warm:\s*#f4efe6/i);
+    assert.doesNotMatch(themedCss, /#2563eb|#1d4ed8|#4f6bed|#7c3aed|rgba\(37,\s*99,\s*235/i);
+    assert.doesNotMatch(html, /href="css\/[^"]+\.css"/);
+    assert.doesNotMatch(html, /src="js\/course-colors\.js"/);
+    assert.match(html, /20260830-theme-fix/);
+});

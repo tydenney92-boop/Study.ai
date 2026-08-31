@@ -61,7 +61,7 @@ test("every authenticated page loads the explicit course-color helper before aut
 
     pages.forEach(filename => {
         const html = fs.readFileSync(path.join(frontendDirectory, filename), "utf8");
-        const helperIndex = html.indexOf('src="js/course-colors.js"');
+        const helperIndex = html.indexOf('src="js/course-colors.js');
         const authIndex = html.indexOf('src="js/auth.js"');
         assert.ok(helperIndex >= 0, `${filename} must load course-colors.js`);
         assert.ok(helperIndex < authIndex, `${filename} must load course-colors.js before auth.js`);
