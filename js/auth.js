@@ -1,3 +1,51 @@
+const COURSE_COLOR_PALETTE = Object.freeze([
+    { name: "blue", value: "#2563EB" },
+    { name: "purple", value: "#7C3AED" },
+    { name: "teal", value: "#0F766E" },
+    { name: "green", value: "#15803D" },
+    { name: "orange", value: "#C2410C" },
+    { name: "rose", value: "#BE123C" },
+    { name: "indigo", value: "#4338CA" },
+    { name: "cyan", value: "#0E7490" }
+]);
+
+function explicitCourseColor(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+    const match = COURSE_COLOR_PALETTE.find(color =>
+        color.name === normalized || color.value.toLowerCase() === normalized
+    );
+    return match?.value || null;
+}
+
+function stableCourseHash(course) {
+    const source = `${course?.courseCode || ""}|${course?.courseName || ""}`.trim().toLowerCase();
+    let hash = 2166136261;
+    for (let index = 0; index < source.length; index++) {
+        hash ^= source.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+}
+
+function getCourseColor(course = {}) {
+    const explicit = explicitCourseColor(course.color);
+    if (explicit) return explicit;
+
+    const numericId = Number(course.id);
+    const paletteIndex = Number.isSafeInteger(numericId) && numericId > 0
+        ? (numericId - 1) % COURSE_COLOR_PALETTE.length
+        : stableCourseHash(course) % COURSE_COLOR_PALETTE.length;
+    return COURSE_COLOR_PALETTE[paletteIndex].value;
+}
+
+function applyCourseColor(element, course) {
+    if (!element) return getCourseColor(course);
+    const color = getCourseColor(course);
+    element.style.setProperty("--course-accent", color);
+    element.dataset.courseColor = color;
+    return color;
+}
+
 function parseSidebarSemester(value) {
     const match = String(value || "").trim().match(/^(winter|spring|summer|fall)\s+(\d{4})$/i);
     if (!match) return null;
@@ -44,10 +92,22 @@ function sidebarSemesterExpanded({ group, index, activeCourseId, state, hasActiv
 }
 
 if (typeof module !== "undefined" && module.exports) {
-    module.exports = { groupSidebarCourses, parseSidebarSemester, sidebarSemesterExpanded };
+    module.exports = {
+        COURSE_COLOR_PALETTE,
+        applyCourseColor,
+        getCourseColor,
+        groupSidebarCourses,
+        parseSidebarSemester,
+        sidebarSemesterExpanded
+    };
 }
 
 if (typeof window !== "undefined" && typeof document !== "undefined") (function() {
+    window.StudyAI.courseColors = {
+        palette: COURSE_COLOR_PALETTE,
+        applyCourseColor,
+        getCourseColor
+    };
     const loginUrl = `login.html?returnTo=${encodeURIComponent(
         window.location.pathname.split("/").pop() + window.location.search + window.location.hash
     )}`;
@@ -221,6 +281,7 @@ if (typeof window !== "undefined" && typeof document !== "undefined") (function(
                     if (String(course.id) === currentCourseId) link.classList.add("active");
                     link.href = `course.html?courseId=${encodeURIComponent(course.id)}`;
                     link.innerHTML = "<strong></strong><span></span>";
+                    applyCourseColor(link, course);
                     link.querySelector("strong").textContent = course.courseCode;
                     link.querySelector("span").textContent = course.courseName;
                     courseList.appendChild(link);

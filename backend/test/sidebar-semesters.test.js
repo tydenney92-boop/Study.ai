@@ -1,10 +1,36 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
+    COURSE_COLOR_PALETTE,
+    getCourseColor,
     groupSidebarCourses,
     parseSidebarSemester,
     sidebarSemesterExpanded
 } = require("../../js/auth.js");
+
+test("course colors preserve valid explicit palette values and normalize invalid values", () => {
+    assert.equal(getCourseColor({ id: 3, color: "purple" }), "#7C3AED");
+    assert.equal(getCourseColor({ id: 3, color: "#7c3aed" }), "#7C3AED");
+
+    const expectedFallback = getCourseColor({ id: 3 });
+    assert.equal(getCourseColor({ id: 3, color: "" }), expectedFallback);
+    assert.equal(getCourseColor({ id: 3, color: "transparent" }), expectedFallback);
+    assert.equal(getCourseColor({ id: 3, color: "#not-a-color" }), expectedFallback);
+});
+
+test("course fallback colors are stable, deterministic, and drawn from the curated palette", () => {
+    const paletteValues = COURSE_COLOR_PALETTE.map(color => color.value);
+    const course = { id: 42, courseCode: "BIO 242", courseName: "Genetics" };
+    assert.equal(getCourseColor(course), getCourseColor({ ...course }));
+    assert.ok(paletteValues.includes(getCourseColor(course)));
+
+    const nearbyColors = [41, 42, 43, 44].map(id => getCourseColor({ id }));
+    assert.equal(new Set(nearbyColors).size, nearbyColors.length);
+
+    const noIdCourse = { courseCode: "CHEM 101", courseName: "Chemistry" };
+    assert.equal(getCourseColor(noIdCourse), getCourseColor({ ...noIdCourse }));
+    assert.ok(paletteValues.includes(getCourseColor(noIdCourse)));
+});
 
 test("semester parsing is normalized and chronological rather than alphabetical", () => {
     assert.deepEqual(parseSidebarSemester(" fall 2026 "), {

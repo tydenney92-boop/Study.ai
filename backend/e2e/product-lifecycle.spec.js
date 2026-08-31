@@ -34,6 +34,29 @@ test("authentication, canonical navigation, session persistence, and recent cour
     await expect(page.locator(".sidebar-course-link").first()).toContainText("FIRST 101");
     await expect(page.getByRole("link", { name: "Dashboard" })).toHaveClass(/active/);
 
+    const courseCards = page.locator("#course-list .course-card");
+    await expect(courseCards).toHaveCount(2);
+    const renderedAccents = await courseCards.evaluateAll(cards => cards.map(card => {
+        const bar = card.querySelector(".course-color");
+        return {
+            color: card.dataset.courseColor,
+            background: getComputedStyle(bar).backgroundColor
+        };
+    }));
+    expect(renderedAccents.every(accent => /^#[0-9A-F]{6}$/.test(accent.color))).toBe(true);
+    expect(renderedAccents.every(accent => !["", "rgba(0, 0, 0, 0)", "transparent"].includes(accent.background))).toBe(true);
+    expect(new Set(renderedAccents.map(accent => accent.color)).size).toBe(2);
+
+    const firstCardColor = await courseCards.filter({ hasText: "FIRST 101" }).getAttribute("data-course-color");
+    const firstSidebarColor = await page.locator(".sidebar-course-link", { hasText: "FIRST 101" }).getAttribute("data-course-color");
+    expect(firstSidebarColor).toBe(firstCardColor);
+    await page.reload();
+    await expect(courseCards.filter({ hasText: "FIRST 101" })).toHaveAttribute("data-course-color", firstCardColor);
+
+    await page.goto(`/course.html?courseId=${firstId}`);
+    await expect(page.locator(".topbar.course-accent-context")).toHaveAttribute("data-course-color", firstCardColor);
+    await expect(page.locator(".sidebar-course-link.active")).toHaveAttribute("data-course-color", firstCardColor);
+
     await page.goto("/index.html");
     await page.getByRole("button", { name: "Log out" }).click();
     await expect(page).toHaveURL(/login\.html$/);

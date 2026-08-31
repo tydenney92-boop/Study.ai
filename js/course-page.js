@@ -27,7 +27,7 @@ function renderUnit(unit, index) {
     const card = document.createElement("article");
     card.className = "course-card unit-management-card";
     card.innerHTML = `
-        <div class="course-color blue"></div>
+        <div class="course-color"></div>
         <a class="unit-main-link"><div class="course-info">
             <span class="course-code"></span><h3></h3>
             <div class="course-meta-line"></div>
@@ -39,6 +39,7 @@ function renderUnit(unit, index) {
             <button type="button" class="text-button destructive unit-delete">Delete</button>
         </div>
     `;
+    StudyAI.courseColors.applyCourseColor(card, loadedCourse);
     card.querySelector(".unit-main-link").href = courseUrl("materials.html", { unitId: unit.id });
     card.querySelector(".course-code").textContent = `UNIT ${String(unit.unitNumber).padStart(2, "0")}`;
     card.querySelector("h3").textContent = unit.name;
@@ -76,6 +77,9 @@ async function loadCourse() {
         document.querySelector("#course-code-title").textContent = loadedCourse.courseCode;
         document.querySelector("#course-name-subtitle").textContent = loadedCourse.courseName;
         document.querySelector("#course-semester").textContent = loadedCourse.semester || "No semester";
+        const courseHeader = document.querySelector(".topbar");
+        courseHeader.classList.add("course-accent-context");
+        StudyAI.courseColors.applyCourseColor(courseHeader, loadedCourse);
         document.querySelector("#course-danger-zone").hidden = false;
         document.querySelector("#edit-course-button").hidden = false;
         document.querySelectorAll("[data-course-page]").forEach(link => {

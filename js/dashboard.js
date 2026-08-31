@@ -4,17 +4,15 @@ const courseModal = document.querySelector("#course-modal");
 const courseForm = document.querySelector("#course-form");
 const courseFormError = document.querySelector("#course-form-error");
 
-function createCourseCard(course, index) {
+function createCourseCard(course) {
     const link = document.createElement("a");
     link.className = "course-card";
     link.href = StudyAI.courseContext.url("course.html", {
         courseId: course.id
     });
 
-    const colors = ["blue", "purple", "green", "orange"];
-    const color = colors[index % colors.length];
     link.innerHTML = `
-        <div class="course-color ${color}"></div>
+        <div class="course-color"></div>
         <div class="course-info">
             <span class="course-code"></span>
             <h3></h3>
@@ -26,6 +24,7 @@ function createCourseCard(course, index) {
         </div>
         <span class="course-arrow">→</span>
     `;
+    StudyAI.courseColors.applyCourseColor(link, course);
     link.querySelector(".course-code").textContent = course.courseCode;
     link.querySelector("h3").textContent = course.courseName;
     link.querySelector(".course-meta-line").textContent =
@@ -51,8 +50,8 @@ async function loadDashboard() {
         const courses = await StudyAI.api.get("/api/courses/summary");
         courseList.innerHTML = "";
 
-        courses.forEach((course, index) => {
-            courseList.appendChild(createCourseCard(course, index));
+        courses.forEach(course => {
+            courseList.appendChild(createCourseCard(course));
         });
         courseList.appendChild(createAddCourseCard());
 
