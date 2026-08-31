@@ -50,6 +50,7 @@
 
         function close() {
             if (!isOpen()) return;
+            if (overlay.getAttribute("aria-busy") === "true") return;
             overlay.querySelectorAll("form").forEach(form => form.reset());
             overlay.querySelectorAll(".form-error").forEach(element => {
                 element.textContent = "";

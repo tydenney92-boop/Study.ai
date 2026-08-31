@@ -80,6 +80,70 @@ test("authentication, canonical navigation, session persistence, and recent cour
     await expect(page.getByRole("link", { name: "Progress" })).toHaveClass(/active/);
 });
 
+test("course deletion is discoverable, confirmed, recoverable on failure, and removes navigation", async ({ page }) => {
+    await signup(page, "CourseDelete");
+    const courseId = await createCourse(page, {
+        name: "Old Calculus",
+        code: "MATH 199",
+        semester: "Spring 2024"
+    });
+
+    const deleteTrigger = page.getByRole("button", { name: "Delete Course" }).first();
+    await expect(page.locator("#course-management-actions")).toBeVisible();
+    await expect(deleteTrigger).toBeVisible();
+    await deleteTrigger.click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.locator("#delete-course-title")).toHaveText("Delete MATH 199?");
+    await expect(page.locator("#delete-course-description")).toContainText("Old Calculus");
+
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(deleteTrigger).toBeFocused();
+    await expect(page.locator("#course-code-title")).toHaveText("MATH 199");
+
+    await page.route(`**/api/courses/${courseId}`, async route => {
+        if (route.request().method() !== "DELETE") return route.continue();
+        await route.fulfill({
+            status: 503,
+            contentType: "application/json",
+            body: JSON.stringify({ error: { code: "DELETE_FAILED", message: "Deletion is temporarily unavailable." } })
+        });
+    });
+    await deleteTrigger.click();
+    await page.locator("#confirm-delete-course").click();
+    await expect(page.getByText("Deletion is temporarily unavailable.").first()).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`course\\.html\\?courseId=${courseId}$`));
+    await expect(page.locator("#course-code-title")).toHaveText("MATH 199");
+    await page.unroute(`**/api/courses/${courseId}`);
+
+    let releaseDelete;
+    let markDeleteRequested;
+    const deleteRelease = new Promise(resolve => { releaseDelete = resolve; });
+    const deleteRequested = new Promise(resolve => { markDeleteRequested = resolve; });
+    await page.route(`**/api/courses/${courseId}`, async route => {
+        if (route.request().method() !== "DELETE") return route.continue();
+        markDeleteRequested();
+        await deleteRelease;
+        const response = await route.fetch();
+        expect(response.status()).toBe(204);
+        await route.fulfill({
+            status: 202,
+            contentType: "application/json",
+            body: JSON.stringify({ cleanup: { completed: 0, pending: 1 } })
+        });
+    });
+    await page.locator("#confirm-delete-course").click();
+    await deleteRequested;
+    await expect(page.locator("#confirm-delete-course")).toHaveText("Deleting…");
+    await expect(page.locator("#confirm-delete-course")).toBeDisabled();
+    releaseDelete();
+    await expect(page).toHaveURL(/index\.html#courses$/);
+    await expect(page.getByText("Course deleted. Stored-file cleanup is queued and will be retried.")).toBeVisible();
+    await expect(page.locator("#course-list .course-card", { hasText: "MATH 199" })).toHaveCount(0);
+    await expect(page.locator(".sidebar-course-link", { hasText: "MATH 199" })).toHaveCount(0);
+    await expect(page.locator(".sidebar-semester-group", { hasText: "Spring 2024" })).toHaveCount(0);
+});
+
 test("dashboard, sidebar, course header, and units share one visible deterministic course accent", async ({ page }) => {
     const pageErrors = [];
     const consoleErrors = [];

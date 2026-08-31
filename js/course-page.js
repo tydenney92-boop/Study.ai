@@ -12,6 +12,7 @@ let materials = [];
 let editingUnit = null;
 let pendingDeleteUnit = null;
 let reorderPending = false;
+let courseDeletePending = false;
 
 if (!courseId) StudyAI.courseContext.goToMyCourses("Choose a course to continue.");
 
@@ -80,8 +81,10 @@ async function loadCourse() {
         const courseHeader = document.querySelector(".topbar");
         courseHeader.classList.add("course-accent-context");
         window.StudySignalCourseColors.applyCourseColor(courseHeader, loadedCourse);
-        document.querySelector("#course-danger-zone").hidden = false;
-        document.querySelector("#edit-course-button").hidden = false;
+        document.querySelector("#course-management-actions").hidden = false;
+        document.querySelector("#delete-course-title").textContent = `Delete ${loadedCourse.courseCode}?`;
+        document.querySelector("#delete-course-description").textContent =
+            `This will permanently remove ${loadedCourse.courseName} and its associated units, materials, saved study content, flashcards, progress, conversations, and uploaded files. This action cannot be undone.`;
         document.querySelectorAll("[data-course-page]").forEach(link => {
             link.href = courseUrl(link.dataset.coursePage, link.dataset.openUpload ? { upload: 1 } : {});
         });
@@ -232,19 +235,37 @@ document.querySelector("#edit-course-form").addEventListener("submit", async eve
     }
 });
 
-document.querySelector("#delete-course-button").addEventListener("click", () => {
-    if (loadedCourse) deleteModal.classList.add("open");
+const deleteCourseButton = document.querySelector("#delete-course-button");
+const confirmDeleteCourseButton = document.querySelector("#confirm-delete-course");
+const cancelDeleteCourseButton = document.querySelector("#cancel-delete-course");
+const closeDeleteCourseButton = document.querySelector("#close-delete-course-modal");
+
+function setCourseDeletePending(pending) {
+    courseDeletePending = pending;
+    deleteModal.setAttribute("aria-busy", String(pending));
+    deleteCourseButton.disabled = pending;
+    confirmDeleteCourseButton.disabled = pending;
+    cancelDeleteCourseButton.disabled = pending;
+    closeDeleteCourseButton.disabled = pending;
+    confirmDeleteCourseButton.textContent = pending ? "Deleting…" : "Delete Course";
+}
+
+deleteCourseButton.addEventListener("click", () => {
+    if (!loadedCourse || courseDeletePending) return;
+    document.querySelector("#delete-course-error").textContent = "";
+    deleteModal.classList.add("open");
 });
 function closeDeleteModal() {
+    if (courseDeletePending) return;
     deleteModal.classList.remove("open");
     document.querySelector("#delete-course-error").textContent = "";
 }
-document.querySelector("#close-delete-course-modal").addEventListener("click", closeDeleteModal);
-document.querySelector("#cancel-delete-course").addEventListener("click", closeDeleteModal);
-document.querySelector("#confirm-delete-course").addEventListener("click", async event => {
-    const button = event.currentTarget;
-    button.disabled = true;
-    button.textContent = "Deleting…";
+closeDeleteCourseButton.addEventListener("click", closeDeleteModal);
+cancelDeleteCourseButton.addEventListener("click", closeDeleteModal);
+confirmDeleteCourseButton.addEventListener("click", async () => {
+    if (!loadedCourse || courseDeletePending) return;
+    setCourseDeletePending(true);
+    document.querySelector("#delete-course-error").textContent = "";
     try {
         const result = await StudyAI.api.delete(`/api/courses/${courseId}`);
         document.querySelector(`.sidebar-course-link[href$="courseId=${courseId}"]`)?.remove();
@@ -254,8 +275,8 @@ document.querySelector("#confirm-delete-course").addEventListener("click", async
         window.location.replace("index.html#courses");
     } catch (error) {
         document.querySelector("#delete-course-error").textContent = error.message;
-        button.disabled = false;
-        button.textContent = "Yes, Delete Course";
+        StudyAI.ui.notify(error.message, { type: "error" });
+        setCourseDeletePending(false);
     }
 });
 

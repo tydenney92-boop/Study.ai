@@ -16,8 +16,17 @@ test("course and material management controls are wired to owned APIs", () => {
     const materialsScript = read("js/materials.js");
 
     assert.match(courseHtml, /id="edit-course-button"/);
+    assert.match(courseHtml, /id="course-management-actions"[^>]+hidden/);
+    assert.match(courseHtml, /id="delete-course-button"/);
+    assert.match(courseHtml, /id="delete-course-modal"/);
+    assert.match(courseHtml, /aria-describedby="delete-course-description"/);
+    assert.match(courseHtml, />Cancel<\/button>/);
     assert.match(courseHtml, /id="delete-unit-modal"/);
     assert.match(courseScript, /\/api\/courses\/\$\{courseId\}\/units\/order/);
+    assert.match(courseScript, /StudyAI\.api\.delete\(`\/api\/courses\/\$\{courseId\}`\)/);
+    assert.match(courseScript, /result\?\.cleanup\?\.pending/);
+    assert.match(courseScript, /window\.location\.replace\("index\.html#courses"\)/);
+    assert.match(courseScript, /StudyAI\.ui\.notify\(error\.message, \{ type: "error" \}\)/);
     assert.match(materialHtml, /id="edit-material-button"/);
     assert.match(materialHtml, /id="view-original-link"/);
     assert.match(materialScript, /\/materials\/\$\{materialId\}\/file/);

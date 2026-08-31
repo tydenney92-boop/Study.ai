@@ -179,6 +179,30 @@ test("deleting a course cascades relational data and removes stored materials", 
     context.database.prepare(`
         INSERT INTO flashcard_materials (flashcard_id, material_id) VALUES (?, ?)
     `).run(flashcardId, materialId);
+    const chunkId = Number(context.database.prepare(`
+        INSERT INTO material_chunks (
+            material_id, course_id, chunk_index, chunk_text, character_count,
+            token_estimate, content_hash, chunking_version
+        ) VALUES (?, 1, 0, 'stored course content', 21, 6, 'chunk-hash', 1)
+    `).run(materialId).lastInsertRowid);
+    context.database.prepare(`
+        INSERT INTO material_chunk_embeddings (
+            chunk_id, provider, model, embedding_version, dimensions,
+            vector_json, source_content_hash
+        ) VALUES (?, 'fake', 'fake-model', 1, 2, '[0.1,0.2]', 'chunk-hash')
+    `).run(chunkId);
+    const conversationId = Number(context.database.prepare(`
+        INSERT INTO ask_notes_conversations (user_id, course_id) VALUES (1, 1)
+    `).run().lastInsertRowid);
+    const messageId = Number(context.database.prepare(`
+        INSERT INTO ask_notes_messages (conversation_id, role, content)
+        VALUES (?, 'user', 'What should I study?')
+    `).run(conversationId).lastInsertRowid);
+    context.database.prepare(`
+        INSERT INTO ask_notes_message_materials (
+            message_id, relationship, source_order, material_id, material_name
+        ) VALUES (?, 'selection', 0, ?, 'keep.txt')
+    `).run(messageId, materialId);
 
     await request(context.app)
         .delete("/api/courses/1")
@@ -188,7 +212,10 @@ test("deleting a course cascades relational data and removes stored materials", 
     for (const table of [
         "courses", "units", "materials", "generated_study_guides",
         "study_guide_materials", "generated_quizzes", "quiz_materials",
-        "quiz_attempts", "flashcards", "flashcard_materials"
+        "quiz_attempts", "flashcards", "flashcard_materials",
+        "material_chunks", "material_chunk_embeddings",
+        "ask_notes_conversations", "ask_notes_messages",
+        "ask_notes_message_materials"
     ]) {
         assert.equal(context.database.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get().count, 0);
     }

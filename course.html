@@ -20,7 +20,16 @@
     <main class="main-content">
         <header class="topbar">
             <div><a class="back-link" href="index.html#courses">← My Courses</a><p class="eyebrow">MY COURSE · <span id="course-semester">Loading…</span></p><h1 id="course-code-title">Course</h1><p class="subtitle" id="course-name-subtitle">Loading course…</p></div>
-            <div class="header-actions"><button class="secondary-tool-button" id="edit-course-button" hidden>Edit Course</button><button class="secondary-tool-button" id="add-unit-button">+ Add Unit</button><a href="index.html#courses" data-course-page="materials.html" data-open-upload="true" class="primary-button">+ Add Materials</a></div>
+            <div class="header-actions">
+                <div class="course-management-actions" id="course-management-actions" role="group" aria-label="Course management" hidden>
+                    <button class="secondary-tool-button" id="edit-course-button">Edit Course</button>
+                    <button class="danger-button course-delete-trigger" id="delete-course-button">Delete Course</button>
+                </div>
+                <div class="course-create-actions">
+                    <button class="secondary-tool-button" id="add-unit-button">+ Add Unit</button>
+                    <a href="index.html#courses" data-course-page="materials.html" data-open-upload="true" class="primary-button">+ Add Materials</a>
+                </div>
+            </div>
         </header>
 
         <section class="stats-grid">
@@ -48,7 +57,6 @@
                     <a href="index.html#courses" data-course-page="notes.html" class="tool-card primary-tool"><div class="tool-icon orange">✦</div><div><strong>Ask My Notes</strong><span>Ask grounded course questions</span></div></a>
                 </div>
                 <div class="course-tip"><span class="eyebrow">STUDY TIP</span><h3>Start with your own material</h3><p>Upload a readable PDF, open it, then choose a study guide or verified practice quiz.</p></div>
-                <div class="danger-zone" id="course-danger-zone" hidden><span class="eyebrow">COURSE SETTINGS</span><h3>Remove this course</h3><p>This permanently removes its units, materials, generated guides, quizzes, attempts, flashcards, and uploaded files.</p><button class="danger-button" id="delete-course-button">Delete Course</button></div>
             </div>
         </section>
     </main>
@@ -87,11 +95,11 @@
     </div>
 
     <div class="app-modal-overlay" id="delete-course-modal">
-        <div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="delete-course-title">
-            <div class="app-modal-header"><div><p class="eyebrow">PERMANENT ACTION</p><h2 id="delete-course-title">Delete this course?</h2></div><button class="icon-button" id="close-delete-course-modal" aria-label="Close">×</button></div>
-            <p>This cannot be undone. All course materials and study activity will be removed.</p>
+        <div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="delete-course-title" aria-describedby="delete-course-description">
+            <div class="app-modal-header"><div><p class="eyebrow">PERMANENT ACTION</p><h2 id="delete-course-title">Delete this course?</h2></div><button type="button" class="icon-button" id="close-delete-course-modal" aria-label="Close delete course dialog">×</button></div>
+            <p id="delete-course-description">This will permanently remove the course and its associated units, materials, saved study content, flashcards, progress, conversations, and uploaded files. This action cannot be undone.</p>
             <p class="form-error" id="delete-course-error"></p>
-            <div class="app-modal-actions"><button class="secondary-tool-button" id="cancel-delete-course">Keep Course</button><button class="danger-button" id="confirm-delete-course">Yes, Delete Course</button></div>
+            <div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-delete-course">Cancel</button><button type="button" class="danger-button" id="confirm-delete-course">Delete Course</button></div>
         </div>
     </div>
 
