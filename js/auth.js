@@ -1,12 +1,12 @@
 const COURSE_COLOR_PALETTE = Object.freeze([
-    { name: "blue", value: "#2563EB" },
-    { name: "purple", value: "#7C3AED" },
-    { name: "teal", value: "#0F766E" },
-    { name: "green", value: "#15803D" },
-    { name: "orange", value: "#C2410C" },
-    { name: "rose", value: "#BE123C" },
-    { name: "indigo", value: "#4338CA" },
-    { name: "cyan", value: "#0E7490" }
+    { name: "blue", value: "#3F6F8A" },
+    { name: "purple", value: "#70658A" },
+    { name: "teal", value: "#2F7F7A" },
+    { name: "green", value: "#4F7A5B" },
+    { name: "orange", value: "#A9693A" },
+    { name: "rose", value: "#9B5A66" },
+    { name: "indigo", value: "#536486" },
+    { name: "cyan", value: "#437A82" }
 ]);
 
 function explicitCourseColor(value) {

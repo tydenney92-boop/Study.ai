@@ -9,8 +9,8 @@ const {
 } = require("../../js/auth.js");
 
 test("course colors preserve valid explicit palette values and normalize invalid values", () => {
-    assert.equal(getCourseColor({ id: 3, color: "purple" }), "#7C3AED");
-    assert.equal(getCourseColor({ id: 3, color: "#7c3aed" }), "#7C3AED");
+    assert.equal(getCourseColor({ id: 3, color: "purple" }), "#70658A");
+    assert.equal(getCourseColor({ id: 3, color: "#70658a" }), "#70658A");
 
     const expectedFallback = getCourseColor({ id: 3 });
     assert.equal(getCourseColor({ id: 3, color: "" }), expectedFallback);

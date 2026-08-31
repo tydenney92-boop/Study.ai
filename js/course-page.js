@@ -152,6 +152,7 @@ function closeDeleteUnit() {
 }
 
 document.querySelector("#add-unit-button").addEventListener("click", () => openUnitModal());
+document.querySelector("#add-unit-button-inline").addEventListener("click", () => openUnitModal());
 document.querySelector("#close-unit-modal").addEventListener("click", closeUnitModal);
 document.querySelector("#cancel-unit").addEventListener("click", closeUnitModal);
 unitForm.addEventListener("submit", async event => {

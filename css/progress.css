@@ -2,3 +2,12 @@
 .main-content{box-sizing:border-box;width:calc(100% - 250px)}
 @media(max-width:750px){.main-content{width:calc(100% - 70px)}}
 .progress-layout[hidden],.progress-empty[hidden]{display:none!important}.course-selector select{padding:10px 34px 10px 12px;border:1px solid #d8dee9;border-radius:9px;background:#fff;color:#263246;font:inherit}.clickable-progress-row{cursor:pointer;border-radius:8px;padding-left:8px;padding-right:8px}.clickable-progress-row:hover,.clickable-progress-row:focus{background:#f5f8ff;outline:none}
+
+.main-content{width:calc(100% - var(--sidebar-width))}
+.progress-stat-card,.progress-layout>.dashboard-panel{border-color:var(--color-border);border-radius:var(--radius-card);box-shadow:var(--shadow-card)}
+.progress-score{color:var(--color-primary-hover)}
+.trend-bar{background:var(--color-primary)}
+.course-selector select{min-height:44px;border-color:var(--color-border);border-radius:var(--radius-control)}
+.course-selector select:focus{border-color:var(--color-primary);outline:none;box-shadow:var(--focus-ring)}
+.clickable-progress-row:hover,.clickable-progress-row:focus-visible{background:var(--color-primary-soft);outline:3px solid rgba(47,127,122,.24);outline-offset:1px}
+@media(max-width:750px){.main-content{width:calc(100% - var(--sidebar-width))}.score-trend{height:170px}.progress-stat-card{padding:20px}}

@@ -545,6 +545,13 @@
     color: #2563eb;
 }
 
+.guide-loading { margin-bottom: 22px; padding: 30px; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); text-align: center; box-shadow: var(--shadow-card); }
+.guide-loading-icon { margin-bottom: 10px; color: var(--color-primary); font-size: 24px; }
+.guide-loading p { margin-top: 6px; color: var(--color-text-muted); font-size: 12px; }
+.guide-recommendation-title { margin-top: 8px; }
+.guide-recommendation-copy { margin-top: 7px; color: var(--color-text-muted); font-size: 12px; line-height: 1.5; }
+.guide-quiz-action { display: flex; justify-content: center; margin-top: 15px; text-align: center; }
+
 
 /* =========================================
    ASK MY NOTES
@@ -862,7 +869,7 @@
 .message.error-message .message-content { border: 1px solid #f1d1ce; background: #fffafa; }
 .suggestion:disabled, .send-button:disabled { cursor: not-allowed; opacity: .5; }
 
-@media (max-width: 950px) {
+@media (max-width: 1100px) {
     .notes-layout { grid-template-columns: 1fr; }
     .notes-sources .material-choice-list { max-height: 260px; }
 }
@@ -876,6 +883,70 @@
 
 @media (max-width: 750px) {
     .notes-page { width: calc(100% - 70px); }
+}
+
+/* Study Signal study-tool treatment */
+.back-link:hover, .guide-nav a:hover { color: var(--color-primary); }
+.tool-page-header { margin-bottom: 26px; }
+.tool-page-header h1 { max-width: 760px; }
+
+.flashcards-page, .notes-page { width: calc(100% - var(--sidebar-width)); }
+.flashcard-library-bar, .flashcard-face, .chat-container, .study-guide, .guide-sidebar .dashboard-panel {
+    border-color: var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+}
+.flashcard { height: min(380px, 48vh); min-height: 330px; }
+.flashcard-back { background: var(--color-primary-soft); }
+.flashcard-label, .guide-label, .guide-section-heading span, .review-question span { color: var(--color-primary); }
+.flashcard-face h2, .flashcard-heading { color: var(--color-ink); }
+.review-button, .flashcard-actions .secondary-tool-button { min-height: 44px; border-color: var(--color-border); border-radius: var(--radius-control); }
+.review-button:hover { border-color: var(--color-border-strong); background: #f9fafb; }
+.review-button.known { border-color: #9dcab1; background: var(--color-success-soft); color: var(--color-success); }
+.flashcard-progress .progress-fill { background: var(--color-primary); }
+.flashcard-card-actions .text-button,
+.flashcard-card-actions .history-delete { min-height: 40px; padding: 9px 12px; }
+.flashcard-library-bar select, .card-count-field select { min-height: 44px; border-color: var(--color-border); border-radius: var(--radius-control); }
+
+.guide-layout { grid-template-columns: minmax(0, 1fr) 260px; gap: 24px; }
+.guide-intro, .guide-section, .quick-review { padding: clamp(24px, 3vw, 36px); }
+.guide-ai-icon { background: var(--color-primary-soft); color: var(--color-primary); }
+.guide-section > p, .guide-list, .definition-grid { max-width: 74ch; }
+.guide-section > p, .guide-list li { color: #4f5d6f; font-size: 14px; line-height: 1.75; }
+.concept-box { border-left-color: var(--color-primary); background: #f7faf9; }
+.concept-box strong { color: var(--color-primary-hover); }
+.quick-review { background: var(--color-surface-warm); }
+
+.notes-layout { max-width: 1280px; gap: 20px; }
+.notes-sources { border-color: var(--color-border); box-shadow: var(--shadow-card); }
+.notes-status { color: var(--color-text-muted); }
+.notes-status .status-dot { background: var(--color-primary); }
+.chat-header { padding: 16px 20px; }
+.chat-ai-avatar, .message-avatar, .send-button { background: var(--color-primary); }
+.chat-conversation-controls select { min-height: 44px; }
+.chat-messages { padding: 22px; }
+.message-content { border-radius: 12px; background: #f1f3f5; }
+.message.user .message-content { background: var(--color-navy); }
+.suggestion { min-height: 44px; border-color: var(--color-border); color: #4f5d6f; }
+.suggestion:hover { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-hover); }
+.chat-input-area textarea { min-height: 44px; border-color: var(--color-border); }
+.chat-input-area textarea:focus { border-color: var(--color-primary); box-shadow: var(--focus-ring); }
+.answer-sources span, .answer-support-label { background: var(--color-primary-soft); color: var(--color-primary-hover); }
+.chat-disclaimer { color: #798496; line-height: 1.4; }
+
+@media (max-width: 750px) {
+    .flashcards-page, .notes-page { width: calc(100% - var(--sidebar-width)); }
+    .flashcard { height: 340px; min-height: 0; }
+    .flashcard-actions { display: grid; grid-template-columns: 1fr 1fr; }
+    .known-actions { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; order: -1; }
+    .flashcard-actions > .secondary-tool-button { width: 100%; }
+    .notes-layout { gap: 14px; }
+    .notes-sources { padding: 18px; }
+    .chat-messages { padding: 18px 14px; }
+    .message-content { max-width: calc(100vw - var(--sidebar-width) - 98px); }
+    .suggestion-row { margin-left: 0; }
+    .suggestion { flex: 1 1 140px; }
+    .chat-input-area { padding: 12px; }
 }
 
 
@@ -958,7 +1029,7 @@
 }
 
 /* Persisted course flashcards */
-.flashcards-page { box-sizing: border-box; width: calc(100% - 250px); }
+.flashcards-page { box-sizing: border-box; width: calc(100% - var(--sidebar-width)); }
 .flashcard-library-bar { display: flex; align-items: end; justify-content: space-between; gap: 20px; max-width: 850px; margin: 0 auto 22px; padding: 15px 18px; border: 1px solid #e3e7ed; border-radius: 12px; background: #fff; }
 .flashcard-library-bar label { display: grid; gap: 6px; color: #7b8495; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
 .flashcard-library-bar select, .card-count-field select { min-width: 220px; padding: 10px 34px 10px 12px; border: 1px solid #d8dee9; border-radius: 9px; background: #fff; color: #263246; font: inherit; }
@@ -981,7 +1052,7 @@ button.flashcard { appearance: none; padding: 0; border: 0; background: transpar
 .app-form textarea { min-height: 95px; resize: vertical; }
 
 @media (max-width: 750px) {
-    .flashcards-page { width: calc(100% - 70px); }
+    .flashcards-page { width: calc(100% - var(--sidebar-width)); }
     .flashcard-library-bar { align-items: stretch; flex-direction: column; }
     .flashcard-library-bar > div { text-align: left; }
     .flashcard-library-bar select { min-width: 0; width: 100%; }

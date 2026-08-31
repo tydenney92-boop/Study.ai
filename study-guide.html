@@ -133,25 +133,9 @@
 
     <!-- LOADING -->
 
-    <div
-        id="guide-loading"
-        style="
-            display:none;
-            padding:30px;
-            background:white;
-            border:1px solid #e5e9ef;
-            border-radius:14px;
-            text-align:center;
-            margin-bottom:22px;
-        "
-    >
+    <div id="guide-loading" class="guide-loading" hidden>
 
-        <div
-            style="
-                font-size:24px;
-                margin-bottom:10px;
-            "
-        >
+        <div class="guide-loading-icon" aria-hidden="true">
             ✦
         </div>
 
@@ -159,13 +143,7 @@
             Generating your study guide...
         </strong>
 
-        <p
-            style="
-                margin-top:6px;
-                color:#7b8495;
-                font-size:12px;
-            "
-        >
+        <p>
             Study Signal is analyzing your course material.
         </p>
 
@@ -428,30 +406,18 @@
                     STUDY RECOMMENDATION
                 </span>
 
-                <h3 style="
-                    margin-top:8px;
-                ">
+                <h3 class="guide-recommendation-title">
                     Test yourself next
                 </h3>
 
-                <p style="
-                    margin-top:7px;
-                    color:#7b8495;
-                    font-size:12px;
-                    line-height:1.5;
-                ">
+                <p class="guide-recommendation-copy">
                     When you are ready, test your recall with a practice quiz generated from the same course.
                 </p>
 
                 <a
                     href="index.html#courses"
                     id="guide-quiz-link"
-                    class="primary-button"
-                    style="
-                        display:block;
-                        text-align:center;
-                        margin-top:15px;
-                    "
+                    class="primary-button guide-quiz-action"
                 >
                     Practice Quiz
                 </a>

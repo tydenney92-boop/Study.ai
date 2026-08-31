@@ -319,6 +319,26 @@
     color: #7b8495;
 }
 
+/* Study Signal material detail treatment */
+.back-link:hover, .content-status { color: var(--color-primary); }
+.material-meta-card, .material-actions, .material-content-panel {
+    border-color: var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+}
+.material-status-panel { border-color: #cfe0dd; border-radius: var(--radius-control); background: var(--color-primary-soft); }
+.material-status-panel strong { color: var(--color-primary-hover); }
+.material-action-button { min-height: 42px; border-color: var(--color-border); border-radius: var(--radius-control); }
+.material-action-button:hover { border-color: var(--color-primary); background: #f8fbfa; }
+.material-action-button.primary { border-color: var(--color-primary); background: var(--color-primary); }
+.material-content { max-width: 100%; color: #3e4b5e; font-size: 13px; line-height: 1.85; }
+
+@media (max-width: 720px) {
+    .material-actions { align-items: flex-start; flex-direction: column; }
+    .material-action-buttons { width: 100%; }
+    .material-action-button { flex: 1 1 calc(50% - 10px); justify-content: center; }
+}
+
 
 .empty-content > div {
     font-size: 32px;

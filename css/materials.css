@@ -799,3 +799,39 @@
     position: relative;
     z-index: 2;
 }
+
+/* Study Signal materials treatment */
+.back-link:hover, .unit-number, .material-menu:hover { color: var(--color-primary); }
+.materials-header { margin-bottom: 28px; }
+.materials-controls { margin-bottom: 34px; }
+.search-box, .materials-controls select {
+    min-height: 44px;
+    border-color: var(--color-border);
+    border-radius: var(--radius-control);
+    background-color: var(--color-surface);
+}
+.search-box:focus-within, .materials-controls select:focus {
+    border-color: var(--color-primary);
+    box-shadow: var(--focus-ring);
+    outline: none;
+}
+.search-box input { min-height: 42px; color: var(--color-text); font-size: 12px; }
+.material-card { border-color: var(--color-border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+.material-card:hover { border-color: rgba(47, 127, 122, .48); box-shadow: 0 9px 24px rgba(23, 32, 51, .07); }
+.material-icon.notes, .upload-icon { background: var(--color-primary-soft); color: var(--color-primary); }
+.material-info .extraction-badge.ocr { background: var(--color-primary-soft); color: var(--color-primary-hover); }
+.upload-area { min-height: 88px; border-color: #c8d5d2; border-radius: var(--radius-card); background: #f8fbfa; }
+.upload-modal { border: 1px solid var(--color-border); box-shadow: var(--shadow-raised); }
+.file-drop-zone { min-height: 210px; border-color: #c8d5d2; background: #fafcfb; }
+.file-drop-zone:hover, .file-drop-zone:focus-visible, .file-drop-zone.dragging {
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+    box-shadow: var(--focus-ring);
+}
+.upload-select { min-height: 44px; border-color: var(--color-border); border-radius: var(--radius-control); }
+
+@media (max-width: 600px) {
+    .materials-controls { gap: 10px; }
+    .upload-area { padding: 18px; }
+    .file-drop-zone { min-height: 190px; padding: 22px 16px; }
+}

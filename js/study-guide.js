@@ -107,8 +107,8 @@ async function generateStudyGuide() {
     generateButton.textContent =
         "Generating...";
 
-    loadingBox.style.display =
-        "block";
+    loadingBox.hidden =
+        false;
 
 
     try {
@@ -159,8 +159,8 @@ async function generateStudyGuide() {
     generateButton.textContent =
         "Generate Study Guide";
 
-    loadingBox.style.display =
-        "none";
+    loadingBox.hidden =
+        true;
 
 }
 

@@ -644,15 +644,9 @@ function finishQuiz() {
 
     quizContainer.innerHTML = `
 
-        <div style="
-            text-align:center;
-            padding:30px 0;
-        ">
+        <div class="quiz-completion">
 
-            <div style="
-                font-size:45px;
-                margin-bottom:15px;
-            ">
+            <div class="quiz-completion-icon" aria-hidden="true">
                 🎉
             </div>
 
@@ -662,54 +656,31 @@ function finishQuiz() {
             </div>
 
 
-            <h2 style="
-                margin-top:8px;
-                font-size:28px;
-            ">
+            <h2>
                 Great work!
             </h2>
 
 
-            <p style="
-                margin-top:10px;
-                color:#7b8495;
-            ">
+            <p class="quiz-completion-copy">
                 You completed the
                 ${questions.length}-question
                 practice quiz.
             </p>
 
 
-            <div style="
-                margin:30px auto;
-                padding:25px;
-                max-width:300px;
-                background:#f8fafc;
-                border-radius:12px;
-            ">
+            <div class="quiz-score-card">
 
-                <div style="
-                    color:#7b8495;
-                    font-size:12px;
-                ">
+                <div class="quiz-score-label">
                     SCORE
                 </div>
 
 
-                <div style="
-                    margin-top:5px;
-                    font-size:38px;
-                    font-weight:700;
-                ">
+                <div class="quiz-score-value">
                     ${percentage}%
                 </div>
 
 
-                <div style="
-                    margin-top:5px;
-                    color:#7b8495;
-                    font-size:12px;
-                ">
+                <div class="quiz-score-detail">
                     ${score} of
                     ${questions.length}
                     correct
@@ -718,26 +689,12 @@ function finishQuiz() {
             </div>
 
 
-            <button
-                id="retake-quiz"
-                class="primary-button"
-                style="
-                    margin-right:8px;
-                "
-            >
-                Try Again
-            </button>
-
-
-            <a
-                href="${quizReturnUrl}"
-                class="primary-button"
-                style="
-                    display:inline-block;
-                "
-            >
-                ${savedQuizId ? "Back to Saved Study" : quizOrigin === "material" ? "Back to Material" : "Back to Course"}
-            </a>
+            <div class="quiz-completion-actions">
+                <button id="retake-quiz" class="secondary-tool-button">Try Again</button>
+                <a href="${quizReturnUrl}" class="primary-button">
+                    ${savedQuizId ? "Back to Saved Study" : quizOrigin === "material" ? "Back to Material" : "Back to Course"}
+                </a>
+            </div>
 
         </div>
 
@@ -745,7 +702,7 @@ function finishQuiz() {
 
     const saveStatus = document.createElement("p");
     saveStatus.id = "attempt-save-status";
-    saveStatus.style.cssText = "margin-top:14px;color:#7b8495;font-size:12px;";
+    saveStatus.className = "attempt-save-status";
     saveStatus.textContent = generatedQuizId
         ? "Saving this attempt…"
         : "This attempt could not be linked to a generated quiz.";
