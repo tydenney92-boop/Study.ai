@@ -1,8 +1,13 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const {
     COURSE_COLOR_PALETTE,
+    applyCourseColor,
     getCourseColor,
+} = require("../../js/course-colors.js");
+const {
     groupSidebarCourses,
     parseSidebarSemester,
     sidebarSemesterExpanded
@@ -30,6 +35,37 @@ test("course fallback colors are stable, deterministic, and drawn from the curat
     const noIdCourse = { courseCode: "CHEM 101", courseName: "Chemistry" };
     assert.equal(getCourseColor(noIdCourse), getCourseColor({ ...noIdCourse }));
     assert.ok(paletteValues.includes(getCourseColor(noIdCourse)));
+});
+
+test("course color application exposes the resolved value to CSS and rendered assertions", () => {
+    const properties = new Map();
+    const element = {
+        dataset: {},
+        style: { setProperty: (name, value) => properties.set(name, value) }
+    };
+    const course = { id: 42, courseCode: "BIO 242", courseName: "Genetics" };
+    const color = applyCourseColor(element, course);
+
+    assert.equal(color, getCourseColor(course));
+    assert.equal(properties.get("--course-accent"), color);
+    assert.equal(element.dataset.courseColor, color);
+});
+
+test("every authenticated page loads the explicit course-color helper before auth consumers", () => {
+    const frontendDirectory = path.resolve(__dirname, "../..");
+    const pages = [
+        "course.html", "flashcards.html", "history.html", "index.html", "material.html",
+        "materials.html", "notes.html", "progress.html", "quiz.html",
+        "recommendations.html", "study-guide.html"
+    ];
+
+    pages.forEach(filename => {
+        const html = fs.readFileSync(path.join(frontendDirectory, filename), "utf8");
+        const helperIndex = html.indexOf('src="js/course-colors.js"');
+        const authIndex = html.indexOf('src="js/auth.js"');
+        assert.ok(helperIndex >= 0, `${filename} must load course-colors.js`);
+        assert.ok(helperIndex < authIndex, `${filename} must load course-colors.js before auth.js`);
+    });
 });
 
 test("semester parsing is normalized and chronological rather than alphabetical", () => {

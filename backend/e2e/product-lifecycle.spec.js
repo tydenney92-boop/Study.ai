@@ -80,6 +80,84 @@ test("authentication, canonical navigation, session persistence, and recent cour
     await expect(page.getByRole("link", { name: "Progress" })).toHaveClass(/active/);
 });
 
+test("dashboard, sidebar, course header, and units share one visible deterministic course accent", async ({ page }) => {
+    const pageErrors = [];
+    const consoleErrors = [];
+    page.on("pageerror", error => pageErrors.push(error.message));
+    page.on("console", message => {
+        if (message.type() === "error") consoleErrors.push(message.text());
+    });
+
+    await signup(page, "CourseColors");
+    const courseId = await createCourse(page, {
+        name: "Color Systems",
+        code: "COLOR 220",
+        semester: "Fall 2026"
+    });
+    await createUnit(page, "Visible Unit");
+
+    await page.goto("/index.html#courses");
+    await expect.poll(() => page.evaluate(() =>
+        typeof window.StudySignalCourseColors?.applyCourseColor
+    )).toBe("function");
+    const card = page.locator("#course-list .course-card", { hasText: "COLOR 220" });
+    const sidebar = page.locator(".sidebar-course-link", { hasText: "COLOR 220" });
+    await expect(card).toBeVisible();
+    await expect(sidebar).toBeVisible();
+
+    const dashboardAccent = await card.evaluate(element => ({
+        resolved: element.dataset.courseColor,
+        visible: getComputedStyle(element.querySelector(".course-color")).backgroundColor
+    }));
+    const sidebarAccent = await sidebar.evaluate(element => ({
+        resolved: element.dataset.courseColor,
+        visible: getComputedStyle(element, "::before").backgroundColor
+    }));
+    expect(dashboardAccent.resolved).toMatch(/^#[0-9A-F]{6}$/);
+    expect(dashboardAccent.visible).not.toBe("rgba(0, 0, 0, 0)");
+    expect(sidebarAccent.resolved).toBe(dashboardAccent.resolved);
+    expect(sidebarAccent.visible).toBe(dashboardAccent.visible);
+
+    await page.reload();
+    await expect(card).toHaveAttribute("data-course-color", dashboardAccent.resolved);
+    await page.goto(`/course.html?courseId=${courseId}`);
+    await expect(page.locator("#course-units-list")).toContainText("Visible Unit");
+    const courseAccents = await page.evaluate(() => ({
+        helper: typeof window.StudySignalCourseColors?.applyCourseColor,
+        headerResolved: document.querySelector(".topbar").dataset.courseColor,
+        headerVisible: getComputedStyle(document.querySelector(".topbar")).borderLeftColor,
+        unitResolved: document.querySelector(".unit-management-card").dataset.courseColor,
+        unitVisible: getComputedStyle(document.querySelector(".unit-management-card .course-color")).backgroundColor
+    }));
+    expect(courseAccents.helper).toBe("function");
+    expect(courseAccents.headerResolved).toBe(dashboardAccent.resolved);
+    expect(courseAccents.unitResolved).toBe(dashboardAccent.resolved);
+    expect(courseAccents.headerVisible).toBe(dashboardAccent.visible);
+    expect(courseAccents.unitVisible).toBe(dashboardAccent.visible);
+    expect(pageErrors).toEqual([]);
+    expect(consoleErrors).toEqual([]);
+});
+
+test("course rendering uses a safe accent and does not crash when the color helper asset is unavailable", async ({ page }) => {
+    const pageErrors = [];
+    page.on("pageerror", error => pageErrors.push(error.message));
+    await signup(page, "ColorFallback");
+    await page.route("**/js/course-colors.js", route => route.abort());
+
+    const courseId = await createCourse(page, {
+        name: "Fallback Course",
+        code: "SAFE 101",
+        semester: "Spring 2027"
+    });
+    await createUnit(page, "Fallback Unit");
+
+    await expect(page.locator("#course-code-title")).toHaveText("SAFE 101");
+    await expect(page.locator("#course-units-list")).toContainText("Fallback Unit");
+    await expect(page.locator(".topbar.course-accent-context")).toHaveAttribute("data-course-color", "#2F7F7A");
+    expect(pageErrors).toEqual([]);
+    expect(pageErrors.some(message => message.includes("applyCourseColor"))).toBe(false);
+});
+
 test("semester sidebar groups courses, persists folders, and keeps one active destination", async ({ page }) => {
     await signup(page, "Semesters");
     const fallId = await createCourse(page, {

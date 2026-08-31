@@ -515,17 +515,17 @@ h1 {
     height: 55px;
 
     border-radius: 5px;
-    background: var(--course-accent, #2563eb);
+    background: var(--course-accent, #2F7F7A);
 }
 
 
 .course-color.blue {
-    background: #2563eb;
+    background: #3F6F8A;
 }
 
 
 .course-color.purple {
-    background: #7c3aed;
+    background: #70658A;
 }
 
 
@@ -1300,15 +1300,15 @@ select {
 .sidebar-semester-courses { display: grid; gap: 2px; padding: 2px 0 3px 12px; }
 .sidebar-semester-courses[hidden] { display: none; }
 .sidebar-course-link { position: relative; display: grid; min-width: 0; gap: 2px; padding: 7px 9px 7px 18px; border-radius: 8px; color: #697386; }
-.sidebar-course-link::before { position: absolute; top: 50%; left: 8px; width: 4px; height: 22px; border-radius: 999px; background: var(--course-accent, #2563eb); content: ""; transform: translateY(-50%); }
+.sidebar-course-link::before { position: absolute; top: 50%; left: 8px; width: 4px; height: 22px; border-radius: 999px; background: var(--course-accent, #2F7F7A); content: ""; transform: translateY(-50%); }
 .sidebar-course-link:hover { background: #f5f7fb; }
-.sidebar-course-link.active { background: #edf3ff; color: #2458cf; box-shadow: inset 3px 0 var(--course-accent, #4f6bed); }
+.sidebar-course-link.active { background: #edf3ff; color: #2458cf; box-shadow: inset 3px 0 var(--course-accent, #2F7F7A); }
 .sidebar-course-link strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .sidebar-course-link span, .sidebar-course-status { overflow: hidden; color: #98a2b3; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .sidebar-course-status { display: block; padding: 8px 10px; }
 .sidebar-all-courses { display: inline-block; margin: 9px 8px 0; color: #4f6bed; font-size: 10px; font-weight: 600; }
 
-.topbar.course-accent-context { padding-left: 16px; border-left: 4px solid var(--course-accent, #2563eb); }
+.topbar.course-accent-context { padding-left: 16px; border-left: 4px solid var(--course-accent, #2F7F7A); }
 
 .material-selection { margin: 24px 0; text-align: left; }
 .material-selection > h3 { margin-bottom: 10px; font-size: 14px; }
@@ -1434,7 +1434,7 @@ h1 { color: var(--color-ink); font-size: clamp(28px, 3vw, 34px); line-height: 1.
 .sidebar-semester-chevron, .sidebar-semester-count { color: #8391a5; }
 .sidebar-course-link { min-height: 46px; color: #c3ccd8; }
 .sidebar-course-link:hover { background: rgba(255, 255, 255, .07); }
-.sidebar-course-link.active { background: rgba(47, 127, 122, .3); color: white; box-shadow: inset 3px 0 var(--course-accent, #75aaa5); }
+.sidebar-course-link.active { background: rgba(47, 127, 122, .3); color: white; box-shadow: inset 3px 0 var(--course-accent, #2F7F7A); }
 .sidebar-course-link span { color: #8f9caf; }
 .sidebar-course-link.active span { color: #c7d6d5; }
 

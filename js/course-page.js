@@ -39,7 +39,7 @@ function renderUnit(unit, index) {
             <button type="button" class="text-button destructive unit-delete">Delete</button>
         </div>
     `;
-    StudyAI.courseColors.applyCourseColor(card, loadedCourse);
+    window.StudySignalCourseColors.applyCourseColor(card, loadedCourse);
     card.querySelector(".unit-main-link").href = courseUrl("materials.html", { unitId: unit.id });
     card.querySelector(".course-code").textContent = `UNIT ${String(unit.unitNumber).padStart(2, "0")}`;
     card.querySelector("h3").textContent = unit.name;
@@ -79,7 +79,7 @@ async function loadCourse() {
         document.querySelector("#course-semester").textContent = loadedCourse.semester || "No semester";
         const courseHeader = document.querySelector(".topbar");
         courseHeader.classList.add("course-accent-context");
-        StudyAI.courseColors.applyCourseColor(courseHeader, loadedCourse);
+        window.StudySignalCourseColors.applyCourseColor(courseHeader, loadedCourse);
         document.querySelector("#course-danger-zone").hidden = false;
         document.querySelector("#edit-course-button").hidden = false;
         document.querySelectorAll("[data-course-page]").forEach(link => {

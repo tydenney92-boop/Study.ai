@@ -24,7 +24,7 @@ function createCourseCard(course) {
         </div>
         <span class="course-arrow">→</span>
     `;
-    StudyAI.courseColors.applyCourseColor(link, course);
+    window.StudySignalCourseColors.applyCourseColor(link, course);
     link.querySelector(".course-code").textContent = course.courseCode;
     link.querySelector("h3").textContent = course.courseName;
     link.querySelector(".course-meta-line").textContent =

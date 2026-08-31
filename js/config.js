@@ -19,6 +19,22 @@ const STUDY_AI_API_BASE_URL =
         ? "http://localhost:3000"
         : window.location.origin);
 
+const SAFE_COURSE_ACCENT = "#2F7F7A";
+
+window.StudySignalCourseColors = window.StudySignalCourseColors || Object.freeze({
+    palette: Object.freeze([{ name: "teal", value: SAFE_COURSE_ACCENT }]),
+    getCourseColor: function() {
+        return SAFE_COURSE_ACCENT;
+    },
+    applyCourseColor: function(element) {
+        if (element) {
+            element.style.setProperty("--course-accent", SAFE_COURSE_ACCENT);
+            element.dataset.courseColor = SAFE_COURSE_ACCENT;
+        }
+        return SAFE_COURSE_ACCENT;
+    }
+});
+
 
 window.StudyAI = {
 
