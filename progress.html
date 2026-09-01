@@ -1,14 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Progress | Study Signal</title><link rel="stylesheet" href="css/style.css?v=20260830-theme-fix"><link rel="stylesheet" href="css/progress.css?v=20260830-theme-fix"></head>
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress | Study Signal</title>
+    <link rel="stylesheet" href="css/style.css?v=20260830-theme-fix">
+    <link rel="stylesheet" href="css/progress.css?v=20260901-progress">
+</head>
 <body>
 <aside class="sidebar"><div class="brand"><div class="brand-icon">S</div><span>Study Signal</span></div><nav class="sidebar-nav"><a href="index.html" class="nav-item"><span>⌂</span>Dashboard</a><a href="index.html#courses" class="nav-item"><span>▣</span>My Courses</a><a href="progress.html" class="nav-item"><span>◔</span>Progress</a></nav><div class="sidebar-bottom"><div class="profile-card"><div class="profile-avatar"></div><div><strong></strong><small>Student</small></div></div></div></aside>
-<main class="main-content">
-<header class="progress-header"><div><p class="eyebrow">QUIZ ACTIVITY</p><h1>Your Progress</h1><p class="subtitle">Real results from your saved practice quiz attempts.</p></div><label class="course-selector"><span>COURSE</span><select id="course-select"><option value="">All courses</option></select></label></header>
-<section class="progress-stat-grid"><div class="progress-stat-card"><span class="stat-label">AVERAGE SCORE</span><strong class="big-stat" id="average-score">—</strong></div><div class="progress-stat-card"><span class="stat-label">QUIZ ATTEMPTS</span><strong class="big-stat" id="total-attempts">—</strong></div><div class="progress-stat-card"><span class="stat-label">LATEST SCORE</span><strong class="big-stat" id="latest-score">—</strong></div></section>
-<section id="progress-empty" class="dashboard-panel progress-empty" hidden><h2>No quiz attempts yet</h2><p>Complete a practice quiz and your real scores will appear here.</p><a href="index.html#courses" class="primary-button" id="progress-empty-action">Choose a Course</a></section>
-<section id="progress-content" class="progress-layout" hidden><div class="dashboard-panel"><div class="panel-header"><div><h2>Score trend</h2><p>Oldest to newest among your recent attempts.</p></div></div><div id="score-trend" class="score-trend"></div></div><div class="dashboard-panel"><div class="panel-header"><div><h2>Course performance</h2><p>Attempts and average score by course.</p></div></div><div id="course-progress-list" class="progress-list"></div></div><div class="dashboard-panel progress-activity"><div class="panel-header"><div><h2>Recent quiz activity</h2><p>Your ten most recent saved attempts.</p></div></div><div id="recent-activity" class="progress-list"></div></div></section>
-<p class="form-error" id="progress-error"></p>
+<main class="main-content progress-page">
+    <header class="progress-header">
+        <div><a id="progress-back" class="back-link" href="index.html#courses" hidden>← All course progress</a><p class="eyebrow">STUDY ACTIVITY</p><h1 id="progress-title">Progress</h1><p class="subtitle" id="progress-subtitle">See how each course is going and choose what to work on next.</p></div>
+        <a id="progress-recommendations-link" class="primary-button" href="index.html#courses" hidden>What to Study</a>
+    </header>
+    <p class="form-error" id="progress-error"></p>
+    <section id="progress-loading" class="dashboard-panel friendly-empty">Loading your real study activity…</section>
+
+    <section id="progress-overview" hidden>
+        <div class="panel-header"><div><h2>Your courses</h2><p>Each summary uses saved quizzes, flashcard reviews, materials, and recent activity.</p></div></div>
+        <div id="progress-course-grid" class="progress-course-grid"></div>
+        <div id="progress-overview-empty" class="dashboard-panel progress-empty" hidden><h2>No courses yet</h2><p>Create a course and add material to begin tracking progress.</p><a class="primary-button" href="index.html#courses">Create a Course</a></div>
+    </section>
+
+    <section id="course-progress" hidden>
+        <div id="course-progress-summary" class="progress-summary-grid"></div>
+        <div id="progress-insights" class="progress-insights" hidden></div>
+        <section id="course-progress-empty" class="dashboard-panel progress-empty" hidden><h2>No study activity yet</h2><p>Your course is ready. Start with a practice quiz or flashcards to build an evidence-based picture.</p><div class="empty-actions"><a id="empty-quiz-action" class="primary-button">Take Practice Quiz</a><a id="empty-material-action" class="secondary-tool-button">Upload Materials</a></div></section>
+        <div id="course-progress-content" class="course-progress-layout" hidden>
+            <section class="dashboard-panel"><div class="panel-header"><div><h2>Quiz trend</h2><p>Recent saved attempts, oldest to newest.</p></div></div><div id="score-trend" class="score-trend"></div><div id="trend-empty" class="friendly-empty" hidden>Complete at least two quizzes to see a useful trend.</div></section>
+            <section class="dashboard-panel"><div class="panel-header"><div><h2>Flashcard mastery</h2><p>Only reflects cards you have actually reviewed.</p></div></div><div id="mastery-distribution" class="mastery-distribution"></div></section>
+            <section class="dashboard-panel progress-wide"><div class="panel-header"><div><h2>Areas to work on</h2><p>Materials with recorded quiz or flashcard weakness.</p></div></div><div id="weak-materials" class="progress-list"></div></section>
+            <section class="dashboard-panel progress-wide"><div class="panel-header progress-filter-header"><div><h2>Units and materials</h2><p>Expand a unit to inspect its attributable study evidence.</p></div><label>FILTER<select id="progress-unit-filter"><option value="all">All units</option></select></label></div><p id="progress-attribution-note" class="progress-note"></p><div id="unit-progress-list" class="unit-progress-list"></div></section>
+            <section class="dashboard-panel"><div class="panel-header"><div><h2>Recent quiz attempts</h2><p>Open a saved quiz to review or retake it.</p></div></div><div id="recent-quiz-attempts" class="progress-list"></div></section>
+            <section class="dashboard-panel"><div class="panel-header"><div><h2>Recent study activity</h2><p>Real saved activity across course tools.</p></div></div><div id="recent-study-activity" class="progress-list"></div></section>
+        </div>
+    </section>
 </main>
 <script src="js/config.js"></script><script src="js/course-colors.js?v=20260830-theme-fix"></script><script src="js/api.js"></script><script src="js/auth.js"></script><script src="js/course-context.js"></script><script src="js/progress.js"></script>
 </body></html>

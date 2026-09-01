@@ -172,6 +172,7 @@ document.querySelector("#edit-material-button").addEventListener("click", () => 
     });
     select.value = loadedMaterial.unitId === null ? "" : String(loadedMaterial.unitId);
     document.querySelector("#edit-material-name").value = loadedMaterial.displayName;
+    document.querySelector("#edit-material-role").value = loadedMaterial.materialRole || "general";
     document.querySelector("#original-file-name").textContent = loadedMaterial.originalFilename;
     editMaterialModal.classList.add("open");
 });
@@ -186,7 +187,8 @@ document.querySelector("#edit-material-form").addEventListener("submit", async e
             `/api/courses/${courseId}/materials/${materialId}`,
             {
                 displayName: document.querySelector("#edit-material-name").value,
-                unitId: document.querySelector("#edit-material-unit").value || null
+                unitId: document.querySelector("#edit-material-unit").value || null,
+                materialRole: document.querySelector("#edit-material-role").value
             }
         );
         closeEditMaterialModal();

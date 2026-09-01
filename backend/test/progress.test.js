@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const supertest = require("supertest");
-const { createTestApp, authenticatedRequest } = require("./helpers/test-app");
+const { createTestApp, authenticatedRequest, insertMaterial } = require("./helpers/test-app");
 
 function insertQuiz(database, userId, courseId) {
     return Number(database.prepare(`
@@ -66,4 +66,56 @@ test("progress remains isolated across users and owned courses", async t => {
     assert.equal(seeded.body.totalAttempts, 0);
     await authenticatedRequest(context.app)
         .get(`/api/courses/${course.body.id}/progress`).expect(404);
+});
+
+test("course progress reports unit, material, flashcard, trend, and honest coverage data", async t => {
+    const context = createTestApp(); t.after(context.cleanup);
+    const studiedId = insertMaterial(context.database, {
+        unitId: 1, originalFilename: "elasticity.txt",
+        storedFilename: "elasticity.txt",
+        extractedText: "Elasticity measures responsiveness."
+    });
+    const untouchedId = insertMaterial(context.database, {
+        unitId: 2, originalFilename: "unstudied.txt",
+        storedFilename: "unstudied.txt",
+        extractedText: "Comparative advantage uses opportunity costs."
+    });
+    const quizId = insertQuiz(context.database, 1, 1);
+    context.database.prepare("INSERT INTO quiz_materials (quiz_id, material_id) VALUES (?, ?)").run(quizId, studiedId);
+    insertAttempt(context.database, 1, quizId, 40, "2026-01-01 10:00:00");
+    insertAttempt(context.database, 1, quizId, 55, "2026-01-02 10:00:00");
+    insertAttempt(context.database, 1, quizId, 80, "2026-01-03 10:00:00");
+    const cardId = Number(context.database.prepare(`
+        INSERT INTO flashcards (
+            user_id, course_id, front, back, mastery_level,
+            correct_count, incorrect_count, last_reviewed_at
+        ) VALUES (1, 1, 'Elasticity?', 'Responsiveness', 1, 0, 2, '2026-01-04 10:00:00')
+    `).run().lastInsertRowid);
+    context.database.prepare("INSERT INTO flashcard_materials VALUES (?, ?)").run(cardId, studiedId);
+
+    const response = await authenticatedRequest(context.app).get("/api/courses/1/progress").expect(200);
+    assert.equal(response.body.summary.attemptCount, 3);
+    assert.equal(response.body.summary.latestScore, 80);
+    assert.equal(response.body.summary.trend.direction, "improving");
+    assert.equal(response.body.flashcards.lowMastery, 1);
+    const unit = response.body.units.find(item => item.id === 1);
+    assert.equal(unit.quizAverage, 58.3);
+    assert.equal(unit.lowMasteryFlashcards, 1);
+    assert.equal(unit.materials[0].coverage, "needs_review");
+    assert.equal(response.body.units.find(item => item.id === 2).materials[0].coverage, "not_studied");
+    assert.match(response.body.insights.join(" "), /improving/i);
+    assert.match(response.body.insights.join(" "), /not used unstudied\.txt/i);
+    assert.match(response.body.attributionNote, /source materials/);
+    assert.equal(response.body.units.flatMap(item => item.materials).some(item => item.id === untouchedId), true);
+
+    const overall = await authenticatedRequest(context.app).get("/api/progress").expect(200);
+    const card = overall.body.courses.find(item => item.courseId === 1);
+    assert.equal(card.attemptCount, 3);
+    assert.equal(card.averageScore, 58.3);
+    assert.equal(card.latestScore, 80);
+    assert.equal(card.trend.direction, "improving");
+    assert.equal(card.flashcardsReviewed, 1);
+    assert.equal(card.lowMasteryFlashcards, 1);
+    assert.equal(card.studiedMaterialCount, 1);
+    assert.equal(card.materialCount, 2);
 });

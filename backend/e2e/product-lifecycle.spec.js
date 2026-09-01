@@ -271,7 +271,7 @@ test("major rendered pages resolve the centralized ink and teal theme without le
         [`/flashcards.html?courseId=${courseId}`, "#generate-cards-button"],
         [`/notes.html?courseId=${courseId}`, "#send-message"],
         [`/recommendations.html?courseId=${courseId}`, "#recommendations-empty-primary"],
-        [`/progress.html?courseId=${courseId}`, "#progress-empty-action"]
+        [`/progress.html?courseId=${courseId}`, "#empty-quiz-action"]
     ];
     for (const [url, primarySelector, hasSidebar = true] of pages) {
         await page.goto(url);
@@ -491,7 +491,7 @@ test("quizzes persist attempts, retake without generation, update progress, and 
 
     await page.goto(`/progress.html?courseId=${courseId}`);
     await expect(page.locator("#total-attempts")).toHaveText("2");
-    await page.locator("#recent-activity .progress-row").first().click();
+    await page.locator("#recent-quiz-attempts .progress-row").first().click();
     await expect(page).toHaveURL(/quizId=/);
 
     await page.goto(`/quiz.html?courseId=${courseId}&materialId=${materialId}`);
@@ -508,7 +508,7 @@ test("quizzes persist attempts, retake without generation, update progress, and 
     await page.locator("#history-delete-confirm").click();
     await page.goto(`/progress.html?courseId=${courseId}`);
     await expect(page.locator("#total-attempts")).toHaveText("0");
-    await expect(page.locator("#progress-empty")).toBeVisible();
+    await expect(page.locator("#recent-quiz-attempts")).toContainText("No saved quiz attempts yet.");
 });
 
 test("flashcards and Ask My Notes use real course material and persisted state", async ({ page }) => {
@@ -621,10 +621,18 @@ test("image notes are OCR-extracted and participate in Ask My Notes", async ({ p
 test("course study recommendations use persisted evidence and preserve course links", async ({ page }) => {
     await signup(page, "Recommend");
     const courseId = await createCourse(page, { code: "SIGNAL 301" });
+    await createUnit(page, "Market Analysis");
     const materialId = await uploadTextMaterial(page, courseId, {
+        unitLabel: "Unit 1 — Market Analysis",
         filename: "midterm-review.txt",
         content: "The midterm review topics include elasticity and tax incidence. Elasticity measures responsiveness to price changes."
     });
+
+    await page.goto(`/quiz.html?courseId=${courseId}&materialId=${materialId}`);
+    await page.locator('.quiz-length-button[data-question-count="5"]').click();
+    await page.locator("#generate-quiz-button").click();
+    await completeFiveQuestionQuiz(page);
+
     const created = await api(page, "POST", `/api/courses/${courseId}/flashcards`, {
         front: "How does elasticity affect tax incidence?",
         back: "The less elastic side bears more of a tax."
@@ -641,6 +649,15 @@ test("course study recommendations use persisted evidence and preserve course li
     await page.getByRole("link", { name: /What to Study/ }).click();
     await expect(page).toHaveURL(new RegExp(`recommendations\\.html\\?courseId=${courseId}$`));
     await expect(page.locator("#recommendations-title")).toContainText("SIGNAL 301");
+    await page.locator("#toggle-exam-plan").click();
+    await page.locator("#exam-name").fill("Midterm 1");
+    await page.locator("#exam-date").fill("2026-10-15");
+    await page.locator("#exam-unit-options input").check();
+    await page.locator("#exam-material-options input").check();
+    await page.locator("#exam-source-options input").check();
+    await page.locator("#exam-source-options select").selectOption("exam_review");
+    await page.locator("#save-exam-plan").click();
+    await expect(page.locator("#exam-plan-summary")).toContainText("Midterm 1");
     await expect(page.locator("#focus-first-list")).toContainText("elasticity");
     await expect(page.locator("#focus-first-list")).toContainText("Still Learning");
     await expect(page.locator("#recommendation-exam-sources")).toHaveText("1");
@@ -651,6 +668,15 @@ test("course study recommendations use persisted evidence and preserve course li
     const response = await api(page, "GET", `/api/courses/${courseId}/recommendations`);
     expect(response.body.sections.focusFirst[0].action.href).toContain(`courseId=${courseId}`);
     expect(response.body.sections.focusFirst[0].evidence).not.toContain("invented");
+    await page.goto(`/progress.html?courseId=${courseId}`);
+    await expect(page.locator("#total-attempts")).toHaveText("1");
+    await expect(page.locator("#unit-progress-list")).toContainText("Market Analysis");
+    await expect(page.locator("#unit-progress-list")).toContainText("midterm-review.txt");
+    await page.goto(`/recommendations.html?courseId=${courseId}`);
+    const recommendedAction = page.locator("#focus-first-list .recommendation-actions a").first();
+    await expect(recommendedAction).toHaveAttribute("href", new RegExp(`courseId=${courseId}`));
+    await recommendedAction.click();
+    await expect(page).toHaveURL(new RegExp(`courseId=${courseId}`));
     expect(materialId).toBeGreaterThan(0);
 });
 

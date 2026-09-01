@@ -27,6 +27,9 @@ const askNotesConversationsMigration = require(
 const extractionMethodMigration = require(
     "../src/database/migrations/011-material-extraction-method"
 );
+const examPlanningMigration = require(
+    "../src/database/migrations/012-course-exam-planning"
+);
 
 const legacyMaterials = [
     {
@@ -115,11 +118,12 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
         createBackup: false
     });
 
-    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     assert.equal(tableExists(context.database, "storage_cleanup_jobs"), true);
     assert.equal(tableExists(context.database, "material_chunks"), true);
     assert.equal(tableExists(context.database, "material_chunk_embeddings"), true);
     assert.equal(tableExists(context.database, "ask_notes_conversations"), true);
+    assert.equal(tableExists(context.database, "course_exam_settings"), true);
     assert.equal(tableExists(context.database, "sessions"), true);
     assert.equal(
         context.database.prepare("SELECT COUNT(*) AS count FROM users").get().count,
@@ -225,6 +229,31 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
         context.database.prepare("SELECT COUNT(*) AS count FROM materials").get().count,
         3
     );
+});
+
+test("exam-planning migration backfills roles and cascades course settings", t => {
+    const context = temporaryDatabase(t);
+    context.database.exec(`
+        CREATE TABLE courses (id INTEGER PRIMARY KEY);
+        CREATE TABLE materials (
+            id INTEGER PRIMARY KEY,
+            course_id INTEGER NOT NULL,
+            original_filename TEXT NOT NULL
+        );
+        INSERT INTO courses VALUES (1);
+        INSERT INTO materials VALUES (1, 1, 'Syllabus.pdf');
+    `);
+    examPlanningMigration.up(context.database);
+    examPlanningMigration.up(context.database);
+    assert.equal(context.database.prepare("SELECT material_role FROM materials").get().material_role, "general");
+    context.database.prepare(`
+        INSERT INTO course_exam_settings (
+            course_id, exam_name, selected_unit_ids_json,
+            scoped_material_ids_json, source_material_ids_json
+        ) VALUES (1, 'Final', '[]', '[1]', '[1]')
+    `).run();
+    context.database.prepare("DELETE FROM courses WHERE id = 1").run();
+    assert.equal(context.database.prepare("SELECT COUNT(*) AS count FROM course_exam_settings").get().count, 0);
 });
 
 test("an unmappable legacy unit rolls back the entire migration", t => {

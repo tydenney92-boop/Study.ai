@@ -898,6 +898,28 @@ h1 {
     gap: 18px;
 }
 
+.exam-plan-panel { margin-bottom: 20px; }
+.exam-plan-form { display: grid; gap: 20px; padding-top: 18px; border-top: 1px solid var(--color-border); }
+.exam-plan-form[hidden] { display: none; }
+.exam-plan-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.exam-plan-form label { display: grid; gap: 7px; color: var(--color-text-muted); font-size: 12px; font-weight: 700; }
+.exam-plan-form input, .exam-plan-form select { min-height: 42px; padding: 9px 11px; border: 1px solid var(--color-border); border-radius: var(--radius-control); background: white; color: var(--color-text); }
+.exam-plan-form fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.exam-plan-form legend { margin-bottom: 9px; color: var(--color-ink); font-weight: 700; }
+.exam-plan-form legend span, .field-help { color: var(--color-text-muted); font-size: 11px; font-weight: 400; }
+.field-help { margin: -4px 0 10px; }
+.exam-option-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.exam-option { display: flex!important; align-items: center; gap: 9px!important; min-height: 42px; padding: 9px 11px; border: 1px solid var(--color-border); border-radius: 9px; color: var(--color-text)!important; font-weight: 600!important; }
+.exam-option input { min-height: auto; padding: 0; accent-color: var(--color-primary); }
+.exam-source-grid { display: grid; gap: 8px; }
+.exam-source-option { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 10px; align-items: center; }
+.exam-plan-summary { margin-top: 12px; color: var(--color-text-muted); font-size: 12px; }
+.recommendation-signals { display: flex; flex-wrap: wrap; gap: 7px; margin: 8px 0; }
+.recommendation-signals>span { padding: 4px 8px; border-radius: 999px; background: var(--color-surface-warm); color: #6f5737; font-size: 11px; font-weight: 700; }
+.recommendation-signals .exam-listed { background: #f5e9dc; color: #8b552d; }
+.exam-statement { flex-basis: 100%; margin: 2px 0; padding-left: 10px; border-left: 2px solid #c48652; color: var(--color-text-muted); font-size: 12px; }
+.recommendation-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
 .recommendation-section { border-top: 3px solid #dce5f5; }
 .recommendation-section.focus-first { border-top-color: #ef9a66; }
 .recommendation-section.keep-fresh { border-top-color: #7bc59b; }
@@ -939,6 +961,7 @@ h1 {
 @media (max-width: 700px) {
     .recommendations-summary { grid-template-columns: 1fr; }
     .recommendation-card-heading { flex-direction: column; gap: 8px; }
+    .exam-plan-fields, .exam-option-grid, .exam-source-option { grid-template-columns: 1fr; }
 }
 
 .unit-management-card { padding: 10px 12px; }

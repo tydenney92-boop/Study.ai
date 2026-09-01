@@ -65,6 +65,7 @@ function createRecommendationsRepository(database) {
                 SELECT materials.id,
                        COALESCE(materials.display_name, materials.original_filename) AS name,
                        materials.extracted_text AS extractedText,
+                       materials.material_role AS materialRole,
                        materials.unit_id AS unitId,
                        units.name AS unitName
                 FROM materials

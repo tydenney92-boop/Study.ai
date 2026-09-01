@@ -74,6 +74,10 @@ test("recommendations combine quiz weakness, flashcard weakness, and explicit ex
         mastery: 1,
         incorrect: 2
     });
+    await request(context.app).put("/api/courses/1/exam-plan").send({
+        examName: "Midterm 1", examDate: "2026-09-10", unitIds: [],
+        materialIds: [materialId], sourceMaterialIds: [materialId]
+    }).expect(200);
 
     const response = await request(context.app)
         .get("/api/courses/1/recommendations").expect(200);
@@ -83,6 +87,7 @@ test("recommendations combine quiz weakness, flashcard weakness, and explicit ex
         flashcards: 1,
         flashcardReviews: 2,
         examRelatedMaterials: 1,
+        explicitExamStatements: 1,
         savedStudyGuides: 0
     });
     const top = response.body.sections.focusFirst[0];
@@ -90,7 +95,7 @@ test("recommendations combine quiz weakness, flashcard weakness, and explicit ex
     assert.equal(top.confidence, "strong");
     assert.match(top.reason, /2 missed quiz answers/);
     assert.match(top.reason, /2 Still Learning reviews/);
-    assert.match(top.reason, /exam or review language/);
+    assert.match(top.reason, /explicitly listed/);
     assert.equal(top.action.href, `quiz.html?courseId=1&quizId=${quizId}`);
 });
 
@@ -135,16 +140,42 @@ test("exam relevance requires extracted content and never invents exam topics", 
         storedFilename: "week-8.txt",
         extractedText: "The study guide says the midterm review will cover market equilibrium."
     });
+    await request(context.app).put("/api/courses/1/exam-plan").send({
+        examName: "Midterm", examDate: "", unitIds: [], materialIds: [],
+        sourceMaterialIds: [explicitId]
+    }).expect(200);
     const response = await request(context.app)
         .get("/api/courses/1/recommendations").expect(200);
     assert.equal(response.body.evidenceSummary.examRelatedMaterials, 1);
     assert.equal(response.body.sections.reviewNext.length, 1);
-    assert.equal(response.body.sections.reviewNext[0].topic, "Review Week 8 notes.txt");
+    assert.match(response.body.sections.reviewNext[0].topic, /market equilibrium/i);
     assert.equal(
         response.body.sections.reviewNext[0].action.href,
         `material.html?courseId=1&materialId=${explicitId}`
     );
     assert.doesNotMatch(JSON.stringify(response.body), /FINAL EXAM SYLLABUS/);
+});
+
+test("selected exam sources without explicit scope remain selected but are never labeled likely tested", async t => {
+    const context = createTestApp();
+    t.after(context.cleanup);
+    const materialId = insertMaterial(context.database, {
+        originalFilename: "ordinary-notes.txt",
+        extractedText: "Elasticity measures how quantity responds to a change in price."
+    });
+    await request(context.app).put("/api/courses/1/exam-plan").send({
+        examName: "Midterm", examDate: "", unitIds: [], materialIds: [],
+        sourceMaterialIds: [materialId]
+    }).expect(200);
+
+    const response = await request(context.app)
+        .get("/api/courses/1/recommendations").expect(200);
+    assert.equal(response.body.evidenceSummary.examRelatedMaterials, 1);
+    assert.equal(response.body.evidenceSummary.explicitExamStatements, 0);
+    assert.equal(response.body.hasExamSpecificEvidence, false);
+    assert.deepEqual(response.body.sections, {
+        focusFirst: [], reviewNext: [], keepFresh: []
+    });
 });
 
 test("recommendations provide truthful new-course and no-activity states", async t => {
@@ -199,6 +230,10 @@ test("recommendations are isolated by course and authenticated owner", async t =
         correct: false,
         score: 0
     });
+    await other.put(`/api/courses/${course.body.id}/exam-plan`).send({
+        examName: "Final", examDate: "", unitIds: [], materialIds: [materialId],
+        sourceMaterialIds: [materialId]
+    }).expect(200);
 
     await request(context.app)
         .get(`/api/courses/${course.body.id}/recommendations`).expect(404);

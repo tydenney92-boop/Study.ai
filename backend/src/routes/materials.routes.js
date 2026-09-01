@@ -4,7 +4,8 @@ const {
     positiveInteger,
     requestObject,
     requireAtLeastOne,
-    stringField
+    stringField,
+    validationError
 } = require("../utils/validation");
 
 function materialChanges(body) {
@@ -18,8 +19,18 @@ function materialChanges(body) {
             ? undefined
             : body.unitId === null || body.unitId === ""
                 ? null
-                : positiveInteger(body.unitId, "unitId")
+                : positiveInteger(body.unitId, "unitId"),
+        materialRole: body.materialRole === undefined
+            ? undefined
+            : stringField(body, "materialRole", { maxLength: 30 })
     };
+    if (
+        changes.materialRole !== undefined &&
+        !["general", "syllabus", "exam_review", "study_guide"]
+            .includes(changes.materialRole)
+    ) {
+        throw validationError("materialRole is invalid.", { field: "materialRole" });
+    }
     return requireAtLeastOne(changes);
 }
 

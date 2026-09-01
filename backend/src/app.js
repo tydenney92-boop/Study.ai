@@ -18,6 +18,7 @@ const { createStorageCleanupRepository } = require("./repositories/storage-clean
 const { createMaterialChunksRepository } = require("./repositories/material-chunks.repository");
 const { createMaterialChunkEmbeddingsRepository } = require("./repositories/material-chunk-embeddings.repository");
 const { createRecommendationsRepository } = require("./repositories/recommendations.repository");
+const { createExamPlansRepository } = require("./repositories/exam-plans.repository");
 const { createAskNotesConversationsRepository } = require("./repositories/ask-notes-conversations.repository");
 const { createCourseService } = require("./services/course.service");
 const { createUnitService } = require("./services/unit.service");
@@ -34,6 +35,8 @@ const { createFlashcardGenerationService } = require("./services/flashcard-gener
 const { createAskNotesService } = require("./services/ask-notes.service");
 const { createAskNotesRetrievalContextService } = require("./services/ask-notes-retrieval-context.service");
 const { createRecommendationsService } = require("./services/recommendations.service");
+const { createExamPlanService } = require("./services/exam-plan.service");
+const { createExamScopeService } = require("./services/exam-scope.service");
 const { createAskNotesConversationService } = require("./services/ask-notes-conversation.service");
 const { createAskNotesFollowUpService } = require("./services/ask-notes-follow-up.service");
 const { createStorageCleanupService } = require("./services/storage-cleanup.service");
@@ -62,6 +65,7 @@ const { createProgressRouter, createCourseProgressRouter } = require("./routes/p
 const { createFlashcardsRouter } = require("./routes/flashcards.routes");
 const { createAskNotesRouter } = require("./routes/ask-notes.routes");
 const { createRecommendationsRouter } = require("./routes/recommendations.routes");
+const { createExamPlanRouter } = require("./routes/exam-plan.routes");
 const { createStorageCleanupRouter } = require("./routes/storage-cleanup.routes");
 const {
     createCourseMaterialsRouter,
@@ -166,6 +170,7 @@ const defaultRepositories = {
     materialChunks: createMaterialChunksRepository(db),
     materialChunkEmbeddings: createMaterialChunkEmbeddingsRepository(db),
     recommendations: createRecommendationsRepository(db),
+    examPlans: createExamPlansRepository(db),
     askNotesConversations: createAskNotesConversationsRepository(db)
 };
 const repositories = {
@@ -267,7 +272,8 @@ const generatedContentService = createGeneratedContentService({
 });
 const progressService = createProgressService({
     coursesService,
-    progressRepository: repositories.progress
+    progressRepository: repositories.progress,
+    examPlansRepository: repositories.examPlans
 });
 const flashcardService = createFlashcardService({
     coursesService,
@@ -306,7 +312,15 @@ const askNotesService = createAskNotesService({
 });
 const recommendationsService = createRecommendationsService({
     coursesService,
-    recommendationsRepository: repositories.recommendations
+    recommendationsRepository: repositories.recommendations,
+    examPlansRepository: repositories.examPlans,
+    examScopeService: createExamScopeService({ chunksRepository: repositories.materialChunks })
+});
+const examPlanService = createExamPlanService({
+    coursesService,
+    unitsRepository: repositories.units,
+    materialsRepository: repositories.materials,
+    examPlansRepository: repositories.examPlans
 });
 const authService = createAuthService({
     usersRepository: repositories.users,
@@ -426,6 +440,10 @@ app.use(
 app.use(
     "/api/courses/:courseId/recommendations",
     createRecommendationsRouter({ recommendationsService })
+);
+app.use(
+    "/api/courses/:courseId/exam-plan",
+    createExamPlanRouter({ examPlanService })
 );
 app.use(
     "/api/courses",

@@ -13,6 +13,7 @@ function createMaterialsRepository(database) {
         materials.extraction_error AS extractionError,
         materials.extraction_status AS extractionStatus,
         materials.extraction_method AS extractionMethod,
+        materials.material_role AS materialRole,
         materials.created_at AS createdAt,
         units.name AS unitName,
         units.unit_number AS unitNumber
@@ -141,7 +142,7 @@ function createMaterialsRepository(database) {
 
             database.prepare(`
                 UPDATE materials
-                SET display_name = ?, unit_id = ?
+                SET display_name = ?, unit_id = ?, material_role = ?
                 WHERE id = ?
                   AND course_id = ?
                   AND EXISTS (
@@ -152,6 +153,7 @@ function createMaterialsRepository(database) {
             `).run(
                 changes.displayName ?? current.displayName,
                 changes.unitId === undefined ? current.unitId : changes.unitId,
+                changes.materialRole ?? current.materialRole,
                 materialId,
                 courseId,
                 userId

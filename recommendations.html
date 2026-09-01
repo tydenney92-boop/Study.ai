@@ -26,10 +26,23 @@
             </div>
         </header>
 
+        <section class="dashboard-panel exam-plan-panel">
+            <div class="panel-header"><div><p class="eyebrow">EXAM PLAN</p><h2>Prepare for an exam</h2><p>Select the scope and the sources that explicitly describe what to study.</p></div><button type="button" class="secondary-tool-button" id="toggle-exam-plan" aria-expanded="false">Set Up Exam</button></div>
+            <form id="exam-plan-form" class="exam-plan-form" hidden>
+                <div class="exam-plan-fields"><label>Exam name<input id="exam-name" maxlength="100" placeholder="Midterm 1"></label><label>Exam date<input id="exam-date" type="date"></label></div>
+                <fieldset><legend>Units in scope <span>Optional</span></legend><div id="exam-unit-options" class="exam-option-grid"></div></fieldset>
+                <fieldset><legend>Materials in scope <span>Optional</span></legend><div id="exam-material-options" class="exam-option-grid"></div></fieldset>
+                <fieldset><legend>Exam-planning sources</legend><p class="field-help">Choose only sources that explicitly state exam coverage, such as a syllabus or professor review sheet.</p><div id="exam-source-options" class="exam-source-grid"></div></fieldset>
+                <p class="form-error" id="exam-plan-error"></p>
+                <div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-exam-plan">Close</button><button type="submit" class="primary-button" id="save-exam-plan">Save Exam Plan</button></div>
+            </form>
+            <div id="exam-plan-summary" class="exam-plan-summary"></div>
+        </section>
+
         <section id="recommendations-summary" class="recommendations-summary" aria-label="Recommendation evidence">
             <div><strong id="recommendation-attempts">—</strong><span>Quiz attempts</span></div>
             <div><strong id="recommendation-reviews">—</strong><span>Card reviews</span></div>
-            <div><strong id="recommendation-exam-sources">—</strong><span>Exam-related sources</span></div>
+            <div><strong id="recommendation-exam-sources">—</strong><span>Selected exam sources</span></div>
         </section>
 
         <div id="recommendations-note" class="recommendations-note" hidden></div>
@@ -59,6 +72,6 @@
             </article>
         </section>
     </main>
-    <script src="js/config.js"></script><script src="js/course-colors.js?v=20260830-theme-fix"></script><script src="js/api.js"></script><script src="js/auth.js"></script><script src="js/course-context.js"></script><script src="js/recommendations.js"></script>
+    <script src="js/config.js"></script><script src="js/course-colors.js?v=20260830-theme-fix"></script><script src="js/api.js"></script><script src="js/auth.js"></script><script src="js/course-context.js"></script><script src="js/ui.js"></script><script src="js/recommendations.js"></script>
 </body>
 </html>
