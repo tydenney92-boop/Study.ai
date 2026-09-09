@@ -1545,3 +1545,14 @@ h1 { color: var(--color-ink); font-size: clamp(28px, 3vw, 34px); line-height: 1.
 }
 
 [hidden] { display: none !important; }
+
+.compact-task-list { display: grid; gap: 8px; }
+.compact-task-row { display: grid; grid-template-columns: auto 5px 1fr auto; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid var(--color-border); border-radius: 9px; background: #fff; }
+.compact-task-row.completed { opacity: .55; }
+.compact-task-row input { width: 18px; height: 18px; accent-color: var(--color-primary); }
+.compact-task-accent { width: 5px; height: 28px; border-radius: 99px; background: var(--course-accent, var(--color-primary)); }
+.compact-task-row div { display: grid; gap: 3px; min-width: 0; }
+.compact-task-row strong { overflow: hidden; color: var(--color-ink); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.compact-task-row small { color: var(--color-text-muted); font-size: 10px; text-transform: capitalize; }
+.course-planner-panel { margin-top: 22px; }
+.course-planner-panel > .text-link { display: inline-block; margin-top: 14px; }

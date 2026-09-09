@@ -15,7 +15,7 @@ function latestDate(values) {
     return values.filter(Boolean).sort().at(-1) || null;
 }
 
-function createProgressService({ coursesService, progressRepository, examPlansRepository }) {
+function createProgressService({ coursesService, progressRepository, examPlansRepository, tasksRepository }) {
     function courseCard(snapshot, course) {
         const attempts = snapshot.attempts.filter(item => item.courseId === course.courseId);
         const cards = snapshot.flashcards.filter(item => item.courseId === course.courseId);
@@ -109,6 +109,9 @@ function createProgressService({ coursesService, progressRepository, examPlansRe
         course(courseId, userId) {
             coursesService.requireOwned(courseId, userId);
             const snapshot = progressRepository.snapshot(userId, courseId);
+            const plannerTasks = tasksRepository ? tasksRepository.listOwned(userId, { courseId }) : [];
+            const upcomingExam = plannerTasks.find(item => !item.completedAt &&
+                ["exam", "quiz"].includes(item.type) && new Date(item.dueAt) >= new Date());
             const base = compatibility(snapshot);
             const rawPlan = examPlansRepository.findOwned(courseId, userId);
             const unitIds = new Set(snapshot.units.map(unit => unit.id));
@@ -150,7 +153,8 @@ function createProgressService({ coursesService, progressRepository, examPlansRe
                 ...snapshot.attempts.map(item => ({ type: "quiz", label: `Quiz ${item.score}%`, createdAt: item.createdAt, href: `quiz.html?courseId=${courseId}&quizId=${item.quizId}` })),
                 ...cards.filter(card => card.lastReviewedAt).map(card => ({ type: "flashcard", label: `Reviewed: ${card.front}`, createdAt: card.lastReviewedAt, href: `flashcards.html?courseId=${courseId}` })),
                 ...snapshot.guides.map(item => ({ type: "study_guide", label: "Generated a study guide", createdAt: item.createdAt, href: `history.html?courseId=${courseId}` })),
-                ...snapshot.conversations.map(item => ({ type: "ask_notes", label: "Asked My Notes", createdAt: item.updatedAt, href: `notes.html?courseId=${courseId}` }))
+                ...snapshot.conversations.map(item => ({ type: "ask_notes", label: "Asked My Notes", createdAt: item.updatedAt, href: `notes.html?courseId=${courseId}` })),
+                ...plannerTasks.filter(item => item.completedAt).map(item => ({ type: "planner", label: `Completed: ${item.title}`, createdAt: item.completedAt, href: `planner.html?courseId=${courseId}` }))
             ].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 12);
             return {
                 ...base, course: snapshot.courses[0], summary: base.courses[0], insights,
@@ -171,6 +175,10 @@ function createProgressService({ coursesService, progressRepository, examPlansRe
                     strong: reviewed.filter(card => card.masteryLevel >= 4).length
                 },
                 recentStudyActivity: timeline,
+                planner: {
+                    completedCount: plannerTasks.filter(item => item.completedAt).length,
+                    upcomingExam: upcomingExam || null
+                },
                 attributionNote: "Quiz results are attributed to the quiz's source materials; individual questions are not linked to a single source."
             };
         }

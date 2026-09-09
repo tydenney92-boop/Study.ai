@@ -143,15 +143,25 @@ async function initializeRecommendations() {
     if (!recommendationCourseId) return;
     const back = document.querySelector("#recommendations-back"); back.href = `course.html?courseId=${recommendationCourseId}`;
     try {
-        const [course, recommendations, plan] = await Promise.all([
+        const [course, recommendations, plan, plannerTasks] = await Promise.all([
             StudyAI.api.get(`/api/courses/${recommendationCourseId}`),
             StudyAI.api.get(`/api/courses/${recommendationCourseId}/recommendations`),
-            StudyAI.api.get(`/api/courses/${recommendationCourseId}/exam-plan`)
+            StudyAI.api.get(`/api/courses/${recommendationCourseId}/exam-plan`),
+            StudyAI.api.get(`/api/courses/${recommendationCourseId}/tasks?status=incomplete`)
         ]);
         document.title = `What to Study · ${course.courseCode} | Study Signal`;
         document.querySelector("#recommendations-title").textContent = `What to Study for ${course.courseCode}`;
         back.textContent = `← Back to ${course.courseCode}`;
         renderExamPlan(plan); renderRecommendations(recommendations);
+        const examTask = plannerTasks.find(item => ["exam", "quiz"].includes(item.type) && new Date(item.dueAt) >= new Date());
+        if (examTask) {
+            const context = document.querySelector("#planner-exam-context");
+            const days = Math.max(0, Math.ceil((new Date(examTask.dueAt) - new Date()) / 86400000));
+            context.textContent = `${examTask.title} — ${days === 0 ? "today" : `${days} day${days === 1 ? "" : "s"} away`}. The planner supplies the deadline; this exam plan remains the source of study scope.`;
+            context.hidden = false;
+            if (!plan.examName) document.querySelector("#exam-name").value = examTask.title;
+            if (!plan.examDate) document.querySelector("#exam-date").value = examTask.dueAt.slice(0, 10);
+        }
         document.querySelector("#recommendations-loading").hidden = true;
     } catch (error) {
         document.querySelector("#recommendations-loading").hidden = true;

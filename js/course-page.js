@@ -69,10 +69,12 @@ function renderUnits() {
 async function loadCourse() {
     if (!courseId) return;
     try {
-        [loadedCourse, units, materials] = await Promise.all([
+        let courseTasks;
+        [loadedCourse, units, materials, courseTasks] = await Promise.all([
             StudyAI.api.get(`/api/courses/${courseId}`),
             StudyAI.api.get(`/api/courses/${courseId}/units`),
-            StudyAI.api.get(`/api/courses/${courseId}/materials`)
+            StudyAI.api.get(`/api/courses/${courseId}/materials`),
+            StudyAI.api.get(`/api/courses/${courseId}/tasks?status=incomplete`)
         ]);
         document.title = `${loadedCourse.courseCode} | Study Signal`;
         document.querySelector("#course-code-title").textContent = loadedCourse.courseCode;
@@ -93,6 +95,7 @@ async function loadCourse() {
         document.querySelector("#course-pdf-count").textContent = materials.filter(material => material.materialType === "pdf").length;
         document.querySelector("#course-other-count").textContent = materials.filter(material => material.materialType !== "pdf").length;
         renderUnits();
+        renderCourseTasks(courseTasks);
     } catch (error) {
         if (error.status === 404) {
             StudyAI.courseContext.goToMyCourses("That course is unavailable.");
@@ -101,6 +104,27 @@ async function loadCourse() {
         unitsList.innerHTML = '<div class="friendly-empty error-state"></div>';
         unitsList.querySelector("div").textContent = error.message;
     }
+}
+
+function renderCourseTasks(tasks) {
+    const list = document.querySelector("#course-upcoming-tasks"); list.innerHTML = "";
+    const selected = tasks.slice(0, 5);
+    if (!selected.length) list.innerHTML = '<div class="friendly-empty"><strong>No upcoming items</strong><span>Add an assignment or exam for this course.</span></div>';
+    selected.forEach(task => {
+        const row = document.createElement("div"); row.className = "compact-task-row";
+        row.innerHTML = '<span class="compact-task-accent"></span><div><strong></strong><small></small></div><a class="text-link"></a>';
+        window.StudySignalCourseColors.applyCourseColor(row, loadedCourse);
+        row.querySelector("strong").textContent = task.title;
+        const due = new Date(task.dueAt), days = Math.ceil((due - new Date()) / 86400000);
+        row.querySelector("small").textContent = `${task.type} · ${days < 0 ? `${Math.abs(days)} days overdue` : days === 0 ? "Due today" : `${days} days away`}`;
+        const action = row.querySelector("a");
+        action.href = ["exam", "quiz"].includes(task.type) ? courseUrl("recommendations.html") : `planner.html?courseId=${courseId}`;
+        action.textContent = ["exam", "quiz"].includes(task.type) ? "Open Study Recommendations" : "Open Planner";
+        list.appendChild(row);
+    });
+    document.querySelector("#add-course-assignment").href = `planner.html?courseId=${courseId}&new=1&type=assignment`;
+    document.querySelector("#add-course-exam").href = `planner.html?courseId=${courseId}&new=1&type=exam`;
+    document.querySelector("#all-course-tasks").href = `planner.html?courseId=${courseId}`;
 }
 
 function openUnitModal(unit = null) {

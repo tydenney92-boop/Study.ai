@@ -95,6 +95,14 @@ if (typeof window !== "undefined" && typeof document !== "undefined") (function(
 
     const sidebarBottom = document.querySelector(".sidebar-bottom");
     const sidebarNavigation = document.querySelector(".sidebar-nav");
+    if (sidebarNavigation && !sidebarNavigation.querySelector("[href='planner.html']")) {
+        const plannerLink = document.createElement("a");
+        plannerLink.href = "planner.html";
+        plannerLink.className = "nav-item";
+        plannerLink.innerHTML = "<span>▦</span>Planner";
+        const progressLink = sidebarNavigation.querySelector("[href='progress.html']");
+        sidebarNavigation.insertBefore(plannerLink, progressLink || null);
+    }
     const currentCourseId = new URLSearchParams(window.location.search).get("courseId");
     const semesterStateKey = "studySignal:sidebar-semesters";
 
@@ -121,6 +129,7 @@ if (typeof window !== "undefined" && typeof document !== "undefined") (function(
         const isDashboard = page === "index.html" && window.location.hash !== "#courses";
         const isCourses = page === "index.html" && window.location.hash === "#courses";
         const isProgress = page === "progress.html" && !currentCourseId;
+        const isPlanner = page === "planner.html";
         document.querySelectorAll(".sidebar .nav-item, .sidebar-course-link")
             .forEach(link => link.classList.remove("active"));
         sidebarNavigation.querySelectorAll(".nav-item").forEach(link => {
@@ -128,10 +137,11 @@ if (typeof window !== "undefined" && typeof document !== "undefined") (function(
             const active =
                 (href === "index.html" && isDashboard) ||
                 (href === "index.html#courses" && isCourses) ||
+                (href === "planner.html" && isPlanner) ||
                 (href === "progress.html" && isProgress);
             link.classList.toggle("active", active);
         });
-        if (!isDashboard && !isCourses && !isProgress && currentCourseId) {
+        if (!isDashboard && !isCourses && !isProgress && !isPlanner && currentCourseId) {
             document.querySelectorAll(".sidebar-course-link").forEach(link => {
                 const target = new URL(link.href, window.location.href);
                 link.classList.toggle(

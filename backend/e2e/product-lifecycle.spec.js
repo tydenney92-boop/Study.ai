@@ -80,6 +80,30 @@ test("authentication, canonical navigation, session persistence, and recent cour
     await expect(page.getByRole("link", { name: "Progress" })).toHaveClass(/active/);
 });
 
+test("planner flow creates assignment and exam, completes work, and opens exam recommendations", async ({ page }) => {
+    await signup(page, "PlannerFlow");
+    const courseId = await createCourse(page, { name: "Planner Economics", code: "ECON 240", semester: "Fall 2026" });
+    await page.goto(`/planner.html?courseId=${courseId}&new=1&type=assignment`);
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.locator("#task-title").fill("Comparative advantage worksheet");
+    await page.locator("#task-date").fill("2026-09-20");
+    await page.locator("#save-task").click();
+    await expect(page.getByText("Comparative advantage worksheet")).toBeVisible();
+
+    await page.getByRole("button", { name: "+ Add Exam" }).click();
+    await page.locator("#task-title").fill("ECON Midterm");
+    await page.locator("#task-date").fill("2026-09-25");
+    await page.locator("#save-task").click();
+    await expect(page.getByText("ECON Midterm")).toBeVisible();
+    await page.getByLabel("Mark task complete").first().check();
+
+    await page.goto(`/course.html?courseId=${courseId}`);
+    await expect(page.locator("#course-upcoming-tasks")).toContainText("ECON Midterm");
+    await page.getByRole("link", { name: "Open Study Recommendations" }).click();
+    await expect(page).toHaveURL(new RegExp(`recommendations\\.html\\?courseId=${courseId}`));
+    await expect(page.locator("#planner-exam-context")).toContainText("ECON Midterm");
+});
+
 test("course deletion is discoverable, confirmed, recoverable on failure, and removes navigation", async ({ page }) => {
     await signup(page, "CourseDelete");
     const courseId = await createCourse(page, {

@@ -47,7 +47,10 @@ function createAddCourseCard() {
 
 async function loadDashboard() {
     try {
-        const courses = await StudyAI.api.get("/api/courses/summary");
+        const [courses, plannerTasks] = await Promise.all([
+            StudyAI.api.get("/api/courses/summary"),
+            StudyAI.api.get("/api/tasks?status=incomplete")
+        ]);
         courseList.innerHTML = "";
 
         courses.forEach(course => {
@@ -60,10 +63,42 @@ async function loadDashboard() {
         document.querySelector("#material-count").textContent = courses.reduce((sum, course) => sum + course.materialCount, 0);
         document.querySelector("#ready-count").textContent =
             courses.reduce((sum, course) => sum + course.readyMaterialCount, 0);
+        renderDashboardUpcoming(plannerTasks);
     } catch (error) {
         courseList.innerHTML = `<div class="friendly-empty error-state"></div>`;
         courseList.querySelector("div").textContent = error.message;
     }
+}
+
+function renderDashboardUpcoming(items) {
+    const list = document.querySelector("#dashboard-upcoming");
+    list.innerHTML = "";
+    const now = new Date();
+    const nextExam = items.find(item => ["exam", "quiz"].includes(item.type) && new Date(item.dueAt) >= now);
+    const selected = [...items.filter(item => new Date(item.dueAt) < now), ...items]
+        .filter((item, index, all) => all.findIndex(other => other.id === item.id) === index)
+        .slice(0, 5);
+    if (nextExam && !selected.some(item => item.id === nextExam.id)) selected.push(nextExam);
+    if (!selected.length) {
+        list.innerHTML = '<div class="friendly-empty"><span>No upcoming deadlines.</span><a class="text-link" href="planner.html?new=1&type=assignment">Add Assignment →</a></div>';
+        return;
+    }
+    selected.forEach(task => {
+        const row = document.createElement("div"); row.className = "compact-task-row";
+        row.innerHTML = '<input type="checkbox" aria-label="Mark complete"><span class="compact-task-accent"></span><div><strong></strong><small></small></div><a class="text-link">Open</a>';
+        window.StudySignalCourseColors.applyCourseColor(row, task);
+        row.querySelector("strong").textContent = task.title;
+        const due = new Date(task.dueAt);
+        row.querySelector("small").textContent = `${task.courseCode} · ${task.type} · ${due.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+        row.querySelector("a").href = ["exam", "quiz"].includes(task.type)
+            ? `recommendations.html?courseId=${task.courseId}` : `planner.html?courseId=${task.courseId}`;
+        row.querySelector("input").addEventListener("change", async event => {
+            row.classList.add("completed");
+            try { await StudyAI.api.patch(`/api/courses/${task.courseId}/tasks/${task.id}`, { completed: true }); row.remove(); }
+            catch (error) { event.target.checked = false; row.classList.remove("completed"); StudyAI.ui.notify(error.message, { type: "error" }); }
+        });
+        list.appendChild(row);
+    });
 }
 
 function openCourseModal() {
