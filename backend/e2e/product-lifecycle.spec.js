@@ -95,13 +95,55 @@ test("planner flow creates assignment and exam, completes work, and opens exam r
     await page.locator("#task-date").fill("2026-09-25");
     await page.locator("#save-task").click();
     await expect(page.getByText("ECON Midterm")).toBeVisible();
-    await page.getByLabel("Mark task complete").first().check();
+    await page.getByRole("tab", { name: "Calendar" }).click();
+    await expect(page.locator(".calendar-heading h2")).toBeVisible();
+    await page.locator('[data-date="2026-09-20"]').click();
+    await expect(page.locator(".calendar-day-panel")).toContainText("Comparative advantage worksheet");
+    await page.locator(".calendar-day-panel").getByRole("button", { name: "+ Add Task" }).click();
+    await expect(page.locator("#task-date")).toHaveValue("2026-09-20");
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await page.locator(".calendar-day-panel").getByRole("button", { name: "Edit" }).click();
+    await page.locator("#task-title").fill("Edited worksheet");
+    await page.locator("#save-task").click();
+    await expect(page.locator(".calendar-day-panel")).toContainText("Edited worksheet");
+    await page.locator(".calendar-day-panel").getByRole("button", { name: "Complete" }).click();
+    await expect(page.locator(".calendar-day-panel .day-task")).toHaveClass(/completed/);
+
+    await page.locator('[data-date="2026-09-25"]').click();
+    await expect(page.locator(".calendar-day-panel")).toContainText("ECON Midterm");
+    await expect(page.locator(".calendar-day-panel").getByRole("link", { name: "What to Study" })).toBeVisible();
 
     await page.goto(`/course.html?courseId=${courseId}`);
     await expect(page.locator("#course-upcoming-tasks")).toContainText("ECON Midterm");
     await page.getByRole("link", { name: "Open Study Recommendations" }).click();
     await expect(page).toHaveURL(new RegExp(`recommendations\\.html\\?courseId=${courseId}`));
     await expect(page.locator("#planner-exam-context")).toContainText("ECON Midterm");
+});
+
+test("interactive calendar remains contained and usable across desktop and mobile widths", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    await signup(page, "CalendarResponsive");
+    const courseId = await createCourse(page, { name: "Responsive Planning", code: "PLAN 101", semester: "Fall 2026" });
+    await page.goto(`/planner.html?courseId=${courseId}&new=1&type=exam`);
+    await page.locator("#task-title").fill("Responsive midterm");
+    await page.locator("#task-date").fill("2026-09-17");
+    await page.locator("#save-task").click();
+    await page.getByRole("tab", { name: "Calendar" }).click();
+    for (const width of [1440, 1024, 390, 320]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expect(page.locator(".calendar-day").first()).toBeVisible();
+        const layout = await page.evaluate(() => ({
+            viewport: document.documentElement.clientWidth,
+            page: document.documentElement.scrollWidth,
+            escaped: [...document.querySelectorAll(".calendar-day")].some(cell => cell.scrollWidth > cell.clientWidth + 1),
+            panelVisible: Boolean(document.querySelector(".calendar-day-panel")?.offsetParent)
+        }));
+        expect(layout.page).toBeLessThanOrEqual(layout.viewport);
+        expect(layout.escaped).toBe(false);
+        expect(layout.panelVisible).toBe(true);
+    }
+    expect(errors).toEqual([]);
 });
 
 test("course deletion is discoverable, confirmed, recoverable on failure, and removes navigation", async ({ page }) => {
