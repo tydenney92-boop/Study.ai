@@ -62,6 +62,7 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
+textarea:focus-visible,
 [role="button"]:focus-visible {
     outline: 3px solid rgba(47, 127, 122, .28);
     outline-offset: 2px;
@@ -1142,6 +1143,8 @@ select {
     justify-content: center;
     padding: 20px;
     background: rgba(20, 27, 45, 0.48);
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .app-modal-overlay.open {
@@ -1150,7 +1153,11 @@ select {
 
 .app-modal {
     width: min(480px, 100%);
+    max-height: calc(100dvh - 40px);
     padding: 25px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     background: #fff;
     border-radius: 16px;
     box-shadow: 0 24px 70px rgba(25, 35, 55, 0.2);
@@ -1176,14 +1183,26 @@ select {
 }
 
 .icon-button {
+    display: inline-flex;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
     font-size: 25px;
     line-height: 1;
 }
 
 .text-button {
+    min-height: 40px;
+    padding: 8px;
     color: var(--color-primary);
     font-weight: 600;
 }
+
+body.modal-open { overflow: hidden; }
+.app-modal-actions { position: sticky; bottom: -25px; z-index: 2; padding: 12px 0 2px; background: #fff; }
+.panel-header > * { min-width: 0; }
 
 .app-form {
     display: grid;
@@ -1254,6 +1273,10 @@ select {
     .app-modal-actions {
         flex-wrap: wrap;
     }
+
+    .app-modal-overlay { padding: 12px; }
+    .app-modal { max-height: calc(100dvh - 24px); padding: 20px; }
+    .app-modal-actions { bottom: -20px; }
 }
 .logout-button {
     width: 100%; margin-top: 10px; padding: 10px 12px; border: 1px solid #dde2ee;
@@ -1545,8 +1568,10 @@ h1 { color: var(--color-ink); font-size: clamp(28px, 3vw, 34px); line-height: 1.
 }
 
 [hidden] { display: none !important; }
+.primary-button:disabled { background: #aab4bd; }
 .schedule-import-modal{max-width:760px}.schedule-candidates{display:grid;gap:10px;max-height:52vh;margin:14px 0;overflow-y:auto}.schedule-candidate{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:12px;border:1px solid var(--color-border);border-radius:10px;background:#fff}.schedule-candidate.ambiguous{border-color:#e6cda9;background:#fffaf2}.schedule-candidate.already_imported{opacity:.62}.candidate-check input{width:19px;height:19px;accent-color:var(--color-primary)}.candidate-fields{display:grid;grid-template-columns:minmax(140px,2fr) minmax(100px,1fr) minmax(180px,1.3fr);gap:8px}.candidate-fields input,.candidate-fields select{min-height:40px;border:1px solid var(--color-border);border-radius:7px;padding:7px}.candidate-fields>div{display:flex;gap:6px}.candidate-fields small,.candidate-fields blockquote{grid-column:1/-1}.candidate-fields small{color:var(--color-text-muted)}.candidate-fields blockquote{margin:0;padding:7px 9px;border-left:3px solid #b9cbc8;background:#f7f9f8;color:var(--color-text-muted);font-size:11px}.schedule-default-note{color:var(--color-text-muted);font-size:11px}@media(max-width:650px){.candidate-fields{grid-template-columns:1fr}.candidate-fields>div{grid-column:1}.candidate-fields small,.candidate-fields blockquote{grid-column:1}}
-.course-task-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.course-task-actions[hidden]{display:none}.course-task-actions .primary-button,.course-task-actions .secondary-tool-button{white-space:nowrap}@media(max-width:650px){.course-planner-panel .panel-header{align-items:stretch}.course-task-actions{justify-content:flex-start}.course-task-actions .primary-button,.course-task-actions .secondary-tool-button{flex:1 1 auto;text-align:center}}
+.course-task-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.course-task-actions[hidden]{display:none}.course-task-actions .primary-button,.course-task-actions .secondary-tool-button{white-space:nowrap}@media(max-width:650px){.course-planner-panel .panel-header{align-items:stretch;flex-direction:column}.course-task-actions{width:100%;justify-content:flex-start}.course-task-actions .primary-button,.course-task-actions .secondary-tool-button{flex:1 1 100%;max-width:100%;white-space:normal;text-align:center}}
+.schedule-confidence-group{display:grid;gap:10px}.schedule-confidence-group h3{margin:8px 0 0;font-size:14px;color:var(--color-ink)}
 
 .compact-task-list { display: grid; gap: 8px; }
 .compact-task-row { display: grid; grid-template-columns: auto 5px 1fr auto; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid var(--color-border); border-radius: 9px; background: #fff; }

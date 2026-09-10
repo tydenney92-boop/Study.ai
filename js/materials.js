@@ -276,12 +276,6 @@ fileInput.addEventListener("change", () => {
 });
 
 const fileDropZone = document.querySelector("#file-drop-zone");
-fileDropZone.addEventListener("keydown", event => {
-    if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        fileInput.click();
-    }
-});
 ["dragenter", "dragover"].forEach(eventName => {
     fileDropZone.addEventListener(eventName, event => {
         event.preventDefault();

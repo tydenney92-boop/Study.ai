@@ -46,6 +46,9 @@
             ? "active"
             : "open";
         const isOpen = () => overlay.classList.contains(openClass);
+        const updatePageScroll = () => document.body.classList.toggle("modal-open",
+            [...document.querySelectorAll(".app-modal-overlay, .upload-modal-overlay")]
+                .some(candidate => candidate.classList.contains("open") || candidate.classList.contains("active")));
         let wasOpen = isOpen();
 
         function close() {
@@ -72,7 +75,7 @@
             }
             if (event.key !== "Tab") return;
             const focusable = [...dialog.querySelectorAll(FOCUSABLE)]
-                .filter(element => !element.hidden);
+                .filter(element => !element.hidden && element.getClientRects().length > 0);
             if (!focusable.length) {
                 event.preventDefault();
                 dialog.focus();
@@ -100,8 +103,10 @@
                 overlay.setAttribute("aria-hidden", "true");
                 if (wasOpen) opener?.focus?.();
             }
+            updatePageScroll();
             wasOpen = isOpen();
         }).observe(overlay, { attributes: true, attributeFilter: ["class"] });
+        updatePageScroll();
     }
 
     document.querySelectorAll(".app-modal-overlay, .upload-modal-overlay")

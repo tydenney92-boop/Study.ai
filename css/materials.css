@@ -538,6 +538,8 @@
     z-index: 1000;
 
     padding: 20px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 
 }
 
@@ -554,12 +556,16 @@
     width: 100%;
 
     max-width: 520px;
+    max-height: calc(100dvh - 40px);
 
     background: white;
 
     border-radius: 16px;
 
     padding: 28px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 
     box-shadow:
         0 20px 60px rgba(
@@ -603,6 +609,9 @@
     color: #7b8495;
 
     cursor: pointer;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
 
 }
 
@@ -627,7 +636,8 @@
 }
 
 
-.upload-form-group label {
+.upload-form-group label,
+.upload-form-label {
 
     display: block;
 
@@ -731,6 +741,11 @@
     gap: 10px;
 
     margin-top: 28px;
+    position: sticky;
+    bottom: -28px;
+    z-index: 2;
+    padding: 12px 0 4px;
+    background: #fff;
 
 }
 
@@ -834,4 +849,7 @@
     .materials-controls { gap: 10px; }
     .upload-area { padding: 18px; }
     .file-drop-zone { min-height: 190px; padding: 22px 16px; }
+    .upload-modal-overlay { padding: 12px; }
+    .upload-modal { max-height: calc(100dvh - 24px); padding: 20px; }
+    .upload-modal-actions { bottom: -20px; }
 }
