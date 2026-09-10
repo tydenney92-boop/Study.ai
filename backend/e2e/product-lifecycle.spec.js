@@ -169,6 +169,11 @@ test("fake Canvas connects, maps, syncs, and updates without duplicates", async 
 });
 
 test("syllabus schedule import reviews, edits, excludes, confirms, and opens exam study recommendations", async ({ page }) => {
+    const browserErrors = [];
+    page.on("pageerror", error => browserErrors.push(error.message));
+    page.on("console", message => {
+        if (message.type() === "error") browserErrors.push(message.text());
+    });
     await signup(page, "ScheduleImport");
     const courseId = await createCourse(page, { name: "Schedule Economics", code: "ECON 389", semester: "Fall 2026" });
     const materialId = await uploadTextMaterial(page, courseId, {
@@ -177,10 +182,17 @@ test("syllabus schedule import reviews, edits, excludes, confirms, and opens exa
     });
     await api(page, "PATCH", `/api/courses/${courseId}/materials/${materialId}`, { materialRole: "syllabus" });
     await page.goto(`/course.html?courseId=${courseId}`);
-    await page.getByRole("button", { name: "Import from Syllabus" }).click();
+    const importButton = page.getByRole("button", { name: "Import from Syllabus" });
+    await expect(importButton).toBeVisible();
+    await expect(page.locator("#course-task-actions")).toBeVisible();
+    await importButton.click();
+    await expect(page.locator("#upload-schedule-material")).toHaveAttribute("href", `materials.html?courseId=${courseId}&upload=1`);
     await page.locator("#schedule-material").selectOption(String(materialId));
     await page.getByRole("button", { name: "Find Deadlines" }).click();
     await expect(page.locator(".schedule-candidate")).toHaveCount(4);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator("#schedule-import-modal .app-modal")).toBeVisible();
+    await expect(page.locator(".schedule-candidate").first()).toBeVisible();
     const homework = page.locator(".schedule-candidate", { hasText: "Homework 1" });
     await homework.locator(".candidate-date").fill("2026-09-13");
     const quiz = page.locator(".schedule-candidate", { hasText: "Quiz 1" });
@@ -196,6 +208,7 @@ test("syllabus schedule import reviews, edits, excludes, confirms, and opens exa
     await page.locator('[data-date="2026-10-10"]').click();
     await page.locator(".calendar-day-panel").getByRole("link", { name: "What to Study" }).click();
     await expect(page).toHaveURL(new RegExp(`recommendations\\.html\\?courseId=${courseId}`));
+    expect(browserErrors).toEqual([]);
 });
 
 test("course deletion is discoverable, confirmed, recoverable on failure, and removes navigation", async ({ page }) => {

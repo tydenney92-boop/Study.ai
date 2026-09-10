@@ -84,6 +84,7 @@ async function loadCourse() {
         courseHeader.classList.add("course-accent-context");
         window.StudySignalCourseColors.applyCourseColor(courseHeader, loadedCourse);
         document.querySelector("#course-management-actions").hidden = false;
+        document.querySelector("#course-task-actions").hidden = false;
         document.querySelector("#delete-course-title").textContent = `Delete ${loadedCourse.courseCode}?`;
         document.querySelector("#delete-course-description").textContent =
             `This will permanently remove ${loadedCourse.courseName} and its associated units, materials, saved study content, flashcards, progress, conversations, and uploaded files. This action cannot be undone.`;
