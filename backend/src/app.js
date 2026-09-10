@@ -40,6 +40,7 @@ const { createAskNotesRetrievalContextService } = require("./services/ask-notes-
 const { createRecommendationsService } = require("./services/recommendations.service");
 const { createExamPlanService } = require("./services/exam-plan.service");
 const { createTaskService } = require("./services/task.service");
+const { createDailyPlanService } = require("./services/daily-plan.service");
 const { createLmsService } = require("./services/lms.service");
 const { createScheduleImportService } = require("./services/schedule-import.service");
 const { createCredentialVault } = require("./services/credential-vault");
@@ -75,6 +76,7 @@ const { createAskNotesRouter } = require("./routes/ask-notes.routes");
 const { createRecommendationsRouter } = require("./routes/recommendations.routes");
 const { createExamPlanRouter } = require("./routes/exam-plan.routes");
 const { createTasksRouter, createCourseTasksRouter } = require("./routes/tasks.routes");
+const { createDailyPlanRouter } = require("./routes/daily-plan.routes");
 const { createLmsRouter } = require("./routes/lms.routes");
 const { createScheduleImportRouter } = require("./routes/schedule-import.routes");
 const { createStorageCleanupRouter } = require("./routes/storage-cleanup.routes");
@@ -331,6 +333,13 @@ const recommendationsService = createRecommendationsService({
     examPlansRepository: repositories.examPlans,
     examScopeService: createExamScopeService({ chunksRepository: repositories.materialChunks })
 });
+const dailyPlanService = createDailyPlanService({
+    coursesService,
+    tasksRepository: repositories.tasks,
+    progressRepository: repositories.progress,
+    recommendationsService,
+    clock: options.clock
+});
 const examPlanService = createExamPlanService({
     coursesService,
     unitsRepository: repositories.units,
@@ -483,6 +492,7 @@ app.use(
     createCourseTasksRouter({ taskService })
 );
 app.use("/api/tasks", createTasksRouter({ taskService }));
+app.use("/api/daily-plan", createDailyPlanRouter({ dailyPlanService }));
 app.use("/api/lms", createLmsRouter({ service: lmsService, config, fetchImpl: options.lmsFetch }));
 app.use("/api/courses/:courseId/schedule-import", createScheduleImportRouter({ service: scheduleImportService }));
 app.use(

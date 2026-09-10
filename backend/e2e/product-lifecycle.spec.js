@@ -925,6 +925,132 @@ test("course study recommendations use persisted evidence and preserve course li
     expect(materialId).toBeGreaterThan(0);
 });
 
+test("Today builds a time-bounded plan, opens the first activity, and refreshes after study", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    page.on("console", message => {
+        if (message.type() === "error") errors.push(message.text());
+    });
+    await signup(page, "TodayPlan");
+    const priorityCourseId = await createCourse(page, {
+        name: "Applied Economics",
+        code: "ECON 415"
+    });
+    const materialId = await uploadTextMaterial(page, priorityCourseId, {
+        filename: "midterm-topics.txt",
+        content: "Midterm topics include elasticity, tax incidence, and market equilibrium."
+    });
+    await page.goto(`/quiz.html?courseId=${priorityCourseId}&materialId=${materialId}`);
+    await page.locator('.quiz-length-button[data-question-count="5"]').click();
+    await page.locator("#generate-quiz-button").click();
+    for (let index = 0; index < 5; index++) {
+        await page.locator(".answer-option").nth(1).click();
+        await page.locator("#submit-answer").click();
+        await expect(page.locator("#quiz-result")).toHaveClass(/show/);
+        await page.locator("#submit-answer").click();
+    }
+    await expect(page.locator("#attempt-save-status")).toContainText("Attempt saved");
+
+    const tomorrow = new Date(Date.now() + 86_400_000);
+    const tomorrowDate = [
+        tomorrow.getFullYear(),
+        String(tomorrow.getMonth() + 1).padStart(2, "0"),
+        String(tomorrow.getDate()).padStart(2, "0")
+    ].join("-");
+    const examPlan = await api(page, "PUT", `/api/courses/${priorityCourseId}/exam-plan`, {
+        examName: "Economics Midterm",
+        examDate: tomorrowDate,
+        unitIds: [],
+        materialIds: [materialId],
+        sourceMaterialIds: [materialId]
+    });
+    expect(examPlan.status).toBe(200);
+
+    const secondCourseId = await createCourse(page, {
+        name: "Strategy Lab",
+        code: "STRAT 401"
+    });
+    const dueSoon = new Date(Date.now() + 2 * 86_400_000).toISOString();
+    const task = await api(page, "POST", `/api/courses/${secondCourseId}/tasks`, {
+        title: "Case analysis",
+        type: "assignment",
+        dueAt: dueSoon,
+        estimatedMinutes: 20,
+        priority: "high"
+    });
+    expect(task.status).toBe(201);
+    const card = await api(page, "POST", `/api/courses/${secondCourseId}/flashcards`, {
+        front: "What creates a defensible advantage?",
+        back: "A difficult-to-copy system of reinforcing choices."
+    });
+    expect(card.status).toBe(201);
+    const review = await api(
+        page,
+        "POST",
+        `/api/courses/${secondCourseId}/flashcards/${card.body.id}/reviews`,
+        { outcome: "still_learning" }
+    );
+    expect(review.status).toBe(201);
+
+    await page.goto("/today.html");
+    await expect(page.getByRole("heading", { name: "What should I do next?" })).toBeVisible();
+    await page.getByRole("button", { name: "45" }).click();
+    await expect(page.locator("#today-plan-summary")).toContainText("45 minutes");
+    const activities = page.locator(".today-plan-card");
+    await expect(activities).toHaveCount(3);
+    const allocated = await activities.locator(".today-plan-minutes").allTextContents();
+    expect(allocated.reduce((sum, value) => sum + Number(value.match(/\d+/)[0]), 0)).toBeLessThanOrEqual(45);
+    await expect(activities.first()).toContainText("ECON 415");
+    await expect(activities.first()).toContainText(/quiz miss|Midterm|exam-planning source/i);
+    await expect(page.locator("#today-upcoming")).toContainText("Case analysis");
+    await expect(page.locator("#today-exams")).toContainText("Economics Midterm");
+    await expect(page.getByRole("link", { name: "Today" })).toHaveClass(/active/);
+
+    for (const [width, height] of [[1440, 900], [1024, 768], [390, 844], [320, 700]]) {
+        await page.setViewportSize({ width, height });
+        const layout = await page.locator(".today-page").evaluate(element => ({
+            documentWidth: document.documentElement.scrollWidth,
+            viewportWidth: window.innerWidth,
+            planWidth: element.getBoundingClientRect().width,
+            minimumActionHeight: Math.min(...[...document.querySelectorAll(".today-plan-actions a, .today-plan-actions button")]
+                .map(action => action.getBoundingClientRect().height))
+        }));
+        expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
+        expect(layout.planWidth).toBeGreaterThan(0);
+        expect(layout.minimumActionHeight).toBeGreaterThanOrEqual(40);
+        await expect(page.locator("#start-study-session")).toBeVisible();
+    }
+
+    await page.locator("#start-study-session").click();
+    await expect(page).toHaveURL(new RegExp(`quiz\\.html\\?courseId=${priorityCourseId}.*quizId=`));
+    await completeFiveQuestionQuiz(page);
+    await page.goto("/today.html");
+    await page.locator("#refresh-plan").click();
+    await expect(page.locator("#today-plan-summary")).toContainText("45 minutes");
+    await expect(page.locator(".today-plan-card").first()).toBeVisible();
+    expect(errors).toEqual([]);
+});
+
+test("Today Done completes a linked Planner assignment", async ({ page }) => {
+    await signup(page, "TodayDone");
+    const courseId = await createCourse(page, { name: "Writing Seminar", code: "WRIT 210" });
+    const task = await api(page, "POST", `/api/courses/${courseId}/tasks`, {
+        title: "Draft introduction",
+        type: "assignment",
+        dueAt: new Date(Date.now() + 86_400_000).toISOString(),
+        estimatedMinutes: 20
+    });
+    expect(task.status).toBe(201);
+    await page.goto("/today.html");
+    const activity = page.locator(".today-plan-card", { hasText: "Draft introduction" });
+    await expect(activity).toBeVisible();
+    await activity.getByRole("button", { name: "Done" }).click();
+    await expect(page.locator("#today-upcoming")).not.toContainText("Draft introduction");
+    const saved = (await api(page, "GET", `/api/courses/${courseId}/tasks`)).body
+        .find(item => item.id === task.body.id);
+    expect(saved.completed).toBe(true);
+});
+
 test("two browser contexts remain isolated across data and destructive APIs", async ({ browser }) => {
     const contextA = await browser.newContext();
     const contextB = await browser.newContext();

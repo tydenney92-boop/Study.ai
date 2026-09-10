@@ -83,7 +83,21 @@ function publicItem(candidate, courseId) {
         },
         actions,
         action: actions[0],
-        materialIds: candidate.materialIds
+        materialIds: candidate.materialIds,
+        signals: {
+            quizMisses: candidate.quizMisses,
+            quizCorrect: candidate.quizCorrect,
+            quizAttempts: candidate.quizAttempts,
+            flashcardIncorrect: candidate.flashcardIncorrect,
+            flashcardReviews: candidate.flashcardReviews,
+            bestMastery: candidate.bestMastery,
+            hasFlashcard: candidate.hasFlashcard,
+            explicitExam: candidate.explicitExam,
+            examScoped: candidate.examScoped,
+            lastAttemptAt: candidate.lastAttemptAt,
+            lastReviewedAt: candidate.lastReviewedAt,
+            reviewGap: candidate.evidence.some(item => item.kind === "review_gap")
+        }
     };
 }
 
@@ -93,8 +107,12 @@ function blank(label, materialIds = []) {
         quizAttempts: 0, flashcardIncorrect: 0, flashcardReviews: 0,
         hasFlashcard: false, bestMastery: 5, quizId: null,
         materialIds: [...materialIds], evidence: [], examStatements: [],
-        explicitExam: false, examScoped: false
+        explicitExam: false, examScoped: false, lastAttemptAt: null, lastReviewedAt: null
     };
+}
+
+function latest(left, right) {
+    return [left, right].filter(Boolean).sort().at(-1) || null;
 }
 
 function createRecommendationsService({
@@ -135,6 +153,8 @@ function createRecommendationsService({
                 existing.quizId ||= candidate.quizId;
                 existing.explicitExam ||= candidate.explicitExam;
                 existing.examScoped ||= candidate.examScoped;
+                existing.lastAttemptAt = latest(existing.lastAttemptAt, candidate.lastAttemptAt);
+                existing.lastReviewedAt = latest(existing.lastReviewedAt, candidate.lastReviewedAt);
                 existing.materialIds = [...new Set([...existing.materialIds, ...candidate.materialIds])];
                 existing.evidence.push(...candidate.evidence);
                 existing.examStatements.push(...candidate.examStatements);
@@ -154,6 +174,7 @@ function createRecommendationsService({
                     quizTopics.set(key, candidate);
                 }
                 candidate.quizAttempts++;
+                candidate.lastAttemptAt = latest(candidate.lastAttemptAt, attempt.createdAt);
                 if (answer.correct === false) {
                     candidate.quizMisses++;
                     candidate.score += candidate.quizMisses > 1 ? 5 : 4;
@@ -173,6 +194,7 @@ function createRecommendationsService({
                 candidate.bestMastery = card.masteryLevel;
                 candidate.flashcardIncorrect = card.incorrectCount;
                 candidate.flashcardReviews = card.reviewCount;
+                candidate.lastReviewedAt = card.lastReviewedAt;
                 candidate.score = card.reviewCount === 0
                     ? 1.5
                     : Math.max(0, 4 - card.masteryLevel) + card.incorrectCount * 2.5 - card.correctCount * 0.4;
