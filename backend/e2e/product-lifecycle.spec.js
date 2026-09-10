@@ -120,7 +120,7 @@ test("planner flow creates assignment and exam, completes work, and opens exam r
     await expect(page.locator("#planner-exam-context")).toContainText("ECON Midterm");
 });
 
-test("planner modal scrolls in a short window and preserves 24-hour time values", async ({ page }) => {
+test("planner modal scrolls in a short window and the time picker preserves 24-hour values", async ({ page }) => {
     const consoleErrors = [];
     page.on("pageerror", error => consoleErrors.push(error.message));
     page.on("console", message => { if (message.type() === "error") consoleErrors.push(message.text()); });
@@ -161,12 +161,34 @@ test("planner modal scrolls in a short window and preserves 24-hour time values"
     await page.locator("#task-description").fill("A long assignment description ".repeat(100));
     await page.locator("#task-title").fill("Afternoon assignment");
     await page.locator("#task-date").fill("2026-10-14");
-    await page.locator("#task-time").fill("25:00");
-    await page.locator("#save-task").click();
-    await expect(page.locator("#task-form-error")).toContainText("valid 24-hour time");
-    await expect(page.locator("#task-modal")).toHaveClass(/open/);
-    await page.locator("#task-time").fill("13:30");
-    await expect(page.locator("#task-time")).toHaveAttribute("type", "text");
+    await page.locator("#task-time-trigger").click();
+    await expect(page.locator("#time-picker-modal")).toHaveClass(/open/);
+    await expect(page.locator("#task-modal")).toHaveAttribute("aria-hidden", "true");
+    await expect(page.getByRole("listbox", { name: "Hour" })).toBeVisible();
+    await expect(page.getByRole("listbox", { name: "Minute" })).toBeVisible();
+    await expect(page.getByRole("listbox", { name: "AM or PM" })).toBeVisible();
+    for (const [width, height] of [[1440, 900], [900, 550], [390, 700], [320, 700]]) {
+        await page.setViewportSize({ width, height });
+        const pickerLayout = await page.locator(".time-picker-dialog").evaluate(element => {
+            const box = element.getBoundingClientRect();
+            const option = element.querySelector(".time-wheel-option").getBoundingClientRect();
+            return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, optionHeight: option.height, width: innerWidth, height: innerHeight };
+        });
+        expect(pickerLayout.left).toBeGreaterThanOrEqual(0);
+        expect(pickerLayout.right).toBeLessThanOrEqual(pickerLayout.width);
+        expect(pickerLayout.top).toBeGreaterThanOrEqual(0);
+        expect(pickerLayout.bottom).toBeLessThanOrEqual(pickerLayout.height);
+        expect(pickerLayout.optionHeight).toBeGreaterThanOrEqual(44);
+        await expect(page.locator("#clear-task-time")).toBeVisible();
+        await expect(page.locator("#cancel-time-picker")).toBeVisible();
+        await expect(page.locator("#confirm-time-picker")).toBeVisible();
+    }
+    await page.setViewportSize({ width: 390, height: 600 });
+    await page.locator('#time-hour-wheel [role="option"][data-value="1"]').click();
+    await page.locator('#time-minute-wheel [role="option"][data-value="30"]').click();
+    await page.locator('#time-period-wheel [role="option"][data-value="PM"]').click();
+    await page.locator("#confirm-time-picker").click();
+    await expect(page.locator("#task-time-display")).toHaveText("1:30 PM");
     await expect(page.locator("#task-time")).toHaveValue("13:30");
     await page.locator("#save-task").click();
     await expect(page.getByText("Afternoon assignment")).toBeVisible();
@@ -177,15 +199,38 @@ test("planner modal scrolls in a short window and preserves 24-hour time values"
     }, saved.dueAt);
     expect(localDue).toEqual([13, 30]);
     await page.locator(".planner-task", { hasText: "Afternoon assignment" }).getByRole("button", { name: "Edit" }).click();
+    await expect(page.locator("#task-time-display")).toHaveText("1:30 PM");
     await expect(page.locator("#task-time")).toHaveValue("13:30");
-    await page.locator("#task-time").fill("23:59");
+    await page.locator("#task-time-trigger").click();
+    await page.locator('#time-hour-wheel [role="option"][data-value="6"]').click();
+    await page.locator('#time-minute-wheel [role="option"][data-value="45"]').click();
+    await page.locator('#time-period-wheel [role="option"][data-value="PM"]').click();
+    await page.locator("#confirm-time-picker").click();
+    await expect(page.locator("#task-time-display")).toHaveText("6:45 PM");
+    await expect(page.locator("#task-time")).toHaveValue("18:45");
     await page.locator("#save-task").click();
     const updated = (await api(page, "GET", `/api/courses/${courseId}/tasks`)).body.find(task => task.title === "Afternoon assignment");
     const updatedLocalDue = await page.evaluate(value => {
         const date = new Date(value);
         return [date.getHours(), date.getMinutes()];
     }, updated.dueAt);
-    expect(updatedLocalDue).toEqual([23, 59]);
+    expect(updatedLocalDue).toEqual([18, 45]);
+    await page.locator(".planner-task", { hasText: "Afternoon assignment" }).getByRole("button", { name: "Edit" }).click();
+    await expect(page.locator("#task-time-display")).toHaveText("6:45 PM");
+    await page.locator("#task-time-trigger").click();
+    await expect(page.locator('#time-hour-wheel [role="option"][data-value="6"]')).toHaveAttribute("aria-selected", "true");
+    await expect(page.locator('#time-minute-wheel [role="option"][data-value="45"]')).toHaveAttribute("aria-selected", "true");
+    await expect(page.locator('#time-period-wheel [role="option"][data-value="PM"]')).toHaveAttribute("aria-selected", "true");
+    await page.getByRole("listbox", { name: "Hour" }).focus();
+    await page.keyboard.press("ArrowUp");
+    await expect(page.locator('#time-hour-wheel [role="option"][data-value="5"]')).toHaveAttribute("aria-selected", "true");
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("listbox", { name: "Minute" })).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#time-picker-modal")).not.toHaveClass(/open/);
+    await expect(page.locator("#task-modal")).toHaveAttribute("aria-hidden", "false");
+    await expect(page.locator("#task-time-trigger")).toBeFocused();
+    await expect(page.locator("#task-time-display")).toHaveText("6:45 PM");
     expect(consoleErrors).toEqual([]);
 });
 
