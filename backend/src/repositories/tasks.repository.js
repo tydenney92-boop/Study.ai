@@ -8,6 +8,9 @@ const SELECT = `
     tasks.external_updated_at AS externalUpdatedAt,
     tasks.external_course_id AS externalCourseId, tasks.external_url AS externalUrl,
     tasks.external_status AS externalStatus, tasks.removed_at AS removedAt,
+    tasks.schedule_source_material_id AS scheduleSourceMaterialId,
+    tasks.schedule_source_snippet AS scheduleSourceSnippet,
+    tasks.schedule_import_key AS scheduleImportKey,
     tasks.created_at AS createdAt, tasks.updated_at AS updatedAt,
     courses.course_name AS courseName, courses.course_code AS courseCode,
     courses.semester

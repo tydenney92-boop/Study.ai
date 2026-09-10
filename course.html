@@ -60,7 +60,7 @@
             </div>
         </section>
         <section class="dashboard-panel course-planner-panel">
-            <div class="panel-header"><div><h2>Assignments &amp; Exams</h2><p>Upcoming deadlines for this course.</p></div><div><a class="secondary-tool-button" id="add-course-exam">+ Add Exam</a> <a class="primary-button" id="add-course-assignment">+ Add Assignment</a></div></div>
+            <div class="panel-header"><div><h2>Assignments &amp; Exams</h2><p>Upcoming deadlines for this course.</p></div><div><button class="secondary-tool-button" id="import-course-schedule">Import from Syllabus</button> <a class="secondary-tool-button" id="add-course-exam">+ Add Exam</a> <a class="primary-button" id="add-course-assignment">+ Add Assignment</a></div></div>
             <div id="course-upcoming-tasks" class="compact-task-list"><div class="friendly-empty">Loading deadlines…</div></div>
             <a class="text-link" id="all-course-tasks">View all course planner items →</a>
         </section>
@@ -108,6 +108,7 @@
         </div>
     </div>
 
-    <script src="js/config.js"></script><script src="js/course-colors.js?v=20260830-theme-fix"></script><script src="js/api.js"></script><script src="js/auth.js"></script><script src="js/course-context.js"></script><script src="js/ui.js"></script><script src="js/course-page.js"></script>
+    <div class="app-modal-overlay" id="schedule-import-modal"><div class="app-modal schedule-import-modal" role="dialog" aria-modal="true" aria-labelledby="schedule-import-title"><div class="app-modal-header"><div><p class="eyebrow">COURSE SCHEDULE</p><h2 id="schedule-import-title">Import Schedule</h2></div><button class="icon-button" id="close-schedule-import" aria-label="Close">×</button></div><div id="schedule-source-step"><p>Choose an extracted syllabus or schedule. Nothing is created until you review and confirm.</p><label class="app-form">Course material<select id="schedule-material"></select></label><a class="text-link" id="upload-schedule-material">Upload a new syllabus instead →</a><div class="app-modal-actions"><button class="primary-button" id="preview-schedule">Find Deadlines</button></div></div><div id="schedule-review-step" hidden><p id="schedule-summary"></p><div id="schedule-candidates" class="schedule-candidates"></div><p class="schedule-default-note">Dates without a time use 11:59 PM in your local timezone.</p><p id="schedule-confirm-copy" class="recommendations-note" hidden></p><div class="app-modal-actions"><button class="secondary-tool-button" id="back-schedule-import">Back</button><button class="primary-button" id="import-schedule-events">Import Selected Events</button></div></div><p class="form-error" id="schedule-import-error"></p></div></div>
+    <script src="js/config.js"></script><script src="js/course-colors.js?v=20260830-theme-fix"></script><script src="js/api.js"></script><script src="js/auth.js"></script><script src="js/course-context.js"></script><script src="js/ui.js"></script><script src="js/course-page.js"></script><script src="js/schedule-import.js"></script>
 </body>
 </html>

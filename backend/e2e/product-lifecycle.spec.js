@@ -168,6 +168,36 @@ test("fake Canvas connects, maps, syncs, and updates without duplicates", async 
     expect(imported[0].dueAt).toBe("2026-10-03T05:59:00.000Z");
 });
 
+test("syllabus schedule import reviews, edits, excludes, confirms, and opens exam study recommendations", async ({ page }) => {
+    await signup(page, "ScheduleImport");
+    const courseId = await createCourse(page, { name: "Schedule Economics", code: "ECON 389", semester: "Fall 2026" });
+    const materialId = await uploadTextMaterial(page, courseId, {
+        filename: "syllabus.txt",
+        content: "Homework 1 — September 12\nQuiz 1 — September 19\nMidterm 1 — October 10 at 7:00 PM\nFinal paper due during finals week."
+    });
+    await api(page, "PATCH", `/api/courses/${courseId}/materials/${materialId}`, { materialRole: "syllabus" });
+    await page.goto(`/course.html?courseId=${courseId}`);
+    await page.getByRole("button", { name: "Import from Syllabus" }).click();
+    await page.locator("#schedule-material").selectOption(String(materialId));
+    await page.getByRole("button", { name: "Find Deadlines" }).click();
+    await expect(page.locator(".schedule-candidate")).toHaveCount(4);
+    const homework = page.locator(".schedule-candidate", { hasText: "Homework 1" });
+    await homework.locator(".candidate-date").fill("2026-09-13");
+    const quiz = page.locator(".schedule-candidate", { hasText: "Quiz 1" });
+    await quiz.locator("input[type=checkbox]").uncheck();
+    await page.getByRole("button", { name: "Import Selected Events" }).click();
+    await expect(page.locator("#schedule-confirm-copy")).toContainText("Create 2 Planner events?");
+    await page.getByRole("button", { name: "Confirm Import" }).click();
+    await page.goto(`/planner.html?courseId=${courseId}`);
+    await expect(page.getByText("Homework 1")).toBeVisible();
+    await expect(page.getByText("Midterm 1")).toBeVisible();
+    await expect(page.locator(".source-badge", { hasText: "Syllabus" }).first()).toBeVisible();
+    await page.getByRole("tab", { name: "Calendar" }).click();
+    await page.locator('[data-date="2026-10-10"]').click();
+    await page.locator(".calendar-day-panel").getByRole("link", { name: "What to Study" }).click();
+    await expect(page).toHaveURL(new RegExp(`recommendations\\.html\\?courseId=${courseId}`));
+});
+
 test("course deletion is discoverable, confirmed, recoverable on failure, and removes navigation", async ({ page }) => {
     await signup(page, "CourseDelete");
     const courseId = await createCourse(page, {

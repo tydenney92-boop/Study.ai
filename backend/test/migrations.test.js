@@ -118,7 +118,7 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
         createBackup: false
     });
 
-    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
     assert.equal(tableExists(context.database, "storage_cleanup_jobs"), true);
     assert.equal(tableExists(context.database, "material_chunks"), true);
     assert.equal(tableExists(context.database, "material_chunk_embeddings"), true);

@@ -21,6 +21,7 @@ const { createRecommendationsRepository } = require("./repositories/recommendati
 const { createExamPlansRepository } = require("./repositories/exam-plans.repository");
 const { createTasksRepository } = require("./repositories/tasks.repository");
 const { createLmsRepository } = require("./repositories/lms.repository");
+const { createScheduleImportRepository } = require("./repositories/schedule-import.repository");
 const { createAskNotesConversationsRepository } = require("./repositories/ask-notes-conversations.repository");
 const { createCourseService } = require("./services/course.service");
 const { createUnitService } = require("./services/unit.service");
@@ -40,6 +41,7 @@ const { createRecommendationsService } = require("./services/recommendations.ser
 const { createExamPlanService } = require("./services/exam-plan.service");
 const { createTaskService } = require("./services/task.service");
 const { createLmsService } = require("./services/lms.service");
+const { createScheduleImportService } = require("./services/schedule-import.service");
 const { createCredentialVault } = require("./services/credential-vault");
 const { createProviderRegistry } = require("./services/lms/provider-registry");
 const { createExamScopeService } = require("./services/exam-scope.service");
@@ -74,6 +76,7 @@ const { createRecommendationsRouter } = require("./routes/recommendations.routes
 const { createExamPlanRouter } = require("./routes/exam-plan.routes");
 const { createTasksRouter, createCourseTasksRouter } = require("./routes/tasks.routes");
 const { createLmsRouter } = require("./routes/lms.routes");
+const { createScheduleImportRouter } = require("./routes/schedule-import.routes");
 const { createStorageCleanupRouter } = require("./routes/storage-cleanup.routes");
 const {
     createCourseMaterialsRouter,
@@ -181,7 +184,8 @@ const defaultRepositories = {
     examPlans: createExamPlansRepository(db),
     askNotesConversations: createAskNotesConversationsRepository(db),
     tasks: createTasksRepository(db),
-    lms: createLmsRepository(db)
+    lms: createLmsRepository(db),
+    scheduleImports: createScheduleImportRepository(db)
 };
 const repositories = {
     ...defaultRepositories,
@@ -346,6 +350,11 @@ const lmsService = createLmsService({
     coursesService
 });
 app.locals.lmsService = lmsService;
+const scheduleImportService = createScheduleImportService({
+    coursesService,
+    materialsRepository: repositories.materials,
+    repository: repositories.scheduleImports
+});
 const authService = createAuthService({
     usersRepository: repositories.users,
     passwordRounds: config.passwordRounds
@@ -475,6 +484,7 @@ app.use(
 );
 app.use("/api/tasks", createTasksRouter({ taskService }));
 app.use("/api/lms", createLmsRouter({ service: lmsService, config, fetchImpl: options.lmsFetch }));
+app.use("/api/courses/:courseId/schedule-import", createScheduleImportRouter({ service: scheduleImportService }));
 app.use(
     "/api/courses",
     createCoursesRouter({ coursesService })
