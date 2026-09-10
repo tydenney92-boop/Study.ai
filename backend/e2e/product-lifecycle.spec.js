@@ -124,26 +124,49 @@ test("planner modal scrolls in a short window and preserves 24-hour time values"
     const consoleErrors = [];
     page.on("pageerror", error => consoleErrors.push(error.message));
     page.on("console", message => { if (message.type() === "error") consoleErrors.push(message.text()); });
-    await page.setViewportSize({ width: 390, height: 480 });
+    await page.setViewportSize({ width: 900, height: 550 });
     await signup(page, "PlannerModal");
     const courseId = await createCourse(page, { name: "Short Window", code: "QA 101" });
     await page.goto(`/planner.html?courseId=${courseId}&new=1&type=assignment`);
     await expect(page.locator("#task-modal")).toHaveClass(/open/);
-    const modalLayout = await page.locator("#task-modal .app-modal").evaluate(element => ({
-        clientHeight: element.clientHeight,
-        scrollHeight: element.scrollHeight,
-        overflowY: getComputedStyle(element).overflowY,
-        bodyOverflow: getComputedStyle(document.body).overflow,
-        right: element.getBoundingClientRect().right,
-        viewport: window.innerWidth
-    }));
-    expect(modalLayout.scrollHeight).toBeGreaterThan(modalLayout.clientHeight);
-    expect(modalLayout.overflowY).toBe("auto");
-    expect(modalLayout.bodyOverflow).toBe("hidden");
-    expect(modalLayout.right).toBeLessThanOrEqual(modalLayout.viewport);
+    for (const [width, height] of [[1024, 600], [900, 550], [768, 500], [390, 600], [390, 500]]) {
+        await page.setViewportSize({ width, height });
+        const modalLayout = await page.locator("#task-modal .app-modal").evaluate(element => {
+            const body = element.querySelector(".app-modal-body");
+            const actions = element.querySelector(".app-modal-actions");
+            return {
+                display: getComputedStyle(element).display,
+                direction: getComputedStyle(element).flexDirection,
+                bodyClientHeight: body.clientHeight,
+                bodyScrollHeight: body.scrollHeight,
+                bodyOverflow: getComputedStyle(body).overflowY,
+                pageOverflow: getComputedStyle(document.body).overflow,
+                actionsBottom: actions.getBoundingClientRect().bottom,
+                viewportHeight: window.innerHeight
+            };
+        });
+        expect(modalLayout.display).toBe("flex");
+        expect(modalLayout.direction).toBe("column");
+        expect(modalLayout.bodyScrollHeight).toBeGreaterThan(modalLayout.bodyClientHeight);
+        expect(modalLayout.bodyOverflow).toBe("auto");
+        expect(modalLayout.pageOverflow).toBe("hidden");
+        expect(modalLayout.actionsBottom).toBeLessThanOrEqual(modalLayout.viewportHeight);
+        await expect(page.locator("#cancel-task")).toBeVisible();
+        await expect(page.locator("#save-task")).toBeVisible();
+    }
+    const pageScrollBefore = await page.evaluate(() => window.scrollY);
+    await page.mouse.move(10, 10);
+    await page.mouse.wheel(0, 600);
+    expect(await page.evaluate(() => window.scrollY)).toBe(pageScrollBefore);
+    await page.locator("#task-description").fill("A long assignment description ".repeat(100));
     await page.locator("#task-title").fill("Afternoon assignment");
     await page.locator("#task-date").fill("2026-10-14");
+    await page.locator("#task-time").fill("25:00");
+    await page.locator("#save-task").click();
+    await expect(page.locator("#task-form-error")).toContainText("valid 24-hour time");
+    await expect(page.locator("#task-modal")).toHaveClass(/open/);
     await page.locator("#task-time").fill("13:30");
+    await expect(page.locator("#task-time")).toHaveAttribute("type", "text");
     await expect(page.locator("#task-time")).toHaveValue("13:30");
     await page.locator("#save-task").click();
     await expect(page.getByText("Afternoon assignment")).toBeVisible();
@@ -153,6 +176,16 @@ test("planner modal scrolls in a short window and preserves 24-hour time values"
         return [date.getHours(), date.getMinutes()];
     }, saved.dueAt);
     expect(localDue).toEqual([13, 30]);
+    await page.locator(".planner-task", { hasText: "Afternoon assignment" }).getByRole("button", { name: "Edit" }).click();
+    await expect(page.locator("#task-time")).toHaveValue("13:30");
+    await page.locator("#task-time").fill("23:59");
+    await page.locator("#save-task").click();
+    const updated = (await api(page, "GET", `/api/courses/${courseId}/tasks`)).body.find(task => task.title === "Afternoon assignment");
+    const updatedLocalDue = await page.evaluate(value => {
+        const date = new Date(value);
+        return [date.getHours(), date.getMinutes()];
+    }, updated.dueAt);
+    expect(updatedLocalDue).toEqual([23, 59]);
     expect(consoleErrors).toEqual([]);
 });
 
