@@ -118,13 +118,15 @@ test("legacy materials migrate with IDs, content, units, and ownership intact", 
         createBackup: false
     });
 
-    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    assert.deepEqual(firstRun.applied, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
     assert.equal(tableExists(context.database, "storage_cleanup_jobs"), true);
     assert.equal(tableExists(context.database, "material_chunks"), true);
     assert.equal(tableExists(context.database, "material_chunk_embeddings"), true);
     assert.equal(tableExists(context.database, "ask_notes_conversations"), true);
     assert.equal(tableExists(context.database, "course_exam_settings"), true);
     assert.equal(tableExists(context.database, "course_tasks"), true);
+    assert.equal(tableExists(context.database, "lms_connections"), true);
+    assert.equal(tableExists(context.database, "lms_course_mappings"), true);
     assert.equal(tableExists(context.database, "sessions"), true);
     assert.equal(
         context.database.prepare("SELECT COUNT(*) AS count FROM users").get().count,

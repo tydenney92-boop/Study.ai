@@ -6,6 +6,8 @@ const SELECT = `
     tasks.estimated_minutes AS estimatedMinutes,
     tasks.external_provider AS externalProvider, tasks.external_id AS externalId,
     tasks.external_updated_at AS externalUpdatedAt,
+    tasks.external_course_id AS externalCourseId, tasks.external_url AS externalUrl,
+    tasks.external_status AS externalStatus, tasks.removed_at AS removedAt,
     tasks.created_at AS createdAt, tasks.updated_at AS updatedAt,
     courses.course_name AS courseName, courses.course_code AS courseCode,
     courses.semester
@@ -20,7 +22,7 @@ function createTasksRepository(database) {
     }
     return {
         listOwned(userId, filters = {}) {
-            const clauses = ["courses.user_id = ?"];
+            const clauses = ["courses.user_id = ?", "tasks.removed_at IS NULL"];
             const params = [userId];
             if (filters.courseId) { clauses.push("tasks.course_id = ?"); params.push(filters.courseId); }
             if (filters.type) { clauses.push("tasks.type = ?"); params.push(filters.type); }

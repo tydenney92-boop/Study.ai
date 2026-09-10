@@ -20,6 +20,7 @@ const { createMaterialChunkEmbeddingsRepository } = require("./repositories/mate
 const { createRecommendationsRepository } = require("./repositories/recommendations.repository");
 const { createExamPlansRepository } = require("./repositories/exam-plans.repository");
 const { createTasksRepository } = require("./repositories/tasks.repository");
+const { createLmsRepository } = require("./repositories/lms.repository");
 const { createAskNotesConversationsRepository } = require("./repositories/ask-notes-conversations.repository");
 const { createCourseService } = require("./services/course.service");
 const { createUnitService } = require("./services/unit.service");
@@ -38,6 +39,9 @@ const { createAskNotesRetrievalContextService } = require("./services/ask-notes-
 const { createRecommendationsService } = require("./services/recommendations.service");
 const { createExamPlanService } = require("./services/exam-plan.service");
 const { createTaskService } = require("./services/task.service");
+const { createLmsService } = require("./services/lms.service");
+const { createCredentialVault } = require("./services/credential-vault");
+const { createProviderRegistry } = require("./services/lms/provider-registry");
 const { createExamScopeService } = require("./services/exam-scope.service");
 const { createAskNotesConversationService } = require("./services/ask-notes-conversation.service");
 const { createAskNotesFollowUpService } = require("./services/ask-notes-follow-up.service");
@@ -69,6 +73,7 @@ const { createAskNotesRouter } = require("./routes/ask-notes.routes");
 const { createRecommendationsRouter } = require("./routes/recommendations.routes");
 const { createExamPlanRouter } = require("./routes/exam-plan.routes");
 const { createTasksRouter, createCourseTasksRouter } = require("./routes/tasks.routes");
+const { createLmsRouter } = require("./routes/lms.routes");
 const { createStorageCleanupRouter } = require("./routes/storage-cleanup.routes");
 const {
     createCourseMaterialsRouter,
@@ -175,7 +180,8 @@ const defaultRepositories = {
     recommendations: createRecommendationsRepository(db),
     examPlans: createExamPlansRepository(db),
     askNotesConversations: createAskNotesConversationsRepository(db),
-    tasks: createTasksRepository(db)
+    tasks: createTasksRepository(db),
+    lms: createLmsRepository(db)
 };
 const repositories = {
     ...defaultRepositories,
@@ -333,6 +339,13 @@ const taskService = createTaskService({
     materialsRepository: repositories.materials,
     tasksRepository: repositories.tasks
 });
+const lmsService = createLmsService({
+    repository: repositories.lms,
+    vault: createCredentialVault(config.lmsEncryptionKey || config.sessionSecret),
+    registry: options.lmsProviderRegistry || createProviderRegistry({ fetchImpl: options.lmsFetch }),
+    coursesService
+});
+app.locals.lmsService = lmsService;
 const authService = createAuthService({
     usersRepository: repositories.users,
     passwordRounds: config.passwordRounds
@@ -461,6 +474,7 @@ app.use(
     createCourseTasksRouter({ taskService })
 );
 app.use("/api/tasks", createTasksRouter({ taskService }));
+app.use("/api/lms", createLmsRouter({ service: lmsService, config, fetchImpl: options.lmsFetch }));
 app.use(
     "/api/courses",
     createCoursesRouter({ coursesService })

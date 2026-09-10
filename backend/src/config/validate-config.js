@@ -61,6 +61,24 @@ function validateProductionConfig(config) {
     if (Boolean(config.objectStorageAccessKeyId) !== Boolean(config.objectStorageSecretAccessKey)) {
         errors.push("Object-storage access key and secret must be provided together.");
     }
+    const canvasConfigured = [config.canvasClientId, config.canvasClientSecret,
+        config.canvasBaseUrl, config.canvasRedirectUri].some(Boolean);
+    if (canvasConfigured) {
+        required(config.canvasClientId, "CANVAS_CLIENT_ID", errors);
+        required(config.canvasClientSecret, "CANVAS_CLIENT_SECRET", errors);
+        required(config.canvasBaseUrl, "CANVAS_BASE_URL", errors);
+        required(config.canvasRedirectUri, "CANVAS_REDIRECT_URI", errors);
+        required(config.lmsEncryptionKey, "LMS_ENCRYPTION_KEY", errors);
+        if (config.canvasBaseUrl && !/^https:\/\//i.test(config.canvasBaseUrl)) {
+            errors.push("CANVAS_BASE_URL must use HTTPS in production.");
+        }
+        if (config.canvasRedirectUri && !/^https:\/\//i.test(config.canvasRedirectUri)) {
+            errors.push("CANVAS_REDIRECT_URI must use HTTPS in production.");
+        }
+    }
+    if (config.lmsEncryptionKey && config.lmsEncryptionKey.length < 32) {
+        errors.push("LMS_ENCRYPTION_KEY must contain at least 32 characters.");
+    }
     if (config.aiProvider && !["ollama", "openai"].includes(config.aiProvider)) {
         errors.push("AI_PROVIDER must be ollama or openai.");
     }

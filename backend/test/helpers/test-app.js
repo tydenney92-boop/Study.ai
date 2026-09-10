@@ -33,6 +33,8 @@ function createTestApp(options = {}) {
         askNotesOutput: options.askNotesOutput,
         retrievalBackend: options.retrievalBackend,
         aiUsageGuard: options.aiUsageGuard,
+        lmsProviderRegistry: options.lmsProviderRegistry,
+        lmsFetch: options.lmsFetch,
         aiClient: options.aiClient || {
             async generate() {
                 throw new Error("Unexpected AI request in test.");

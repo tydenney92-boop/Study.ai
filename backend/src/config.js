@@ -59,6 +59,11 @@ const config = {
     secureCookies: booleanEnvironment("SECURE_COOKIES", isProduction),
     trustProxyHops: Number(process.env.TRUST_PROXY_HOPS) || (isProduction ? 1 : 0),
     passwordRounds: Number(process.env.PASSWORD_ROUNDS) || 12,
+    lmsEncryptionKey: process.env.LMS_ENCRYPTION_KEY || null,
+    canvasClientId: process.env.CANVAS_CLIENT_ID || null,
+    canvasClientSecret: process.env.CANVAS_CLIENT_SECRET || null,
+    canvasBaseUrl: process.env.CANVAS_BASE_URL || null,
+    canvasRedirectUri: process.env.CANVAS_REDIRECT_URI || null,
     aiProvider: process.env.AI_PROVIDER || (isProduction ? null : "ollama"),
     aiEnabled: isProduction && process.env.AI_ENABLED === undefined
         ? null

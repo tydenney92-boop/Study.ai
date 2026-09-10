@@ -9,10 +9,16 @@ const port = Number(process.env.E2E_PORT || 4173);
 const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "study-signal-e2e-"));
 const fakeAiClient = createFakeAiClient();
 const fakeOcrProvider = createFakeOcrProvider();
+let canvasRevision = 0;
+const fakeCanvasProvider = {
+    async listCourses() { return [{ externalId: "canvas-econ", name: "Canvas Economics", code: "ECON 388", term: "Fall 2026" }]; },
+    async listAssignments() { const revision = canvasRevision++; return [{ externalId: "canvas-assignment-1", externalCourseId: "canvas-econ", title: "Canvas Problem Set", type: "assignment", description: "Imported safely", dueAt: revision ? "2026-10-03T05:59:00.000Z" : "2026-09-22T05:59:00.000Z", startAt: null, externalUrl: "https://canvas.test/assignments/1", externalUpdatedAt: revision ? "2026-09-10T00:00:00.000Z" : "2026-09-01T00:00:00.000Z", externalStatus: "available" }]; }
+};
 const app = createApp({
     aiClient: fakeAiClient,
     ocrProvider: fakeOcrProvider,
     ocrOutput: { log() {} },
+    lmsProviderRegistry: { create() { return fakeCanvasProvider; } },
     config: {
         environment: "test",
         isProduction: false,
@@ -29,6 +35,7 @@ const app = createApp({
         storageDriver: "local",
         uploadDirectory: path.join(temporaryDirectory, "uploads"),
         sessionSecret: "study-signal-e2e-session-secret",
+        lmsEncryptionKey: "study-signal-e2e-lms-encryption-key",
         passwordRounds: 4,
         secureCookies: false,
         trustProxyHops: 0,

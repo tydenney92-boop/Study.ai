@@ -146,6 +146,28 @@ test("interactive calendar remains contained and usable across desktop and mobil
     expect(errors).toEqual([]);
 });
 
+test("fake Canvas connects, maps, syncs, and updates without duplicates", async ({ page }) => {
+    await signup(page, "CanvasImport");
+    const courseId = await createCourse(page, { name: "Existing Economics", code: "ECON 388", semester: "Fall 2026" });
+    await page.request.post("/api/lms/test-connect", { data: { accessToken: "fake-secret", baseUrl: "https://canvas.test" } });
+    await page.goto("/planner.html");
+    await page.getByRole("button", { name: "Import from LMS" }).click();
+    const mapping = page.locator(".lms-mapping-row select");
+    await mapping.selectOption(String(courseId));
+    await page.getByRole("button", { name: "Sync Now" }).click();
+    await expect(page.getByText("Canvas Problem Set")).toBeVisible();
+    await expect(page.locator(".source-badge", { hasText: "Canvas" })).toBeVisible();
+    await page.getByRole("button", { name: "Import from LMS" }).click();
+    await Promise.all([
+        page.waitForResponse(response => response.url().includes(`/api/lms/`) && response.url().endsWith("/sync") && response.request().method() === "POST"),
+        page.getByRole("button", { name: "Sync Now" }).click()
+    ]);
+    await expect(page.getByText("Canvas Problem Set")).toHaveCount(1);
+    const imported = await page.request.get("/api/tasks").then(response => response.json());
+    expect(imported.filter(task => task.externalId === "canvas-assignment-1")).toHaveLength(1);
+    expect(imported[0].dueAt).toBe("2026-10-03T05:59:00.000Z");
+});
+
 test("course deletion is discoverable, confirmed, recoverable on failure, and removes navigation", async ({ page }) => {
     await signup(page, "CourseDelete");
     const courseId = await createCourse(page, {
