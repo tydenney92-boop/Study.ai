@@ -120,6 +120,42 @@ test("planner flow creates assignment and exam, completes work, and opens exam r
     await expect(page.locator("#planner-exam-context")).toContainText("ECON Midterm");
 });
 
+test("planner modal scrolls in a short window and preserves 24-hour time values", async ({ page }) => {
+    const consoleErrors = [];
+    page.on("pageerror", error => consoleErrors.push(error.message));
+    page.on("console", message => { if (message.type() === "error") consoleErrors.push(message.text()); });
+    await page.setViewportSize({ width: 390, height: 480 });
+    await signup(page, "PlannerModal");
+    const courseId = await createCourse(page, { name: "Short Window", code: "QA 101" });
+    await page.goto(`/planner.html?courseId=${courseId}&new=1&type=assignment`);
+    await expect(page.locator("#task-modal")).toHaveClass(/open/);
+    const modalLayout = await page.locator("#task-modal .app-modal").evaluate(element => ({
+        clientHeight: element.clientHeight,
+        scrollHeight: element.scrollHeight,
+        overflowY: getComputedStyle(element).overflowY,
+        bodyOverflow: getComputedStyle(document.body).overflow,
+        right: element.getBoundingClientRect().right,
+        viewport: window.innerWidth
+    }));
+    expect(modalLayout.scrollHeight).toBeGreaterThan(modalLayout.clientHeight);
+    expect(modalLayout.overflowY).toBe("auto");
+    expect(modalLayout.bodyOverflow).toBe("hidden");
+    expect(modalLayout.right).toBeLessThanOrEqual(modalLayout.viewport);
+    await page.locator("#task-title").fill("Afternoon assignment");
+    await page.locator("#task-date").fill("2026-10-14");
+    await page.locator("#task-time").fill("13:30");
+    await expect(page.locator("#task-time")).toHaveValue("13:30");
+    await page.locator("#save-task").click();
+    await expect(page.getByText("Afternoon assignment")).toBeVisible();
+    const saved = (await api(page, "GET", `/api/courses/${courseId}/tasks`)).body.find(task => task.title === "Afternoon assignment");
+    const localDue = await page.evaluate(value => {
+        const date = new Date(value);
+        return [date.getHours(), date.getMinutes()];
+    }, saved.dueAt);
+    expect(localDue).toEqual([13, 30]);
+    expect(consoleErrors).toEqual([]);
+});
+
 test("interactive calendar remains contained and usable across desktop and mobile widths", async ({ page }) => {
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
@@ -844,7 +880,7 @@ test("two browser contexts remain isolated across data and destructive APIs", as
     }
 });
 
-test("critical authenticated pages remain usable at a narrow viewport", async ({ page }) => {
+test("critical authenticated pages remain usable at target responsive widths", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signup(page, "Mobile");
     const courseId = await createCourse(page, { code: "MOBILE 101" });
@@ -853,18 +889,22 @@ test("critical authenticated pages remain usable at a narrow viewport", async ({
         "/index.html", `/course.html?courseId=${courseId}`,
         `/materials.html?courseId=${courseId}`, `/quiz.html?courseId=${courseId}&materialId=${materialId}`,
         `/flashcards.html?courseId=${courseId}`, `/notes.html?courseId=${courseId}`,
-        `/recommendations.html?courseId=${courseId}`
+        `/recommendations.html?courseId=${courseId}`, `/planner.html?courseId=${courseId}`,
+        `/progress.html?courseId=${courseId}`, `/history.html?courseId=${courseId}`
     ];
-    for (const url of pages) {
-        await page.goto(url);
-        await expect(page.locator("body")).toBeVisible();
-        const layout = await page.evaluate(() => ({
-            overflow: document.documentElement.scrollWidth - window.innerWidth,
-            offenders: [...document.querySelectorAll("body *")]
-                .filter(element => element.getBoundingClientRect().right > window.innerWidth + 1)
-                .slice(0, 8)
-                .map(element => `${element.tagName.toLowerCase()}.${element.className}`)
-        }));
-        expect(layout.overflow, `${url} overflowed via ${layout.offenders.join(", ")}`).toBeLessThanOrEqual(1);
+    for (const width of [1440, 1024, 768, 390, 320]) {
+        await page.setViewportSize({ width, height: width <= 390 ? 700 : 820 });
+        for (const url of pages) {
+            await page.goto(url);
+            await expect(page.locator("body")).toBeVisible();
+            const layout = await page.evaluate(() => ({
+                overflow: document.documentElement.scrollWidth - window.innerWidth,
+                offenders: [...document.querySelectorAll("body *")]
+                    .filter(element => element.getBoundingClientRect().right > window.innerWidth + 1)
+                    .slice(0, 8)
+                    .map(element => `${element.tagName.toLowerCase()}.${element.className}`)
+            }));
+            expect(layout.overflow, `${url} at ${width}px overflowed via ${layout.offenders.join(", ")}`).toBeLessThanOrEqual(1);
+        }
     }
 });
