@@ -22,6 +22,7 @@ const { createExamPlansRepository } = require("./repositories/exam-plans.reposit
 const { createTasksRepository } = require("./repositories/tasks.repository");
 const { createLmsRepository } = require("./repositories/lms.repository");
 const { createScheduleImportRepository } = require("./repositories/schedule-import.repository");
+const { createOnboardingRepository } = require("./repositories/onboarding.repository");
 const { createAskNotesConversationsRepository } = require("./repositories/ask-notes-conversations.repository");
 const { createCourseService } = require("./services/course.service");
 const { createUnitService } = require("./services/unit.service");
@@ -43,6 +44,7 @@ const { createTaskService } = require("./services/task.service");
 const { createDailyPlanService } = require("./services/daily-plan.service");
 const { createLmsService } = require("./services/lms.service");
 const { createScheduleImportService } = require("./services/schedule-import.service");
+const { createOnboardingService } = require("./services/onboarding.service");
 const { createCredentialVault } = require("./services/credential-vault");
 const { createProviderRegistry } = require("./services/lms/provider-registry");
 const { createExamScopeService } = require("./services/exam-scope.service");
@@ -79,6 +81,7 @@ const { createTasksRouter, createCourseTasksRouter } = require("./routes/tasks.r
 const { createDailyPlanRouter } = require("./routes/daily-plan.routes");
 const { createLmsRouter } = require("./routes/lms.routes");
 const { createScheduleImportRouter } = require("./routes/schedule-import.routes");
+const { createOnboardingRouter } = require("./routes/onboarding.routes");
 const { createStorageCleanupRouter } = require("./routes/storage-cleanup.routes");
 const {
     createCourseMaterialsRouter,
@@ -187,7 +190,8 @@ const defaultRepositories = {
     askNotesConversations: createAskNotesConversationsRepository(db),
     tasks: createTasksRepository(db),
     lms: createLmsRepository(db),
-    scheduleImports: createScheduleImportRepository(db)
+    scheduleImports: createScheduleImportRepository(db),
+    onboarding: createOnboardingRepository(db)
 };
 const repositories = {
     ...defaultRepositories,
@@ -206,6 +210,13 @@ const coursesService = createCourseService({
     materialsRepository: repositories.materials,
     storageCleanupRepository: repositories.storageCleanup,
     storageCleanupService
+});
+const onboardingService = createOnboardingService({
+    onboardingRepository: repositories.onboarding,
+    coursesService,
+    progressRepository: repositories.progress,
+    tasksRepository: repositories.tasks,
+    quizzesRepository: repositories.quizzes
 });
 const unitsService = createUnitService({
     coursesService,
@@ -493,6 +504,7 @@ app.use(
 );
 app.use("/api/tasks", createTasksRouter({ taskService }));
 app.use("/api/daily-plan", createDailyPlanRouter({ dailyPlanService }));
+app.use("/api/onboarding", createOnboardingRouter({ onboardingService }));
 app.use("/api/lms", createLmsRouter({ service: lmsService, config, fetchImpl: options.lmsFetch }));
 app.use("/api/courses/:courseId/schedule-import", createScheduleImportRouter({ service: scheduleImportService }));
 app.use(

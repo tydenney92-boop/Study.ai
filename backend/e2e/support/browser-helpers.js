@@ -12,7 +12,7 @@ function credentials(prefix) {
     };
 }
 
-async function signup(page, prefix = "E2E") {
+async function signup(page, prefix = "E2E", { dismissWelcome = true } = {}) {
     const account = credentials(prefix);
     await page.goto("/signup.html");
     await page.locator("#name").fill(account.name);
@@ -21,6 +21,12 @@ async function signup(page, prefix = "E2E") {
     await page.locator("#password-confirmation").fill(account.password);
     await page.getByRole("button", { name: "Create Account" }).click();
     await expect(page).toHaveURL(/index\.html$/);
+    if (dismissWelcome) {
+        const welcome = page.locator("#welcome-modal");
+        await expect(welcome).toHaveClass(/open/);
+        await page.getByRole("button", { name: "Get Started" }).click();
+        await expect(welcome).not.toHaveClass(/open/);
+    }
     return account;
 }
 
@@ -43,7 +49,7 @@ async function createCourse(page, {
     await page.locator("#course-code").fill(code);
     await page.locator("#course-semester").fill(semester);
     await page.getByRole("button", { name: "Create Course" }).click();
-    await expect(page).toHaveURL(/course\.html\?courseId=\d+$/);
+    await expect(page).toHaveURL(/course\.html\?courseId=\d+(?:&[^#]+)?$/);
     return Number(new URL(page.url()).searchParams.get("courseId"));
 }
 
@@ -58,11 +64,13 @@ async function uploadTextMaterial(page, courseId, {
     unitLabel,
     filename = "market-notes.txt",
     empty = false,
-    content
+    content,
+    materialRole
 } = {}) {
     await page.goto(`/materials.html?courseId=${courseId}&upload=1`);
     await expect(page.locator("#upload-modal")).toHaveClass(/active/);
     if (unitLabel) await page.locator("#upload-unit-modal").selectOption({ label: unitLabel });
+    if (materialRole) await page.locator("#upload-role-modal").selectOption(materialRole);
     const fixture = path.resolve(__dirname, `../fixtures/${empty ? "empty-notes.txt" : "market-notes.txt"}`);
     await page.locator("#file-input").setInputFiles({
         name: filename,

@@ -42,7 +42,7 @@ function createMaterialService({
         }
     }
 
-    async function createFromUpload({ courseId, userId, unitId, file }) {
+    async function createFromUpload({ courseId, userId, unitId, materialRole = "general", file }) {
         if (!file) {
             throw new AppError({
                 code: "FILE_REQUIRED",
@@ -115,7 +115,8 @@ function createMaterialService({
                 uploadStatus: "ready",
                 extractionError: extractionResult.error,
                 extractionStatus: extractionResult.status,
-                extractionMethod: extractionResult.method || null
+                extractionMethod: extractionResult.method || null,
+                materialRole
             });
 
             const material = materialsRepository.findOwned(materialId, courseId, userId);

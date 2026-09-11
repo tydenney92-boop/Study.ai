@@ -80,6 +80,107 @@ test("authentication, canonical navigation, session persistence, and recent cour
     await expect(page.getByRole("link", { name: "Progress" })).toHaveClass(/active/);
 });
 
+test("first-run onboarding reaches a completed Today workflow without trapping navigation", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    page.on("console", message => {
+        if (message.type() === "error") errors.push(message.text());
+    });
+    await signup(page, "FirstRun", { dismissWelcome: false });
+    const welcome = page.locator("#welcome-modal");
+    await expect(welcome).toHaveClass(/open/);
+    await expect(page.getByRole("heading", { name: "Build your first useful study plan" })).toBeVisible();
+    for (const [width, height] of [[1440, 900], [1024, 768], [390, 844], [320, 700]]) {
+        await page.setViewportSize({ width, height });
+        const layout = await welcome.locator("[role=dialog]").evaluate(dialog => {
+            const box = dialog.getBoundingClientRect();
+            return {
+                documentWidth: document.documentElement.scrollWidth,
+                viewportWidth: innerWidth,
+                left: box.left,
+                right: box.right,
+                top: box.top,
+                bottom: box.bottom,
+                viewportHeight: innerHeight
+            };
+        });
+        expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
+        expect(layout.left).toBeGreaterThanOrEqual(0);
+        expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
+        expect(layout.top).toBeGreaterThanOrEqual(0);
+        expect(layout.bottom).toBeLessThanOrEqual(layout.viewportHeight);
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.getByRole("button", { name: "Get Started" }).focus();
+    await page.keyboard.press("Enter");
+    await expect(welcome).not.toHaveClass(/open/);
+    await expect(page.locator("#onboarding-progress-copy")).toHaveText("0 of 6 steps complete");
+    await page.getByRole("link", { name: "Create Course" }).click();
+    await expect(page.locator("#course-modal")).toHaveClass(/open/);
+    await page.locator("#course-name").fill("First Run Economics");
+    await page.locator("#course-code").fill("ECON 150");
+    await page.locator("#course-semester").fill("Fall 2026");
+    await page.getByRole("button", { name: "Create Course" }).click();
+    await expect(page).toHaveURL(/course\.html\?courseId=\d+&onboarding=course-created$/);
+    const courseId = Number(new URL(page.url()).searchParams.get("courseId"));
+    await expect(page.locator("#course-onboarding-next")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Upload Syllabus" })).toHaveAttribute(
+        "href", `materials.html?courseId=${courseId}&upload=1&role=syllabus`
+    );
+    await page.getByRole("link", { name: "Upload Syllabus" }).click();
+    await expect(page.locator("#upload-modal")).toHaveClass(/active/);
+    await expect(page.locator("#upload-role-modal")).toHaveValue("syllabus");
+    await page.locator("#file-input").setInputFiles({
+        name: "economics-syllabus.txt",
+        mimeType: "text/plain",
+        buffer: Buffer.from("Homework 1 — September 20\nMidterm 1 — October 10 at 7:00 PM")
+    });
+    await page.getByRole("button", { name: "Upload Syllabus" }).click();
+    await expect(page.locator("#material-onboarding-next")).toBeVisible();
+    await page.getByRole("link", { name: "Import Deadlines" }).click();
+    await expect(page.locator("#schedule-import-modal")).toHaveClass(/open/);
+    await page.getByRole("button", { name: "Find Deadlines" }).click();
+    await expect(page.locator(".schedule-candidate")).toHaveCount(2);
+    await page.getByRole("button", { name: "Import Selected Events" }).click();
+    await page.getByRole("button", { name: "Confirm Import" }).click();
+    await expect(page.getByRole("heading", { name: "Next, add notes or slides" })).toBeVisible();
+    await page.getByRole("link", { name: "Add Study Material" }).click();
+    await expect(page.locator("#upload-role-modal")).toHaveValue("general");
+    await page.locator("#file-input").setInputFiles({
+        name: "elasticity-notes.txt",
+        mimeType: "text/plain",
+        buffer: Buffer.from("Elasticity measures responsiveness to price changes. Tax incidence depends on relative elasticity.")
+    });
+    await page.getByRole("button", { name: "Upload Material", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Try your first study activity" })).toBeVisible();
+    await page.getByRole("link", { name: "Practice Quiz" }).first().click();
+    await page.locator('.quiz-length-button[data-question-count="5"]').click();
+    await page.locator("#generate-quiz-button").click();
+    await completeFiveQuestionQuiz(page);
+    await page.getByRole("link", { name: "Open Today" }).click();
+    await expect(page).toHaveURL(/today\.html$/);
+    await expect(page.getByRole("heading", { name: "What should I do next?" })).toBeVisible();
+    await expect.poll(async () => (await api(page, "GET", "/api/onboarding")).body.completedCount).toBe(6);
+    await page.getByRole("link", { name: "Dashboard" }).click();
+    await expect(page.locator("#onboarding-checklist")).toBeHidden();
+    await expect(page.locator("#dashboard-getting-started")).toBeVisible();
+    expect(errors).toEqual([]);
+});
+
+test("skipped onboarding stays quiet and can be resumed", async ({ page }) => {
+    await signup(page, "SkipSetup", { dismissWelcome: false });
+    await page.locator("#welcome-skip").click();
+    await expect(page.locator("#welcome-modal")).not.toHaveClass(/open/);
+    await expect(page.locator("#onboarding-checklist")).toBeHidden();
+    await expect(page.locator("#onboarding-resume")).toBeVisible();
+    await page.reload();
+    await expect(page.locator("#welcome-modal")).not.toHaveClass(/open/);
+    await expect(page.locator("#onboarding-resume")).toBeVisible();
+    await page.getByRole("button", { name: "Resume Setup" }).click();
+    await expect(page.locator("#onboarding-checklist")).toBeVisible();
+    await expect(page.locator("#onboarding-progress-copy")).toHaveText("0 of 6 steps complete");
+});
+
 test("planner flow creates assignment and exam, completes work, and opens exam recommendations", async ({ page }) => {
     await signup(page, "PlannerFlow");
     const courseId = await createCourse(page, { name: "Planner Economics", code: "ECON 240", semester: "Fall 2026" });
@@ -300,7 +401,7 @@ test("syllabus schedule import reviews, edits, excludes, confirms, and opens exa
     await expect(importButton).toBeVisible();
     await expect(page.locator("#course-task-actions")).toBeVisible();
     await importButton.click();
-    await expect(page.locator("#upload-schedule-material")).toHaveAttribute("href", `materials.html?courseId=${courseId}&upload=1`);
+    await expect(page.locator("#upload-schedule-material")).toHaveAttribute("href", `materials.html?courseId=${courseId}&upload=1&role=syllabus`);
     await page.locator("#schedule-material").selectOption(String(materialId));
     await page.getByRole("button", { name: "Find Deadlines" }).click();
     await expect(page.locator(".schedule-candidate")).toHaveCount(4);
@@ -357,7 +458,7 @@ test("course deletion is discoverable, confirmed, recoverable on failure, and re
     await deleteTrigger.click();
     await page.locator("#confirm-delete-course").click();
     await expect(page.getByText("Deletion is temporarily unavailable.").first()).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`course\\.html\\?courseId=${courseId}$`));
+    await expect(page).toHaveURL(new RegExp(`course\\.html\\?courseId=${courseId}(?:&[^#]+)?$`));
     await expect(page.locator("#course-code-title")).toHaveText("MATH 199");
     await page.unroute(`**/api/courses/${courseId}`);
 

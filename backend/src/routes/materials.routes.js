@@ -99,10 +99,15 @@ function createCourseMaterialsRouter({ materialService, upload }) {
         "/",
         upload.single("file"),
         asyncHandler(async function(req, res) {
+            const materialRole = req.body.materialRole || "general";
+            if (!["general", "syllabus", "exam_review", "study_guide"].includes(materialRole)) {
+                throw validationError("materialRole is invalid.", { field: "materialRole" });
+            }
             const material = await materialService.createFromUpload({
                 courseId: req.courseId,
                 userId: req.user.id,
                 unitId: req.body.unitId,
+                materialRole,
                 file: req.file
             });
 
