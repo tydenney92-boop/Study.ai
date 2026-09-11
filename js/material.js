@@ -109,6 +109,27 @@ async function loadMaterial() {
                 : extractionLabels[material.extractionStatus] || "Unknown";
         document.querySelector("#material-extraction-error").textContent =
             material.extractionError || "No extraction errors.";
+        const onboardingNext = document.querySelector("#material-onboarding-next");
+        if (material.extractionStatus === "extracted" && material.materialRole === "syllabus") {
+            onboardingNext.hidden = false;
+            document.querySelector("#import-onboarding-deadlines").href =
+                StudyAI.courseContext.url("course.html", { courseId, importSchedule: 1 });
+            document.querySelector("#continue-onboarding-materials").href =
+                StudyAI.courseContext.url("materials.html", { courseId, upload: 1, role: "general" });
+        } else if (material.extractionStatus === "extracted" &&
+            new URLSearchParams(window.location.search).get("onboarding") === "material-ready") {
+            onboardingNext.hidden = false;
+            document.querySelector("#material-onboarding-next .eyebrow").textContent = "MATERIAL READY";
+            document.querySelector("#material-onboarding-title").textContent = "Try your first study activity";
+            document.querySelector("#material-onboarding-next p:last-child").textContent =
+                "A short practice quiz is a quick way to create useful study evidence.";
+            const primary = document.querySelector("#import-onboarding-deadlines");
+            primary.textContent = "Practice Quiz";
+            primary.href = StudyAI.courseContext.url("quiz.html", { courseId, materialId });
+            const secondary = document.querySelector("#continue-onboarding-materials");
+            secondary.textContent = "Generate Flashcards →";
+            secondary.href = StudyAI.courseContext.url("flashcards.html", { courseId, materialId });
+        }
 
         if (material.extractionStatus === "extracted" &&
             material.extractedText && material.extractedText.trim()) {

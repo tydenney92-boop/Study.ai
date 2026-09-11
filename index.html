@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Study Signal | Dashboard</title>
     <link rel="stylesheet" href="css/style.css?v=20260830-theme-fix">
+    <link rel="stylesheet" href="css/onboarding.css?v=20260910">
 </head>
 <body>
     <aside class="sidebar">
@@ -32,6 +33,20 @@
             <button class="primary-button" id="add-course-button">+ Add Course</button>
         </header>
 
+        <section class="onboarding-checklist" id="onboarding-checklist" aria-labelledby="onboarding-checklist-title" hidden>
+            <div class="onboarding-checklist-heading">
+                <div><p class="eyebrow">QUICK SETUP</p><h2 id="onboarding-checklist-title">Get Study Signal ready</h2><p id="onboarding-progress-copy" aria-live="polite"></p></div>
+                <button class="text-button" id="skip-onboarding" type="button">Skip setup</button>
+            </div>
+            <div class="onboarding-progress-track" role="progressbar" aria-label="Onboarding progress" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"><span id="onboarding-progress-bar"></span></div>
+            <ol class="onboarding-steps" id="onboarding-steps"></ol>
+        </section>
+
+        <section class="onboarding-resume" id="onboarding-resume" aria-label="Study Signal setup" hidden>
+            <div><strong>Study Signal setup</strong><span>Your setup guide is available whenever you want it.</span></div>
+            <button class="secondary-tool-button" id="resume-onboarding" type="button">Resume Setup</button>
+        </section>
+
         <section class="stats-grid">
             <div class="stat-card"><div class="stat-icon blue">▣</div><div><span class="stat-label">Courses</span><strong id="course-count">—</strong></div></div>
             <div class="stat-card"><div class="stat-icon purple">☰</div><div><span class="stat-label">Units</span><strong id="unit-count">—</strong></div></div>
@@ -49,7 +64,7 @@
                 </div>
             </div>
 
-            <div class="dashboard-panel">
+            <div class="dashboard-panel" id="dashboard-getting-started">
                 <div class="panel-header"><div><h2>Study Tools</h2><p>Open a course and choose material to begin.</p></div></div>
                 <div class="tool-grid">
                     <a href="#courses" class="tool-card primary-tool"><div class="tool-icon blue">✓</div><div><strong>Practice Quiz</strong><span>Generate from a material</span></div></a>
@@ -90,6 +105,15 @@
                 <p class="form-error" id="course-form-error"></p>
                 <div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-course">Cancel</button><button type="submit" class="primary-button">Create Course</button></div>
             </form>
+        </div>
+    </div>
+
+    <div class="app-modal-overlay" id="welcome-modal">
+        <div class="app-modal welcome-modal" role="dialog" aria-modal="true" aria-labelledby="welcome-title" aria-describedby="welcome-description">
+            <div class="app-modal-header"><div><p class="eyebrow">WELCOME TO STUDY SIGNAL</p><h2 id="welcome-title">Build your first useful study plan</h2></div><button class="icon-button" id="dismiss-welcome" type="button" aria-label="Dismiss welcome">×</button></div>
+            <p id="welcome-description">Turn your courses, materials, deadlines, and study activity into a focused plan for today.</p>
+            <ol class="welcome-path" aria-label="Setup path"><li>Create a course</li><li>Upload your syllabus</li><li>Import deadlines</li><li>Add study material</li><li>Try a study tool</li><li>Open Today</li></ol>
+            <div class="app-modal-actions"><button class="text-button" id="welcome-skip" type="button">Skip setup</button><button class="primary-button" id="welcome-start" type="button">Get Started</button></div>
         </div>
     </div>
 

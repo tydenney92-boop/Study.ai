@@ -691,9 +691,10 @@ function finishQuiz() {
 
             <div class="quiz-completion-actions">
                 <button id="retake-quiz" class="secondary-tool-button">Try Again</button>
-                <a href="${quizReturnUrl}" class="primary-button">
+                <a href="${quizReturnUrl}" class="secondary-tool-button">
                     ${savedQuizId ? "Back to Saved Study" : quizOrigin === "material" ? "Back to Material" : "Back to Course"}
                 </a>
+                <a href="today.html" class="primary-button">Open Today</a>
             </div>
 
         </div>

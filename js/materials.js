@@ -9,6 +9,7 @@ const modal = document.querySelector("#upload-modal");
 const fileInput = document.querySelector("#file-input");
 const selectedFileLabel = document.querySelector("#selected-file");
 const uploadUnit = document.querySelector("#upload-unit-modal");
+const uploadRole = document.querySelector("#upload-role-modal");
 const uploadError = document.querySelector("#upload-error");
 const confirmUpload = document.querySelector("#confirm-upload");
 const emptyTitle = document.querySelector("#empty-materials-title");
@@ -238,6 +239,13 @@ function openModal() {
     if (!courseId) return;
     modal.classList.add("active");
     uploadError.textContent = "";
+    const requestedRole = new URLSearchParams(window.location.search).get("role");
+    if (["general", "syllabus", "exam_review", "study_guide"].includes(requestedRole)) {
+        uploadRole.value = requestedRole;
+    }
+    const syllabusUpload = uploadRole.value === "syllabus";
+    document.querySelector("#upload-modal-title").textContent = syllabusUpload ? "Upload Syllabus" : "Upload Material";
+    confirmUpload.textContent = syllabusUpload ? "Upload Syllabus" : "Upload Material";
 }
 
 function closeModal() {
@@ -304,6 +312,7 @@ confirmUpload.addEventListener("click", async () => {
     const formData = new FormData();
     formData.append("file", selectedFile);
     if (uploadUnit.value) formData.append("unitId", uploadUnit.value);
+    formData.append("materialRole", uploadRole.value);
     confirmUpload.disabled = true;
     confirmUpload.textContent = "Uploading…";
     uploadError.textContent = "";
@@ -314,15 +323,24 @@ confirmUpload.addEventListener("click", async () => {
             formData,
             { timeoutMs: 120000 }
         );
+        const onboardingRole = new URLSearchParams(window.location.search).get("role");
         window.location.href = StudyAI.courseContext.url("material.html", {
             courseId,
-            materialId: material.id
+            materialId: material.id,
+            onboarding: uploadRole.value === "syllabus"
+                ? "syllabus-ready"
+                : onboardingRole === "general" ? "material-ready" : null
         });
     } catch (error) {
         uploadError.textContent = error.message;
         confirmUpload.disabled = false;
         confirmUpload.textContent = "Upload Material";
     }
+});
+uploadRole.addEventListener("change", () => {
+    const syllabusUpload = uploadRole.value === "syllabus";
+    document.querySelector("#upload-modal-title").textContent = syllabusUpload ? "Upload Syllabus" : "Upload Material";
+    confirmUpload.textContent = syllabusUpload ? "Upload Syllabus" : "Upload Material";
 });
 
 searchInput.addEventListener("input", () => {

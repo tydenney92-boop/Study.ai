@@ -3,6 +3,7 @@ const addCourseButton = document.querySelector("#add-course-button");
 const courseModal = document.querySelector("#course-modal");
 const courseForm = document.querySelector("#course-form");
 const courseFormError = document.querySelector("#course-form-error");
+let dashboardCourses = [];
 
 function createCourseCard(course) {
     const link = document.createElement("a");
@@ -52,6 +53,7 @@ async function loadDashboard() {
             StudyAI.api.get("/api/tasks?status=incomplete")
         ]);
         courseList.innerHTML = "";
+        dashboardCourses = courses;
 
         courses.forEach(course => {
             courseList.appendChild(createCourseCard(course));
@@ -142,7 +144,8 @@ courseForm.addEventListener("submit", async event => {
             semester: document.querySelector("#course-semester").value
         });
         window.location.href = StudyAI.courseContext.url("course.html", {
-            courseId: course.id
+            courseId: course.id,
+            onboarding: dashboardCourses.length === 0 ? "course-created" : null
         });
     } catch (error) {
         courseFormError.textContent = error.message;
@@ -151,3 +154,78 @@ courseForm.addEventListener("submit", async event => {
 });
 
 loadDashboard();
+
+const onboardingChecklist = document.querySelector("#onboarding-checklist");
+const onboardingResume = document.querySelector("#onboarding-resume");
+const welcomeModal = document.querySelector("#welcome-modal");
+
+function closeWelcome() {
+    welcomeModal.classList.remove("open");
+}
+
+async function updateOnboarding(action) {
+    const response = await StudyAI.api.patch("/api/onboarding", { action });
+    renderOnboarding(response);
+    return response;
+}
+
+function renderOnboarding(response) {
+    const list = document.querySelector("#onboarding-steps");
+    onboardingChecklist.hidden = !response.showChecklist;
+    onboardingResume.hidden = !response.showResume;
+    document.querySelector("#dashboard-getting-started").hidden = response.showChecklist;
+    document.querySelector("#onboarding-progress-copy").textContent =
+        `${response.completedCount} of ${response.totalSteps} steps complete`;
+    const progress = document.querySelector(".onboarding-progress-track");
+    progress.setAttribute("aria-valuemax", String(response.totalSteps));
+    progress.setAttribute("aria-valuenow", String(response.completedCount));
+    document.querySelector("#onboarding-progress-bar").style.width =
+        `${response.completedCount / response.totalSteps * 100}%`;
+    list.innerHTML = "";
+    response.steps.forEach(step => {
+        const item = document.createElement("li");
+        item.className = `onboarding-step${step.completed ? " complete" : ""}`;
+        item.innerHTML = '<span class="onboarding-step-status" aria-hidden="true"></span><span class="onboarding-step-copy"><strong></strong><small></small></span>';
+        item.setAttribute("aria-label", `${step.title}: ${step.completed ? "complete" : "not complete"}`);
+        item.querySelector(".onboarding-step-status").textContent = step.completed ? "✓" : "○";
+        item.querySelector("strong").textContent = step.title;
+        item.querySelector("small").textContent = step.completed ? "Complete" : "Not complete";
+        if (!step.completed) {
+            const action = document.createElement("a");
+            action.className = "secondary-tool-button";
+            action.href = step.href;
+            action.textContent = step.actionLabel;
+            item.appendChild(action);
+        }
+        list.appendChild(item);
+    });
+    if (response.showWelcome) welcomeModal.classList.add("open");
+    else closeWelcome();
+}
+
+async function loadOnboarding() {
+    try {
+        renderOnboarding(await StudyAI.api.get("/api/onboarding"));
+    } catch (error) {
+        onboardingChecklist.hidden = true;
+        StudyAI.ui.notify(error.message, { type: "error" });
+    }
+}
+
+document.querySelector("#welcome-start").addEventListener("click", async () => {
+    await updateOnboarding("dismiss_welcome");
+    closeWelcome();
+    document.querySelector("#onboarding-steps a")?.focus();
+});
+document.querySelector("#dismiss-welcome").addEventListener("click", async () => {
+    await updateOnboarding("dismiss_welcome");
+    closeWelcome();
+});
+document.querySelector("#welcome-skip").addEventListener("click", async () => {
+    await updateOnboarding("skip");
+    closeWelcome();
+});
+document.querySelector("#skip-onboarding").addEventListener("click", () => updateOnboarding("skip"));
+document.querySelector("#resume-onboarding").addEventListener("click", () => updateOnboarding("resume"));
+welcomeModal.addEventListener("studyai:modal-close", () => { updateOnboarding("dismiss_welcome"); });
+loadOnboarding();

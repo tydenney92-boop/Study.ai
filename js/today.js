@@ -226,4 +226,5 @@
     document.querySelector("#refresh-plan").addEventListener("click", loadPlan);
     syncBudgetControls();
     loadPlan();
+    StudyAI.api.patch("/api/onboarding", { action: "view_today" }).catch(() => {});
 })();

@@ -95,6 +95,22 @@ async function loadCourse() {
         document.querySelector("#course-material-count").textContent = materials.length;
         document.querySelector("#course-pdf-count").textContent = materials.filter(material => material.materialType === "pdf").length;
         document.querySelector("#course-other-count").textContent = materials.filter(material => material.materialType !== "pdf").length;
+        const onboardingNext = document.querySelector("#course-onboarding-next");
+        const onboardingStage = new URLSearchParams(window.location.search).get("onboarding");
+        if (onboardingStage === "course-created") {
+            onboardingNext.hidden = false;
+            document.querySelector("#upload-onboarding-syllabus").href =
+                courseUrl("materials.html", { upload: 1, role: "syllabus" });
+        } else if (onboardingStage === "deadlines-imported") {
+            onboardingNext.hidden = false;
+            document.querySelector("#course-onboarding-next .eyebrow").textContent = "DEADLINES READY";
+            document.querySelector("#course-onboarding-title").textContent = "Next, add notes or slides";
+            document.querySelector("#course-onboarding-next p:last-child").textContent =
+                "Study Signal uses readable course materials for quizzes, flashcards, guides, and Ask My Notes.";
+            const action = document.querySelector("#upload-onboarding-syllabus");
+            action.textContent = "Add Study Material";
+            action.href = courseUrl("materials.html", { upload: 1, role: "general" });
+        }
         renderUnits();
         renderCourseTasks(courseTasks);
     } catch (error) {
@@ -106,6 +122,10 @@ async function loadCourse() {
         unitsList.querySelector("div").textContent = error.message;
     }
 }
+
+document.querySelector("#dismiss-course-onboarding").addEventListener("click", () => {
+    document.querySelector("#course-onboarding-next").hidden = true;
+});
 
 function renderCourseTasks(tasks) {
     const list = document.querySelector("#course-upcoming-tasks"); list.innerHTML = "";
