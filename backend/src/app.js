@@ -47,6 +47,7 @@ const { createScheduleImportService } = require("./services/schedule-import.serv
 const { createOnboardingService } = require("./services/onboarding.service");
 const { createCredentialVault } = require("./services/credential-vault");
 const { createProviderRegistry } = require("./services/lms/provider-registry");
+const { createCanvasOAuthClient } = require("./services/lms/canvas-oauth-client");
 const { createExamScopeService } = require("./services/exam-scope.service");
 const { createAskNotesConversationService } = require("./services/ask-notes-conversation.service");
 const { createAskNotesFollowUpService } = require("./services/ask-notes-follow-up.service");
@@ -79,7 +80,7 @@ const { createRecommendationsRouter } = require("./routes/recommendations.routes
 const { createExamPlanRouter } = require("./routes/exam-plan.routes");
 const { createTasksRouter, createCourseTasksRouter } = require("./routes/tasks.routes");
 const { createDailyPlanRouter } = require("./routes/daily-plan.routes");
-const { createLmsRouter } = require("./routes/lms.routes");
+const { createLmsRouter, canvasConfigured } = require("./routes/lms.routes");
 const { createScheduleImportRouter } = require("./routes/schedule-import.routes");
 const { createOnboardingRouter } = require("./routes/onboarding.routes");
 const { createStorageCleanupRouter } = require("./routes/storage-cleanup.routes");
@@ -363,11 +364,23 @@ const taskService = createTaskService({
     materialsRepository: repositories.materials,
     tasksRepository: repositories.tasks
 });
+const canvasOAuthClient = options.canvasOAuthClient || (canvasConfigured(config)
+    ? createCanvasOAuthClient({
+        baseUrl: config.canvasBaseUrl,
+        clientId: config.canvasClientId,
+        clientSecret: config.canvasClientSecret,
+        redirectUri: config.canvasRedirectUri,
+        fetchImpl: options.lmsFetch,
+        clock: options.lmsClock
+    })
+    : null);
 const lmsService = createLmsService({
     repository: repositories.lms,
     vault: createCredentialVault(config.lmsEncryptionKey || config.sessionSecret),
     registry: options.lmsProviderRegistry || createProviderRegistry({ fetchImpl: options.lmsFetch }),
-    coursesService
+    coursesService,
+    oauthClient: canvasOAuthClient,
+    clock: options.lmsClock
 });
 app.locals.lmsService = lmsService;
 const scheduleImportService = createScheduleImportService({
@@ -505,7 +518,12 @@ app.use(
 app.use("/api/tasks", createTasksRouter({ taskService }));
 app.use("/api/daily-plan", createDailyPlanRouter({ dailyPlanService }));
 app.use("/api/onboarding", createOnboardingRouter({ onboardingService }));
-app.use("/api/lms", createLmsRouter({ service: lmsService, config, fetchImpl: options.lmsFetch }));
+app.use("/api/lms", createLmsRouter({
+    service: lmsService,
+    config,
+    oauthClient: canvasOAuthClient,
+    clock: options.lmsClock
+}));
 app.use("/api/courses/:courseId/schedule-import", createScheduleImportRouter({ service: scheduleImportService }));
 app.use(
     "/api/courses",

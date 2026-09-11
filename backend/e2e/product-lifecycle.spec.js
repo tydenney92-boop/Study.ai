@@ -361,26 +361,54 @@ test("interactive calendar remains contained and usable across desktop and mobil
     expect(errors).toEqual([]);
 });
 
-test("fake Canvas connects, maps, syncs, and updates without duplicates", async ({ page }) => {
+test("fake Canvas OAuth connects, maps, syncs, and updates without duplicates", async ({ page }) => {
+    const browserErrors = [];
+    page.on("pageerror", error => browserErrors.push(error.message));
+    page.on("console", message => {
+        if (message.type() === "error") browserErrors.push(message.text());
+    });
     await signup(page, "CanvasImport");
     const courseId = await createCourse(page, { name: "Existing Economics", code: "ECON 388", semester: "Fall 2026" });
-    await page.request.post("/api/lms/test-connect", { data: { accessToken: "fake-secret", baseUrl: "https://canvas.test" } });
     await page.goto("/planner.html");
     await page.getByRole("button", { name: "Import from LMS" }).click();
+    await page.getByRole("link", { name: "Connect Canvas" }).click();
+    await expect(page.getByRole("heading", { name: "Fake Canvas authorization" })).toBeVisible();
+    await page.getByRole("button", { name: "Authorize Study Signal" }).click();
+    await expect(page).toHaveURL(/planner\.html$/);
+    await expect(page.getByRole("heading", { name: "Connected Learning Platforms" })).toBeVisible();
+    await expect(page.getByText("Connected", { exact: true })).toBeVisible();
     const mapping = page.locator(".lms-mapping-row select");
     await mapping.selectOption(String(courseId));
     await page.getByRole("button", { name: "Sync Now" }).click();
+    await expect(page.locator("#lms-sync-summary")).toContainText("Canvas synced");
+    await expect(page.locator("#lms-sync-summary")).toContainText("1 imported");
+    await page.getByRole("button", { name: "Close" }).click();
     await expect(page.getByText("Canvas Problem Set")).toBeVisible();
     await expect(page.locator(".source-badge", { hasText: "Canvas" })).toBeVisible();
+    const external = page.getByRole("link", { name: "Open in Canvas" }).first();
+    await expect(external).toHaveAttribute("href", "https://canvas.test/assignments/1");
+    await page.setViewportSize({ width: 390, height: 700 });
     await page.getByRole("button", { name: "Import from LMS" }).click();
+    const mobileLayout = await page.locator("#lms-modal .planner-modal").evaluate(element => ({
+        left: element.getBoundingClientRect().left,
+        right: element.getBoundingClientRect().right,
+        viewport: document.documentElement.clientWidth
+    }));
+    expect(mobileLayout.left).toBeGreaterThanOrEqual(0);
+    expect(mobileLayout.right).toBeLessThanOrEqual(mobileLayout.viewport);
     await Promise.all([
         page.waitForResponse(response => response.url().includes(`/api/lms/`) && response.url().endsWith("/sync") && response.request().method() === "POST"),
         page.getByRole("button", { name: "Sync Now" }).click()
     ]);
+    await expect(page.locator("#lms-sync-summary")).toContainText("1 updated");
+    await page.getByRole("button", { name: "Close" }).click();
     await expect(page.getByText("Canvas Problem Set")).toHaveCount(1);
     const imported = await page.request.get("/api/tasks").then(response => response.json());
     expect(imported.filter(task => task.externalId === "canvas-assignment-1")).toHaveLength(1);
     expect(imported[0].dueAt).toBe("2026-10-03T05:59:00.000Z");
+    expect(imported[0].externalStatus).toBe("submitted");
+    expect(imported[0].externalSubmissionType).toBe("online_upload");
+    expect(browserErrors).toEqual([]);
 });
 
 test("syllabus schedule import reviews, edits, excludes, confirms, and opens exam study recommendations", async ({ page }) => {

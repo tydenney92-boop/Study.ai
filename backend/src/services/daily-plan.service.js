@@ -321,6 +321,9 @@ function createDailyPlanService({
                 dueAt: task.dueAt,
                 days: daysUntil(task.dueAt, now, timezoneOffset),
                 overdue: new Date(task.dueAt) < now,
+                externalProvider: task.externalProvider,
+                externalStatus: task.externalStatus,
+                externalUrl: task.externalUrl,
                 href: ["exam", "quiz"].includes(task.type)
                     ? `recommendations.html?courseId=${task.courseId}`
                     : `planner.html?courseId=${task.courseId}`

@@ -35,6 +35,8 @@ function createTestApp(options = {}) {
         aiUsageGuard: options.aiUsageGuard,
         lmsProviderRegistry: options.lmsProviderRegistry,
         lmsFetch: options.lmsFetch,
+        canvasOAuthClient: options.canvasOAuthClient,
+        lmsClock: options.lmsClock,
         clock: options.clock,
         aiClient: options.aiClient || {
             async generate() {

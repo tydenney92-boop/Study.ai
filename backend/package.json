@@ -13,6 +13,7 @@
     "test:watch": "node --test --watch test/*.test.js",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
+    "smoke:canvas": "node scripts/smoke-canvas.js",
     "index:embeddings": "node scripts/index-embeddings.js",
     "eval:retrieval": "node scripts/evaluate-retrieval.js",
     "eval:retrieval:openai": "node scripts/evaluate-retrieval-openai.js",

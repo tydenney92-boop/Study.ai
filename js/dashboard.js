@@ -87,13 +87,19 @@ function renderDashboardUpcoming(items) {
     }
     selected.forEach(task => {
         const row = document.createElement("div"); row.className = "compact-task-row";
-        row.innerHTML = '<input type="checkbox" aria-label="Mark complete"><span class="compact-task-accent"></span><div><strong></strong><small></small></div><a class="text-link">Open</a>';
+        row.innerHTML = '<input type="checkbox" aria-label="Mark complete"><span class="compact-task-accent"></span><div><strong></strong><small></small><em class="source-badge" hidden></em></div><span class="compact-task-actions"><a class="text-link task-primary-action">Open</a><a class="text-link task-canvas-action" target="_blank" rel="noopener noreferrer" hidden>Open in Canvas</a></span>';
         window.StudySignalCourseColors.applyCourseColor(row, task);
         row.querySelector("strong").textContent = task.title;
         const due = new Date(task.dueAt);
         row.querySelector("small").textContent = `${task.courseCode} · ${task.type} · ${due.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
-        row.querySelector("a").href = ["exam", "quiz"].includes(task.type)
+        const badge = row.querySelector(".source-badge");
+        badge.hidden = !task.externalProvider;
+        badge.textContent = task.externalProvider ? `Canvas · ${String(task.externalStatus || "unsubmitted").replaceAll("_", " ")}` : "";
+        row.querySelector(".task-primary-action").href = ["exam", "quiz"].includes(task.type)
             ? `recommendations.html?courseId=${task.courseId}` : `planner.html?courseId=${task.courseId}`;
+        const canvasAction = row.querySelector(".task-canvas-action");
+        canvasAction.href = task.externalUrl || "";
+        canvasAction.hidden = !task.externalUrl;
         row.querySelector("input").addEventListener("change", async event => {
             row.classList.add("completed");
             try { await StudyAI.api.patch(`/api/courses/${task.courseId}/tasks/${task.id}`, { completed: true }); row.remove(); }

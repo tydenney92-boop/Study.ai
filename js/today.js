@@ -56,7 +56,7 @@
             link.innerHTML = '<span class="today-compact-accent"></span><span class="today-compact-copy"><strong></strong><small></small></span><span class="today-compact-meta"></span>';
             courseColorTarget(link, item.course);
             link.querySelector("strong").textContent = item.title;
-            link.querySelector("small").textContent = `${item.course.code} · ${item.type}`;
+            link.querySelector("small").textContent = `${item.course.code} · ${item.type}${item.externalProvider ? ` · Canvas: ${String(item.externalStatus || "unsubmitted").replaceAll("_", " ")}` : ""}`;
             link.querySelector(".today-compact-meta").textContent = timingLabel(item.days, item.overdue);
             list.appendChild(link);
         });

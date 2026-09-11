@@ -75,6 +75,25 @@ function validateProductionConfig(config) {
         if (config.canvasRedirectUri && !/^https:\/\//i.test(config.canvasRedirectUri)) {
             errors.push("CANVAS_REDIRECT_URI must use HTTPS in production.");
         }
+        try {
+            if (config.canvasBaseUrl) {
+                const base = new URL(config.canvasBaseUrl);
+                if (base.pathname !== "/" || base.search || base.hash) {
+                    errors.push("CANVAS_BASE_URL must be the institution Canvas origin without a path, query, or fragment.");
+                }
+            }
+            if (config.canvasRedirectUri) {
+                const redirect = new URL(config.canvasRedirectUri);
+                if (redirect.pathname !== "/api/lms/canvas/callback" || redirect.search || redirect.hash) {
+                    errors.push("CANVAS_REDIRECT_URI must end exactly with /api/lms/canvas/callback.");
+                }
+                if (config.appOrigin && redirect.origin !== new URL(config.appOrigin).origin) {
+                    errors.push("CANVAS_REDIRECT_URI must use APP_ORIGIN.");
+                }
+            }
+        } catch (_error) {
+            errors.push("Canvas URLs must be valid absolute URLs.");
+        }
     }
     if (config.lmsEncryptionKey && config.lmsEncryptionKey.length < 32) {
         errors.push("LMS_ENCRYPTION_KEY must contain at least 32 characters.");

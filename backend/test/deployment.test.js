@@ -77,6 +77,27 @@ test("production configuration accepts the supported single-domain architecture"
     assert.doesNotThrow(() => validateProductionConfig(validProductionConfig()));
 });
 
+test("production Canvas configuration is complete, fixed to the app callback, and HTTPS-only", () => {
+    assert.doesNotThrow(() => validateProductionConfig({
+        ...validProductionConfig(),
+        canvasClientId: "institution-client",
+        canvasClientSecret: "institution-secret",
+        canvasBaseUrl: "https://school.instructure.com",
+        canvasRedirectUri: "https://study.example.com/api/lms/canvas/callback",
+        lmsEncryptionKey: "independent-canvas-encryption-key-123"
+    }));
+    assert.throws(() => validateProductionConfig({
+        ...validProductionConfig(),
+        canvasClientId: "institution-client",
+        canvasClientSecret: "institution-secret",
+        canvasBaseUrl: "https://school.instructure.com/api",
+        canvasRedirectUri: "https://attacker.example/api/lms/canvas/callback?next=elsewhere",
+        lmsEncryptionKey: "short"
+    }), error => error.message.includes("CANVAS_BASE_URL") &&
+        error.message.includes("CANVAS_REDIRECT_URI") &&
+        error.message.includes("LMS_ENCRYPTION_KEY"));
+});
+
 test("production can disable AI without Ollama connection settings", () => {
     assert.doesNotThrow(() => validateProductionConfig({
         ...validProductionConfig(),

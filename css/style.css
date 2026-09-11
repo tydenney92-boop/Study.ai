@@ -1581,5 +1581,9 @@ h1 { color: var(--color-ink); font-size: clamp(28px, 3vw, 34px); line-height: 1.
 .compact-task-row div { display: grid; gap: 3px; min-width: 0; }
 .compact-task-row strong { overflow: hidden; color: var(--color-ink); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .compact-task-row small { color: var(--color-text-muted); font-size: 10px; text-transform: capitalize; }
+.source-badge { padding: 2px 5px; border-radius: 4px; background: #eef3f2; color: #426762; font-size: 9px; font-style: normal; font-weight: 700; }
+.compact-task-actions { display: grid; justify-items: end; gap: 4px; text-align: right; }
+.compact-task-row .source-badge { justify-self: start; margin-top: 2px; text-transform: none; }
+@media (max-width: 500px) { .compact-task-row { grid-template-columns: auto 4px minmax(0, 1fr); } .compact-task-actions { grid-column: 3; justify-items: start; grid-auto-flow: column; } }
 .course-planner-panel { margin-top: 22px; }
 .course-planner-panel > .text-link { display: inline-block; margin-top: 14px; }
