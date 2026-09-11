@@ -78,7 +78,7 @@ function legacyDetailResponse(material) {
     };
 }
 
-function createCourseMaterialsRouter({ materialService, upload }) {
+function createCourseMaterialsRouter({ materialService, upload, analyticsService }) {
     const router = express.Router({ mergeParams: true });
 
     router.use(function parseCourse(req, res, next) {
@@ -110,6 +110,38 @@ function createCourseMaterialsRouter({ materialService, upload }) {
                 materialRole,
                 file: req.file
             });
+
+            analyticsService?.trackEvent({
+                userId: req.user.id,
+                eventName: "material_uploaded",
+                courseId: req.courseId,
+                entityType: "material",
+                entityId: material.id,
+                metadata: {
+                    materialRole: material.materialRole,
+                    extractionStatus: material.extractionStatus,
+                    materialType: material.materialType
+                }
+            });
+            if (material.materialRole === "syllabus") {
+                analyticsService?.trackEvent({
+                    userId: req.user.id,
+                    eventName: "syllabus_uploaded",
+                    courseId: req.courseId,
+                    entityType: "material",
+                    entityId: material.id,
+                    metadata: { extractionStatus: material.extractionStatus }
+                });
+            }
+            if (material.extractionStatus === "extracted") {
+                analyticsService?.trackEventOnce({
+                    userId: req.user.id,
+                    eventName: "onboarding_step_completed",
+                    courseId: req.courseId,
+                    metadata: { step: material.materialRole === "syllabus" ? "syllabus" : "materials" },
+                    dedupeKey: `step:${material.materialRole === "syllabus" ? "syllabus" : "materials"}`
+                });
+            }
 
             res.status(201).json(material);
         })

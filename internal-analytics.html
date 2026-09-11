@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internal Analytics | Study Signal</title>
+    <link rel="stylesheet" href="css/style.css?v=20260910-analytics">
+    <link rel="stylesheet" href="css/internal-analytics.css?v=20260910">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand"><div class="brand-icon">S</div><span>Study Signal</span></div>
+        <nav class="sidebar-nav"><a href="index.html" class="nav-item"><span>⌂</span>Dashboard</a></nav>
+        <div class="sidebar-bottom"><div class="profile-card"><div class="profile-avatar"></div><div><strong></strong><small>Internal view</small></div></div></div>
+    </aside>
+    <main class="main-content internal-analytics-page">
+        <header class="topbar"><div><p class="eyebrow">DEVELOPMENT ONLY</p><h1>Product Analytics</h1><p class="subtitle">First-party milestones and de-identified feedback.</p></div></header>
+        <p id="analytics-error" class="form-error" role="alert"></p>
+        <section class="analytics-metric-grid" id="analytics-metrics" aria-label="Headline metrics"></section>
+        <section class="analytics-grid">
+            <article class="dashboard-panel"><div class="panel-header"><div><h2>Activation funnel</h2><p>Distinct users reaching each milestone.</p></div></div><div id="analytics-funnel" class="analytics-list"></div></article>
+            <article class="dashboard-panel"><div class="panel-header"><div><h2>Feature adoption</h2><p>Share of all registered users.</p></div></div><div id="analytics-adoption" class="analytics-list"></div></article>
+        </section>
+        <section class="dashboard-panel"><div class="panel-header"><div><h2>Feature events</h2><p>Aggregate milestone counts; no content payloads.</p></div></div><div id="analytics-events" class="analytics-event-grid"></div></section>
+        <section class="dashboard-panel"><div class="panel-header"><div><h2>Feedback</h2><p id="feedback-summary">Loading feedback…</p></div></div><div id="recent-feedback" class="analytics-feedback-list"></div></section>
+    </main>
+    <script src="js/config.js"></script><script src="js/course-colors.js?v=20260830-theme-fix"></script><script src="js/api.js"></script><script src="js/auth.js"></script><script src="js/course-context.js"></script><script src="js/ui.js"></script><script src="js/internal-analytics.js"></script>
+</body>
+</html>

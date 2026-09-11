@@ -129,7 +129,7 @@ function allocatePlan(candidates, budgetMinutes, excludedIds = []) {
 
 function createDailyPlanService({
     coursesService, tasksRepository, progressRepository, recommendationsService,
-    clock = () => new Date()
+    clock = () => new Date(), analyticsService
 }) {
     return {
         generate(userId, { minutes = DEFAULT_MINUTES, excludedIds = [], timezoneOffset = 0 } = {}) {
@@ -344,7 +344,7 @@ function createDailyPlanService({
                     action: { label: "Add Materials", href: `materials.html?courseId=${firstCourse.id}&upload=1` }
                 };
             }
-            return {
+            const result = {
                 generatedAt: now.toISOString(),
                 budgetMinutes: minutes,
                 allocatedMinutes: plan.reduce((sum, item) => sum + item.minutes, 0),
@@ -353,6 +353,12 @@ function createDailyPlanService({
                 plan,
                 onboarding
             };
+            analyticsService?.trackEvent({
+                userId,
+                eventName: "plan_generated",
+                metadata: { minutes, itemCount: plan.length }
+            });
+            return result;
         }
     };
 }

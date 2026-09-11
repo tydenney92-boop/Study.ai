@@ -29,7 +29,7 @@ function courseInput(body, partial = false) {
     return partial ? requireAtLeastOne(changes) : changes;
 }
 
-function createCoursesRouter({ coursesService }) {
+function createCoursesRouter({ coursesService, analyticsService }) {
     const router = express.Router();
 
     router.get("/", function(req, res) {
@@ -45,6 +45,20 @@ function createCoursesRouter({ coursesService }) {
             req.user.id,
             courseInput(req.body)
         );
+        analyticsService?.trackEvent({
+            userId: req.user.id,
+            eventName: "course_created",
+            courseId: course.id,
+            entityType: "course",
+            entityId: course.id
+        });
+        analyticsService?.trackEventOnce({
+            userId: req.user.id,
+            eventName: "onboarding_step_completed",
+            courseId: course.id,
+            metadata: { step: "course" },
+            dedupeKey: "step:course"
+        });
         res.status(201).json(course);
     });
 

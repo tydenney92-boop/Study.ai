@@ -6,7 +6,8 @@ function createCourseAiRouter({
     studyGuideService,
     quizGenerationService,
     generatedContentService,
-    aiUsageGuard
+    aiUsageGuard,
+    analyticsService
 }) {
     const router = express.Router({ mergeParams: true });
 
@@ -26,6 +27,9 @@ function createCourseAiRouter({
                     materialIds: req.body.materialIds
                 })
             );
+            analyticsService?.trackEvent({ userId: req.user.id, eventName: "study_guide_generated", courseId: req.courseId, entityType: "study_guide", entityId: guide.id });
+            analyticsService?.trackEvent({ userId: req.user.id, eventName: "study_activity_completed", courseId: req.courseId, entityType: "study_guide", entityId: guide.id, metadata: { activityType: "study_guide" } });
+            analyticsService?.trackEventOnce({ userId: req.user.id, eventName: "onboarding_step_completed", courseId: req.courseId, metadata: { step: "study" }, dedupeKey: "step:study" });
             res.status(201).json(guide);
         })
     );
@@ -57,6 +61,8 @@ function createCourseAiRouter({
                     questionCount: req.body.questionCount
                 })
             );
+            analyticsService?.trackEvent({ userId: req.user.id, eventName: "quiz_generated", courseId: req.courseId, entityType: "quiz", entityId: quiz.id, metadata: { questionCount: quiz.quiz.questions.length } });
+            analyticsService?.trackEventOnce({ userId: req.user.id, eventName: "onboarding_step_completed", courseId: req.courseId, metadata: { step: "study" }, dedupeKey: "step:study" });
             res.status(201).json(quiz);
         })
     );
@@ -83,7 +89,8 @@ function createLegacyAiRouter({
     materialService,
     studyGuideService,
     quizGenerationService,
-    aiUsageGuard
+    aiUsageGuard,
+    analyticsService
 }) {
     const router = express.Router();
 
@@ -99,6 +106,8 @@ function createLegacyAiRouter({
                     materialIds: req.body.materialIds
                 })
             );
+            analyticsService?.trackEvent({ userId: req.user.id, eventName: "study_guide_generated", courseId: course.id, entityType: "study_guide", entityId: guide.id });
+            analyticsService?.trackEvent({ userId: req.user.id, eventName: "study_activity_completed", courseId: course.id, entityType: "study_guide", entityId: guide.id, metadata: { activityType: "study_guide" } });
             res.json({
                 success: true,
                 studyGuide: guide.generatedContent,
@@ -120,6 +129,8 @@ function createLegacyAiRouter({
                     questionCount: req.body.questionCount
                 })
             );
+            analyticsService?.trackEvent({ userId: req.user.id, eventName: "quiz_generated", courseId: course.id, entityType: "quiz", entityId: generated.id, metadata: { questionCount: generated.quiz.questions.length } });
+            analyticsService?.trackEventOnce({ userId: req.user.id, eventName: "onboarding_step_completed", courseId: course.id, metadata: { step: "study" }, dedupeKey: "step:study" });
             res.json({
                 success: true,
                 quiz: generated.quiz,

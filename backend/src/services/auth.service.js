@@ -31,7 +31,7 @@ function credentials(body, { includeName = false, requireStrongPassword = false 
     return { name, email, password };
 }
 
-function createAuthService({ usersRepository, passwordRounds = 12 }) {
+function createAuthService({ usersRepository, passwordRounds = 12, analyticsService }) {
     return {
         async register(body) {
             const value = credentials(body, {
@@ -48,11 +48,17 @@ function createAuthService({ usersRepository, passwordRounds = 12 }) {
 
             const passwordHash = await bcrypt.hash(value.password, passwordRounds);
             try {
-                return publicUser(usersRepository.create({
+                const user = publicUser(usersRepository.create({
                     name: value.name,
                     email: value.email,
                     passwordHash
                 }));
+                analyticsService?.trackEventOnce({
+                    userId: user.id,
+                    eventName: "signup",
+                    dedupeKey: "signup"
+                });
+                return user;
             } catch (error) {
                 if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
                     throw new AppError({

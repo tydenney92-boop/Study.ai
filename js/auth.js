@@ -60,6 +60,22 @@ if (typeof window !== "undefined" && typeof document !== "undefined") (function(
         window.location.replace(loginUrl);
     }
 
+    function viewportClass() {
+        if (window.innerWidth <= 480) return "mobile";
+        if (window.innerWidth <= 1024) return "tablet";
+        return "desktop";
+    }
+
+    function track(eventName, context = {}) {
+        return StudyAI.api.post("/api/analytics/events", {
+            eventName,
+            ...context,
+            viewportClass: viewportClass()
+        }).catch(() => null);
+    }
+
+    window.StudyAI.analytics = { track, viewportClass };
+
     window.addEventListener("studyai:unauthenticated", redirectToLogin);
 
     async function loadCurrentUser() {
@@ -259,6 +275,62 @@ if (typeof window !== "undefined" && typeof document !== "undefined") (function(
     }
 
     if (sidebarBottom) {
+        const feedbackButton = document.createElement("button");
+        feedbackButton.type = "button";
+        feedbackButton.className = "feedback-button";
+        feedbackButton.textContent = "Send Feedback";
+        sidebarBottom.appendChild(feedbackButton);
+
+        const feedbackModal = document.createElement("div");
+        feedbackModal.className = "app-modal-overlay";
+        feedbackModal.id = "feedback-modal";
+        feedbackModal.innerHTML = `
+            <div class="app-modal feedback-modal" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
+                <div class="app-modal-header"><div><p class="eyebrow">PRODUCT FEEDBACK</p><h2 id="feedback-title">Send Feedback</h2></div><button type="button" class="icon-button" id="close-feedback" aria-label="Close feedback">×</button></div>
+                <form id="feedback-form" class="app-form">
+                    <label>Category<select id="feedback-category" required><option value="bug">Bug</option><option value="confusing">Confusing</option><option value="feature_request">Feature request</option><option value="other">Other</option></select></label>
+                    <label>Message<textarea id="feedback-message" rows="5" maxlength="2000" required placeholder="What happened, or what would make Study Signal better?"></textarea></label>
+                    <p class="feedback-privacy-note">Includes only this page and a broad screen-size category. Course files and study content are never attached.</p>
+                    <p class="form-error" id="feedback-error"></p>
+                    <div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-feedback">Cancel</button><button type="submit" class="primary-button" id="submit-feedback">Send Feedback</button></div>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(feedbackModal);
+        const closeFeedback = () => feedbackModal.classList.remove("open");
+        feedbackButton.addEventListener("click", () => {
+            feedbackModal.classList.add("open");
+        });
+        feedbackModal.querySelector("#close-feedback").addEventListener("click", closeFeedback);
+        feedbackModal.querySelector("#cancel-feedback").addEventListener("click", closeFeedback);
+        feedbackModal.addEventListener("studyai:modal-close", closeFeedback);
+        feedbackModal.querySelector("#feedback-form").addEventListener("submit", async event => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const submit = feedbackModal.querySelector("#submit-feedback");
+            const error = feedbackModal.querySelector("#feedback-error");
+            submit.disabled = true;
+            submit.textContent = "Sending…";
+            error.textContent = "";
+            try {
+                await StudyAI.api.post("/api/feedback", {
+                    category: feedbackModal.querySelector("#feedback-category").value,
+                    message: feedbackModal.querySelector("#feedback-message").value,
+                    pageName: window.location.pathname.split("/").pop() || "index.html",
+                    viewportClass: viewportClass()
+                });
+                form.reset();
+                closeFeedback();
+                StudyAI.ui.notify("Thanks — your feedback was sent.", { type: "success" });
+            } catch (requestError) {
+                error.textContent = requestError.message;
+            } finally {
+                submit.disabled = false;
+                submit.textContent = "Send Feedback";
+            }
+        });
+        window.setTimeout(() => StudyAI.ui?.setupModal(feedbackModal), 0);
+
         const button = document.createElement("button");
         button.type = "button";
         button.className = "logout-button";

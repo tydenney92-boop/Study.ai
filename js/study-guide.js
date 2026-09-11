@@ -41,6 +41,7 @@ const loadingBox =
 
 const courseId =
     StudyAI.courseContext.getCourseId();
+StudyAI.analytics.track("study_activity_launched", { courseId, activityType: "study_guide" });
 
 const materialId =
     StudyAI.courseContext.getMaterialId();

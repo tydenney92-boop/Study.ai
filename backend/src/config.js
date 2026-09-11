@@ -39,6 +39,9 @@ const config = {
         process.env.UPLOAD_DIRECTORY ||
         (isProduction ? null : path.join(backendRoot, "uploads")),
     storageDriver: process.env.STORAGE_DRIVER || (isProduction ? null : "local"),
+    internalAnalyticsEnabled:
+        !isProduction && booleanEnvironment("INTERNAL_ANALYTICS_ENABLED", false),
+    appVersion: process.env.APP_VERSION || process.env.RAILWAY_GIT_COMMIT_SHA || null,
     objectStorageBucket: process.env.OBJECT_STORAGE_BUCKET || null,
     objectStorageRegion: process.env.OBJECT_STORAGE_REGION || null,
     objectStorageEndpoint: process.env.OBJECT_STORAGE_ENDPOINT || null,

@@ -8,7 +8,9 @@ const FRONTEND_PAGES = [
     "today.html"
 ];
 
-function registerFrontendRoutes(app, { frontendDirectory }) {
+function registerFrontendRoutes(app, {
+    frontendDirectory, internalAnalyticsEnabled = false, requireAuthentication
+}) {
     const staticOptions = {
         dotfiles: "deny",
         etag: true,
@@ -29,6 +31,13 @@ function registerFrontendRoutes(app, { frontendDirectory }) {
     app.get("/", sendPage("index.html"));
     for (const page of FRONTEND_PAGES) {
         app.get(`/${page}`, sendPage(page));
+    }
+    if (internalAnalyticsEnabled) {
+        app.get(
+            "/internal-analytics.html",
+            requireAuthentication,
+            sendPage("internal-analytics.html")
+        );
     }
 }
 

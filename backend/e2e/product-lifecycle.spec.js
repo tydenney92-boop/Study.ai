@@ -164,6 +164,30 @@ test("first-run onboarding reaches a completed Today workflow without trapping n
     await page.getByRole("link", { name: "Dashboard" }).click();
     await expect(page.locator("#onboarding-checklist")).toBeHidden();
     await expect(page.locator("#dashboard-getting-started")).toBeVisible();
+    await page.getByRole("button", { name: "Send Feedback" }).click();
+    const feedbackModal = page.locator("#feedback-modal");
+    await expect(feedbackModal).toHaveClass(/open/);
+    const feedbackLayout = await feedbackModal.locator("[role=dialog]").evaluate(dialog => {
+        const box = dialog.getBoundingClientRect();
+        return { left: box.left, right: box.right, width: innerWidth };
+    });
+    expect(feedbackLayout.left).toBeGreaterThanOrEqual(0);
+    expect(feedbackLayout.right).toBeLessThanOrEqual(feedbackLayout.width);
+    await page.locator("#feedback-category").selectOption("confusing");
+    await page.locator("#feedback-message").fill("The deadline review labels could be clearer.");
+    await page.getByRole("button", { name: "Send Feedback", exact: true }).last().click();
+    await expect(page.getByText("Thanks — your feedback was sent.")).toBeVisible();
+    const analyticsEvents = (await api(page, "GET", "/api/e2e/analytics-events")).body;
+    const eventNames = analyticsEvents.map(event => event.eventName);
+    for (const expected of [
+        "signup", "onboarding_started", "course_created", "syllabus_uploaded",
+        "syllabus_import_started", "syllabus_import_completed", "task_created",
+        "material_uploaded", "study_activity_launched", "quiz_generated",
+        "quiz_completed", "study_activity_completed", "today_opened",
+        "plan_generated", "onboarding_completed"
+    ]) expect(eventNames).toContain(expected);
+    expect(JSON.stringify(analyticsEvents)).not.toContain("elasticity-notes.txt");
+    expect(JSON.stringify(analyticsEvents)).not.toContain("Tax incidence");
     expect(errors).toEqual([]);
 });
 

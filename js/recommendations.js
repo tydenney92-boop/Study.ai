@@ -1,4 +1,5 @@
 const recommendationCourseId = StudyAI.courseContext.getCourseId();
+StudyAI.analytics.track("recommendations_opened", { courseId: recommendationCourseId });
 let examPlanData = null;
 
 if (!recommendationCourseId) StudyAI.courseContext.goToMyCourses("Choose a course before viewing study recommendations.");
@@ -116,6 +117,16 @@ function renderRecommendations(data) {
 
 document.querySelector("#toggle-exam-plan").addEventListener("click", () => document.querySelector("#exam-plan-form").hidden ? openExamPlan() : closeExamPlan());
 document.querySelector("#cancel-exam-plan").addEventListener("click", closeExamPlan);
+document.addEventListener("click", event => {
+    const link = event.target.closest(".recommendation-actions a, #recommendations-empty a");
+    if (!link) return;
+    const page = (link.getAttribute("href") || "").split("?")[0];
+    const actionType = {
+        "quiz.html": "quiz", "flashcards.html": "flashcards", "study-guide.html": "study_guide",
+        "notes.html": "ask_notes", "planner.html": "planner", "today.html": "today", "material.html": "material"
+    }[page] || "other";
+    StudyAI.analytics.track("recommendation_action_clicked", { courseId: recommendationCourseId, actionType });
+});
 document.querySelector("#exam-plan-form").addEventListener("submit", async event => {
     event.preventDefault();
     const form = event.currentTarget;

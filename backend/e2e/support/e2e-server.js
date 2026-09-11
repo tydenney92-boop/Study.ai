@@ -51,6 +51,17 @@ const app = createApp({
             fakeAiClient.reset();
             res.json(fakeAiClient.counts);
         });
+        testApp.get("/api/e2e/analytics-events", (req, res) => {
+            const events = testApp.locals.database.prepare(`
+                SELECT event_name AS eventName, course_id AS courseId,
+                       metadata_json AS metadataJson
+                FROM analytics_events WHERE user_id = ? ORDER BY id
+            `).all(req.user.id).map(event => ({
+                ...event,
+                metadata: JSON.parse(event.metadataJson)
+            }));
+            res.json(events);
+        });
     }
 });
 

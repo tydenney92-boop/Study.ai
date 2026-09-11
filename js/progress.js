@@ -1,4 +1,5 @@
 const progressCourseId = StudyAI.courseContext.getCourseId();
+StudyAI.analytics.track("progress_opened", { courseId: progressCourseId });
 
 function dateLabel(value) {
     if (!value) return "No activity yet";

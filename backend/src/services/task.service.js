@@ -16,7 +16,7 @@ function optionalId(value, field) {
     if (value === null || value === "") return null;
     return positiveInteger(value, field);
 }
-function createTaskService({ coursesService, unitsRepository, materialsRepository, tasksRepository }) {
+function createTaskService({ coursesService, unitsRepository, materialsRepository, tasksRepository, analyticsService }) {
     function validate(courseId, userId, input, current = {}) {
         const task = { ...current };
         if (input.title !== undefined || !current.id) task.title = stringField(input, "title", { maxLength: 200 });
@@ -60,8 +60,8 @@ function createTaskService({ coursesService, unitsRepository, materialsRepositor
     return {
         list(userId, filters) { return tasksRepository.listOwned(userId, filters).map(decorate); },
         listCourse(courseId, userId, filters) { coursesService.requireOwned(courseId, userId); return this.list(userId, { ...filters, courseId }); },
-        create(courseId, userId, input) { coursesService.requireOwned(courseId, userId); if(["externalProvider","externalId","externalUpdatedAt"].some(key=>input[key]!==undefined))throw validationError("External task identity is managed by LMS imports."); return decorate(tasksRepository.createOwned(courseId, userId, validate(courseId, userId, input))); },
-        update(courseId, taskId, userId, input) { coursesService.requireOwned(courseId, userId); const current = tasksRepository.findOwned(taskId, courseId, userId); if (!current) throw notFound(); if(current.externalProvider&&["title","type","description","dueAt","startAt"].some(key=>input[key]!==undefined))throw validationError("Imported task details are managed by the LMS; only local completion can be changed."); return decorate(tasksRepository.updateOwned(taskId, courseId, userId, validate(courseId, userId, input, current))); },
+        create(courseId, userId, input) { coursesService.requireOwned(courseId, userId); if(["externalProvider","externalId","externalUpdatedAt"].some(key=>input[key]!==undefined))throw validationError("External task identity is managed by LMS imports."); const task=decorate(tasksRepository.createOwned(courseId,userId,validate(courseId,userId,input)));analyticsService?.trackEvent({userId,eventName:"task_created",courseId,entityType:"task",entityId:task.id,metadata:{taskType:task.type,source:"manual"}});return task; },
+        update(courseId, taskId, userId, input) { coursesService.requireOwned(courseId, userId); const current = tasksRepository.findOwned(taskId, courseId, userId); if (!current) throw notFound(); if(current.externalProvider&&["title","type","description","dueAt","startAt"].some(key=>input[key]!==undefined))throw validationError("Imported task details are managed by the LMS; only local completion can be changed."); const task=decorate(tasksRepository.updateOwned(taskId,courseId,userId,validate(courseId,userId,input,current)));if(!current.completedAt&&task.completed){analyticsService?.trackEventOnce({userId,eventName:"task_completed",courseId,entityType:"task",entityId:task.id,metadata:{taskType:task.type,source:task.externalProvider?"lms":task.scheduleSourceMaterialId?"syllabus":"manual"},dedupeKey:`task:${task.id}`})}return task; },
         delete(courseId, taskId, userId) { coursesService.requireOwned(courseId, userId); if (!tasksRepository.deleteOwned(taskId, courseId, userId)) throw notFound(); return { deleted: true, id: taskId }; }
     };
 }

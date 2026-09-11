@@ -1,5 +1,7 @@
 const notesContext = StudyAI.courseContext;
 const notesCourseId = notesContext.getCourseId();
+StudyAI.analytics.track("ask_notes_opened", { courseId: notesCourseId });
+StudyAI.analytics.track("study_activity_launched", { courseId: notesCourseId, activityType: "ask_notes" });
 const notesMaterialId = notesContext.getMaterialId();
 const notesBackLink = document.querySelector("#notes-back-link");
 const chatInput = document.querySelector("#chat-input");

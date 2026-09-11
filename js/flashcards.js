@@ -1,5 +1,6 @@
 const flashcardContext = StudyAI.courseContext;
 const flashcardCourseId = flashcardContext.getCourseId();
+StudyAI.analytics.track("study_activity_launched", { courseId: flashcardCourseId, activityType: "flashcards" });
 const initialMaterialId = flashcardContext.getMaterialId();
 const reviewSection = document.querySelector("#flashcard-review");
 const emptySection = document.querySelector("#flashcard-empty");

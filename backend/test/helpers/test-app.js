@@ -31,6 +31,7 @@ function createTestApp(options = {}) {
         embeddingClient: options.embeddingClient,
         embeddingOutput: options.embeddingOutput,
         askNotesOutput: options.askNotesOutput,
+        analyticsOutput: options.analyticsOutput,
         retrievalBackend: options.retrievalBackend,
         aiUsageGuard: options.aiUsageGuard,
         lmsProviderRegistry: options.lmsProviderRegistry,

@@ -8,7 +8,8 @@ const STEP_DEFINITIONS = [
 ];
 
 function createOnboardingService({
-    onboardingRepository, coursesService, progressRepository, tasksRepository, quizzesRepository
+    onboardingRepository, coursesService, progressRepository, tasksRepository, quizzesRepository,
+    analyticsService
 }) {
     function status(userId) {
         const preferences = onboardingRepository.find(userId);
@@ -88,12 +89,33 @@ function createOnboardingService({
     return {
         status,
         update(userId, action) {
-            if (action === "dismiss_welcome") onboardingRepository.dismissWelcome(userId);
-            else if (action === "skip") onboardingRepository.skip(userId);
+            if (action === "dismiss_welcome") {
+                onboardingRepository.dismissWelcome(userId);
+                analyticsService?.trackEventOnce({ userId, eventName: "onboarding_started", dedupeKey: "started" });
+            } else if (action === "skip") {
+                onboardingRepository.skip(userId);
+                analyticsService?.trackEventOnce({ userId, eventName: "onboarding_skipped", dedupeKey: "skipped" });
+            }
             else if (action === "resume") onboardingRepository.resume(userId);
-            else if (action === "view_today") onboardingRepository.markTodayViewed(userId);
+            else if (action === "view_today") {
+                onboardingRepository.markTodayViewed(userId);
+                analyticsService?.trackEventOnce({
+                    userId,
+                    eventName: "onboarding_step_completed",
+                    metadata: { step: "today" },
+                    dedupeKey: "step:today"
+                });
+            }
             else return null;
-            return status(userId);
+            const result = status(userId);
+            if (result.completed) {
+                analyticsService?.trackEventOnce({
+                    userId,
+                    eventName: "onboarding_completed",
+                    dedupeKey: "completed"
+                });
+            }
+            return result;
         }
     };
 }

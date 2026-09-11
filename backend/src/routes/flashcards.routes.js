@@ -2,7 +2,7 @@ const express = require("express");
 const { asyncHandler } = require("../utils/async-handler");
 const { positiveInteger, requestObject } = require("../utils/validation");
 
-function createFlashcardsRouter({ flashcardService, flashcardGenerationService, aiUsageGuard }) {
+function createFlashcardsRouter({ flashcardService, flashcardGenerationService, aiUsageGuard, analyticsService }) {
     const router = express.Router({ mergeParams: true });
 
     router.use((req, res, next) => {
@@ -34,6 +34,8 @@ function createFlashcardsRouter({ flashcardService, flashcardGenerationService, 
                 cardCount: req.body.cardCount
             })
         );
+        analyticsService?.trackEvent({ userId: req.user.id, eventName: "flashcards_generated", courseId: req.courseId, metadata: { cardCount: cards.length } });
+        analyticsService?.trackEventOnce({ userId: req.user.id, eventName: "onboarding_step_completed", courseId: req.courseId, metadata: { step: "study" }, dedupeKey: "step:study" });
         res.status(201).json({ flashcards: cards });
     }));
 
@@ -54,9 +56,13 @@ function createFlashcardsRouter({ flashcardService, flashcardGenerationService, 
     router.post("/:flashcardId/reviews", (req, res) => {
         requestObject(req.body);
         const flashcardId = positiveInteger(req.params.flashcardId, "flashcardId");
-        res.status(201).json(flashcardService.review(
+        const review = flashcardService.review(
             flashcardId, req.courseId, req.user.id, req.body.outcome
-        ));
+        );
+        analyticsService?.trackEvent({ userId: req.user.id, eventName: "flashcards_reviewed", courseId: req.courseId, entityType: "flashcard", entityId: flashcardId, metadata: { outcome: req.body.outcome } });
+        analyticsService?.trackEvent({ userId: req.user.id, eventName: "study_activity_completed", courseId: req.courseId, entityType: "flashcard", entityId: flashcardId, metadata: { activityType: "flashcards" } });
+        analyticsService?.trackEventOnce({ userId: req.user.id, eventName: "onboarding_step_completed", courseId: req.courseId, metadata: { step: "study" }, dedupeKey: "step:study" });
+        res.status(201).json(review);
     });
 
     return router;

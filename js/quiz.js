@@ -76,6 +76,7 @@ let generatingQuiz = false;
 
 const courseId =
     StudyAI.courseContext.getCourseId();
+StudyAI.analytics.track("study_activity_launched", { courseId, activityType: "quiz" });
 
 const materialId =
     StudyAI.courseContext.getMaterialId();

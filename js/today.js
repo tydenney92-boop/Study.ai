@@ -1,4 +1,5 @@
 (function() {
+    StudyAI.analytics.track("today_opened");
     const budgetKey = "studySignal:today-minutes";
     const todayKey = () => {
         const date = new Date();

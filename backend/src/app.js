@@ -23,6 +23,8 @@ const { createTasksRepository } = require("./repositories/tasks.repository");
 const { createLmsRepository } = require("./repositories/lms.repository");
 const { createScheduleImportRepository } = require("./repositories/schedule-import.repository");
 const { createOnboardingRepository } = require("./repositories/onboarding.repository");
+const { createAnalyticsRepository } = require("./repositories/analytics.repository");
+const { createFeedbackRepository } = require("./repositories/feedback.repository");
 const { createAskNotesConversationsRepository } = require("./repositories/ask-notes-conversations.repository");
 const { createCourseService } = require("./services/course.service");
 const { createUnitService } = require("./services/unit.service");
@@ -45,6 +47,8 @@ const { createDailyPlanService } = require("./services/daily-plan.service");
 const { createLmsService } = require("./services/lms.service");
 const { createScheduleImportService } = require("./services/schedule-import.service");
 const { createOnboardingService } = require("./services/onboarding.service");
+const { createAnalyticsService } = require("./services/analytics.service");
+const { createFeedbackService } = require("./services/feedback.service");
 const { createCredentialVault } = require("./services/credential-vault");
 const { createProviderRegistry } = require("./services/lms/provider-registry");
 const { createExamScopeService } = require("./services/exam-scope.service");
@@ -82,6 +86,8 @@ const { createDailyPlanRouter } = require("./routes/daily-plan.routes");
 const { createLmsRouter } = require("./routes/lms.routes");
 const { createScheduleImportRouter } = require("./routes/schedule-import.routes");
 const { createOnboardingRouter } = require("./routes/onboarding.routes");
+const { createAnalyticsRouter, createInternalAnalyticsRouter } = require("./routes/analytics.routes");
+const { createFeedbackRouter } = require("./routes/feedback.routes");
 const { createStorageCleanupRouter } = require("./routes/storage-cleanup.routes");
 const {
     createCourseMaterialsRouter,
@@ -98,6 +104,9 @@ const config = {
     ...defaultConfig,
     ...(options.config || {})
 };
+const internalAnalyticsEnabled = Boolean(
+    config.internalAnalyticsEnabled && config.environment !== "production"
+);
 
 if (!config.sessionSecret) {
     throw new Error("SESSION_SECRET is required in production.");
@@ -191,7 +200,9 @@ const defaultRepositories = {
     tasks: createTasksRepository(db),
     lms: createLmsRepository(db),
     scheduleImports: createScheduleImportRepository(db),
-    onboarding: createOnboardingRepository(db)
+    onboarding: createOnboardingRepository(db),
+    analytics: createAnalyticsRepository(db),
+    feedback: createFeedbackRepository(db)
 };
 const repositories = {
     ...defaultRepositories,
@@ -211,12 +222,23 @@ const coursesService = createCourseService({
     storageCleanupRepository: repositories.storageCleanup,
     storageCleanupService
 });
+const analyticsService = createAnalyticsService({
+    repository: repositories.analytics,
+    feedbackRepository: repositories.feedback,
+    coursesService,
+    output: options.analyticsOutput || console
+});
+const feedbackService = createFeedbackService({
+    repository: repositories.feedback,
+    appVersion: config.appVersion
+});
 const onboardingService = createOnboardingService({
     onboardingRepository: repositories.onboarding,
     coursesService,
     progressRepository: repositories.progress,
     tasksRepository: repositories.tasks,
-    quizzesRepository: repositories.quizzes
+    quizzesRepository: repositories.quizzes,
+    analyticsService
 });
 const unitsService = createUnitService({
     coursesService,
@@ -349,7 +371,8 @@ const dailyPlanService = createDailyPlanService({
     tasksRepository: repositories.tasks,
     progressRepository: repositories.progress,
     recommendationsService,
-    clock: options.clock
+    clock: options.clock,
+    analyticsService
 });
 const examPlanService = createExamPlanService({
     coursesService,
@@ -361,7 +384,8 @@ const taskService = createTaskService({
     coursesService,
     unitsRepository: repositories.units,
     materialsRepository: repositories.materials,
-    tasksRepository: repositories.tasks
+    tasksRepository: repositories.tasks,
+    analyticsService
 });
 const lmsService = createLmsService({
     repository: repositories.lms,
@@ -377,7 +401,8 @@ const scheduleImportService = createScheduleImportService({
 });
 const authService = createAuthService({
     usersRepository: repositories.users,
-    passwordRounds: config.passwordRounds
+    passwordRounds: config.passwordRounds,
+    analyticsService
 });
 const requireAuthentication = createRequireAuthentication({
     usersRepository: repositories.users
@@ -446,7 +471,9 @@ app.use("/api/auth", createAuthRouter({
 
 if (config.serveFrontend) {
     registerFrontendRoutes(app, {
-        frontendDirectory: config.frontendDirectory
+        frontendDirectory: config.frontendDirectory,
+        internalAnalyticsEnabled,
+        requireAuthentication
     });
 }
 
@@ -472,14 +499,15 @@ app.use(
 
 app.use(
     "/api/courses/:courseId/materials",
-    createCourseMaterialsRouter({ materialService, upload })
+    createCourseMaterialsRouter({ materialService, upload, analyticsService })
 );
 app.use(
     "/api/courses/:courseId/flashcards",
     createFlashcardsRouter({
         flashcardService,
         flashcardGenerationService,
-        aiUsageGuard
+        aiUsageGuard,
+        analyticsService
     })
 );
 app.use(
@@ -505,11 +533,20 @@ app.use(
 app.use("/api/tasks", createTasksRouter({ taskService }));
 app.use("/api/daily-plan", createDailyPlanRouter({ dailyPlanService }));
 app.use("/api/onboarding", createOnboardingRouter({ onboardingService }));
+app.use("/api/analytics", createAnalyticsRouter({ analyticsService }));
+app.use("/api/feedback", createFeedbackRouter({ feedbackService }));
+app.use("/api/internal/analytics", createInternalAnalyticsRouter({
+    analyticsService,
+    enabled: internalAnalyticsEnabled
+}));
 app.use("/api/lms", createLmsRouter({ service: lmsService, config, fetchImpl: options.lmsFetch }));
-app.use("/api/courses/:courseId/schedule-import", createScheduleImportRouter({ service: scheduleImportService }));
+app.use("/api/courses/:courseId/schedule-import", createScheduleImportRouter({
+    service: scheduleImportService,
+    analyticsService
+}));
 app.use(
     "/api/courses",
-    createCoursesRouter({ coursesService })
+    createCoursesRouter({ coursesService, analyticsService })
 );
 app.use(
     "/api/courses/:courseId",
@@ -517,7 +554,8 @@ app.use(
         studyGuideService,
         quizGenerationService,
         generatedContentService,
-        aiUsageGuard
+        aiUsageGuard,
+        analyticsService
     })
 );
 app.use(
@@ -526,7 +564,7 @@ app.use(
 );
 app.use(
     "/api/quizzes/:quizId/attempts",
-    createQuizAttemptsRouter({ quizAttemptService })
+    createQuizAttemptsRouter({ quizAttemptService, analyticsService })
 );
 app.use("/api/progress", createProgressRouter({ progressService }));
 app.use(
@@ -539,7 +577,8 @@ app.use(
         materialService,
         studyGuideService,
         quizGenerationService,
-        aiUsageGuard
+        aiUsageGuard,
+        analyticsService
     })
 );
 
