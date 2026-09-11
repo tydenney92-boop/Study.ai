@@ -95,6 +95,13 @@ if (typeof window !== "undefined" && typeof document !== "undefined") (function(
 
     const sidebarBottom = document.querySelector(".sidebar-bottom");
     const sidebarNavigation = document.querySelector(".sidebar-nav");
+    if (sidebarNavigation && !sidebarNavigation.querySelector("[href='today.html']")) {
+        const todayLink = document.createElement("a");
+        todayLink.href = "today.html";
+        todayLink.className = "nav-item";
+        todayLink.innerHTML = "<span>☀</span>Today";
+        sidebarNavigation.prepend(todayLink);
+    }
     if (sidebarNavigation && !sidebarNavigation.querySelector("[href='planner.html']")) {
         const plannerLink = document.createElement("a");
         plannerLink.href = "planner.html";
@@ -130,18 +137,20 @@ if (typeof window !== "undefined" && typeof document !== "undefined") (function(
         const isCourses = page === "index.html" && window.location.hash === "#courses";
         const isProgress = page === "progress.html" && !currentCourseId;
         const isPlanner = page === "planner.html";
+        const isToday = page === "today.html";
         document.querySelectorAll(".sidebar .nav-item, .sidebar-course-link")
             .forEach(link => link.classList.remove("active"));
         sidebarNavigation.querySelectorAll(".nav-item").forEach(link => {
             const href = link.getAttribute("href") || "";
             const active =
+                (href === "today.html" && isToday) ||
                 (href === "index.html" && isDashboard) ||
                 (href === "index.html#courses" && isCourses) ||
                 (href === "planner.html" && isPlanner) ||
                 (href === "progress.html" && isProgress);
             link.classList.toggle("active", active);
         });
-        if (!isDashboard && !isCourses && !isProgress && !isPlanner && currentCourseId) {
+        if (!isToday && !isDashboard && !isCourses && !isProgress && !isPlanner && currentCourseId) {
             document.querySelectorAll(".sidebar-course-link").forEach(link => {
                 const target = new URL(link.href, window.location.href);
                 link.classList.toggle(
