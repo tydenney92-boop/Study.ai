@@ -392,7 +392,8 @@ const scheduleImportService = createScheduleImportService({
         aiClient,
         output: options.scheduleAiOutput || console
     }),
-    aiUsageGuard
+    aiUsageGuard,
+    output: options.scheduleAiOutput || console
 });
 const authService = createAuthService({
     usersRepository: repositories.users,

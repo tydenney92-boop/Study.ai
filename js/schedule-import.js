@@ -53,7 +53,10 @@
             if (!items.length) return; const group = document.createElement("section"); group.className = "schedule-confidence-group"; const title = document.createElement("h3"); title.textContent = heading; group.appendChild(title); items.forEach(item => group.appendChild(row(item))); candidatesBox.appendChild(group);
         });
         const clear = preview.summary.confirmed || 0, review = preview.summary.ambiguous || 0;
-        $("#schedule-summary").textContent = preview.candidates.length ? `Found ${clear} clear deadline${clear === 1 ? "" : "s"} and ${review} item${review === 1 ? "" : "s"} that need review.` : "No likely assignment or exam deadlines were found. Try a clearer screenshot or a page containing the schedule table.";
+        const manualFallback = $("#schedule-manual-fallback");
+        manualFallback.hidden = preview.candidates.length > 0;
+        manualFallback.href = `planner.html?new=1&type=assignment&courseId=${courseId()}`;
+        $("#schedule-summary").textContent = preview.candidates.length ? `Found ${clear} clear deadline${clear === 1 ? "" : "s"} and ${review} item${review === 1 ? "" : "s"} that need review.` : "We could read the file, but no deadlines were recognized.";
         $("#schedule-confirm-copy").hidden = true; $("#import-schedule-events").dataset.confirmed = "false"; $("#import-schedule-events").textContent = "Import Selected Events";
     }
     async function find() {

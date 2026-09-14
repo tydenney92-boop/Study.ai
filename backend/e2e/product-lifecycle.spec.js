@@ -425,6 +425,39 @@ test("schedule import uploads directly, reviews, edits, excludes, confirms, and 
     expect(browserErrors).toEqual([]);
 });
 
+test("structured PDF schedule imports deterministically through preview and Calendar", async ({ page }) => {
+    const browserErrors = [];
+    page.on("pageerror", error => browserErrors.push(error.message));
+    page.on("console", message => {
+        if (message.type() === "error") browserErrors.push(message.text());
+    });
+    await signup(page, "StructuredPdf");
+    const courseId = await createCourse(page, { name: "Structured Schedule", code: "PDF 101", semester: "Fall 2026" });
+    await page.goto(`/course.html?courseId=${courseId}`);
+    await page.getByRole("button", { name: "Import Assignment Schedule" }).click();
+    const { textPdf } = require("../test/helpers/pdf-fixtures");
+    const buffer = textPdf(["EVENT", "Title: Homework 1", "Type: Assignment", "Date: 2026-09-08", "Time: None", "", "EVENT", "Title: Exam 1", "Type: Exam", "Date: 2026-09-29", "Time: 09:30"]);
+    await page.locator("#schedule-file").setInputFiles({ name: "structured-events.pdf", mimeType: "application/pdf", buffer });
+    await page.getByRole("button", { name: "Find Deadlines" }).click();
+    await expect(page.locator(".schedule-candidate")).toHaveCount(2);
+    const homework = page.locator(".schedule-candidate", { hasText: "Homework 1" });
+    const exam = page.locator(".schedule-candidate", { hasText: "Exam 1" });
+    await expect(homework.locator(".candidate-date")).toHaveValue("2026-09-08");
+    await expect(homework.locator(".candidate-time")).toHaveValue("");
+    await expect(exam.locator(".candidate-type")).toHaveValue("exam");
+    await expect(exam.locator(".candidate-time")).toHaveValue("09:30");
+    expect((await api(page, "GET", "/api/tasks")).body).toHaveLength(0);
+    await page.getByRole("button", { name: "Import Selected Events" }).click();
+    await page.getByRole("button", { name: "Confirm Import" }).click();
+    await page.goto(`/planner.html?courseId=${courseId}`);
+    await expect(page.getByText("Homework 1", { exact: true })).toBeVisible();
+    await expect(page.getByText("Exam 1", { exact: true })).toBeVisible();
+    await page.getByRole("tab", { name: "Calendar" }).click();
+    await page.locator('[data-date="2026-09-29"]').click();
+    await expect(page.locator(".calendar-day-panel")).toContainText("Exam 1");
+    expect(browserErrors).toEqual([]);
+});
+
 test("long schedule review remains scrollable and contained at every target width", async ({ page }) => {
     const browserErrors = [];
     page.on("pageerror", error => browserErrors.push(error.message));

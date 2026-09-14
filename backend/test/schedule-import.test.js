@@ -74,7 +74,7 @@ test("schedule reconciliation never overwrites a manual Planner task", async t =
     assert.equal(ctx.database.prepare("SELECT count(*) AS count FROM course_tasks").get().count, 2);
 });
 
-test("deterministic success avoids AI while ambiguous extraction uses the mocked fallback", async t => {
+test("structured deterministic success avoids AI while date-rich zero-candidate text uses fallback", async t => {
     let calls = 0;
     const ctx = createTestApp({ aiClient: {
         provider: "fake",
@@ -82,13 +82,15 @@ test("deterministic success avoids AI while ambiguous extraction uses the mocked
     } });
     t.after(ctx.cleanup);
     ctx.database.prepare("UPDATE courses SET semester='Fall 2026' WHERE id=1").run();
-    const clear = insertMaterial(ctx.database, { storedFilename: "clear-schedule.txt", extractedText: "Homework 1 due Sep 12\nQuiz 1 due Sep 18" });
+    const clear = insertMaterial(ctx.database, { storedFilename: "clear-schedule.txt", extractedText: "EVENT\nTitle: Homework 1\nType: Assignment\nDate: 2026-09-08\nTime: None\n\nEVENT\nTitle: Exam 1\nType: Exam\nDate: 2026-09-29\nTime: 09:30" });
     let response = await authenticatedRequest(ctx.app).post("/api/courses/1/schedule-import/preview").send({ materialId: clear }).expect(200);
     assert.equal(response.body.aiFallback, "not_needed");
     assert.equal(calls, 0);
-    const ambiguous = insertMaterial(ctx.database, { storedFilename: "ambiguous-schedule.txt", extractedText: "Final paper due during finals week." });
+    assert.deepEqual(response.body.candidates.map(candidate => candidate.parserStrategy), ["structured_event_blocks", "structured_event_blocks"]);
+    const ambiguous = insertMaterial(ctx.database, { storedFilename: "ambiguous-schedule.txt", extractedText: "Important schedule dates\n2026-09-08\n2026-09-29" });
     response = await authenticatedRequest(ctx.app).post("/api/courses/1/schedule-import/preview").send({ materialId: ambiguous }).expect(200);
     assert.equal(response.body.aiFallback, "used");
     assert.equal(calls, 1);
-    assert.equal(response.body.candidates[0].selected, false);
+    assert.equal(response.body.diagnostics.dateTokenCount, 2);
+    assert.equal(response.body.candidates.length, 0);
 });

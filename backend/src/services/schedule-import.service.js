@@ -3,7 +3,7 @@ const { positiveInteger, validationError } = require("../utils/validation");
 const { parseSchedule, parseDate } = require("./schedule-parser");
 const { TYPES } = require("./task.service");
 
-function createScheduleImportService({ coursesService, materialsRepository, repository, aiExtractor, aiUsageGuard }) {
+function createScheduleImportService({ coursesService, materialsRepository, repository, aiExtractor, aiUsageGuard, output = console }) {
     function source(courseId, userId, materialId) {
         coursesService.requireOwned(courseId, userId);
         const material = materialsRepository.findOwned(positiveInteger(materialId, "materialId"), courseId, userId);
@@ -19,6 +19,7 @@ function createScheduleImportService({ coursesService, materialsRepository, repo
         const material = source(courseId, userId, materialId);
         const result = parseSchedule(material.extractedText, { semester: course.semester });
         let aiFallback = "not_needed";
+        let aiCandidateCount = 0;
         if (aiExtractor?.shouldUseAi(result)) {
             const operation = () => aiExtractor.extract(material.extractedText, { semester: course.semester });
             let ai;
@@ -28,6 +29,7 @@ function createScheduleImportService({ coursesService, materialsRepository, repo
                 ai = { status: "unavailable", candidates: [] };
             }
             aiFallback = ai.status;
+            aiCandidateCount = ai.candidates.length;
             const keys = new Set(result.candidates.map(candidate => candidate.key));
             for (const candidate of ai.candidates) {
                 if (!keys.has(candidate.key)) { keys.add(candidate.key); result.candidates.push(candidate); }
@@ -51,6 +53,16 @@ function createScheduleImportService({ coursesService, materialsRepository, repo
             alreadyImported: result.candidates.filter(candidate => candidate.importState === "already_imported").length,
             potentiallyChanged: result.candidates.filter(candidate => candidate.importState === "potentially_changed").length
         };
+        result.diagnostics = {
+            ...result.diagnostics,
+            aiFallbackRan: aiFallback !== "not_needed",
+            aiFallbackStatus: aiFallback,
+            aiCandidateCount,
+            candidatesAfterFiltering: result.candidates.length
+        };
+        if (result.candidates.length === 0) {
+            output.log(JSON.stringify({ level: "info", event: "schedule_import_no_candidates", ...result.diagnostics }));
+        }
         return { material: { id: material.id, displayName: material.displayName, materialRole: material.materialRole, materialType: material.materialType }, aiFallback, ...result };
     }
 

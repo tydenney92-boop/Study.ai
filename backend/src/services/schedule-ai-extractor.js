@@ -6,17 +6,20 @@ const {
     SUPPRESSED_CONTEXT,
     identityKey,
     isReview,
+    normalizeSource,
+    parseDate,
+    semesterYear,
     typeFor
 } = require("./schedule-parser");
 
 const TYPES = new Set(["assignment", "quiz", "exam", "reading", "project", "paper", "other"]);
-const DATE_SIGNAL = /\b(?:due|deadline|exam|midterm|final|quiz|assignment|homework|problem set|project|paper|presentation|reading|lab|discussion|jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|\d{1,2}\/\d{1,2})\b/i;
+const DATE_SIGNAL = /\b(?:due|deadline|event|title|date|exam|midterm|final|quiz|assignment|homework|problem set|project|paper|presentation|reading|lab|discussion|20\d{2}[-/]\d{1,2}[-/]\d{1,2}|jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|\d{1,2}\/\d{1,2})\b/i;
 const MAX_SOURCE_CHARACTERS = 12000;
 const MAX_EVENTS = 40;
-const EXPLICIT_DATE = /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+\d{1,2}\b|\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/i;
+const EXPLICIT_DATE = /\b20\d{2}[-/]\d{1,2}[-/]\d{1,2}\b|\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+\d{1,2}\b|\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/i;
 
 function comparable(value) {
-    return String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
+    return normalizeSource(value).replace(/\s+/g, " ").trim().toLowerCase();
 }
 
 function boundedScheduleText(text) {
@@ -33,11 +36,14 @@ function boundedScheduleText(text) {
 }
 
 function shouldUseAi(result) {
-    return result.summary.confirmed < 2 ||
-        (result.summary.ambiguous > 0 && result.summary.ambiguous >= result.summary.confirmed);
+    if (result.summary.confirmed === 0) return true;
+    if (result.summary.highConfidence === 0) return true;
+    if (result.diagnostics?.dateTokenCount >= 2 && result.diagnostics.candidatesAfterFiltering === 0) return true;
+    if (result.diagnostics?.scheduleLike && result.summary.confirmed === 0) return true;
+    return result.summary.ambiguous > 0 && result.summary.ambiguous >= result.summary.confirmed;
 }
 
-function validateAiEvents(response, sourceText) {
+function validateAiEvents(response, sourceText, { semester = "" } = {}) {
     const payload = parseJsonResponse(response);
     if (!payload || !Array.isArray(payload.events) || payload.events.length > MAX_EVENTS) {
         throw new Error("Schedule extraction returned an invalid event list.");
@@ -59,6 +65,8 @@ function validateAiEvents(response, sourceText) {
             if (!parts) continue;
             const date = new Date(Date.UTC(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3])));
             if (date.getUTCFullYear() !== Number(parts[1]) || date.getUTCMonth() + 1 !== Number(parts[2]) || date.getUTCDate() !== Number(parts[3])) continue;
+            const supportedDate = parseDate(event.sourceText, semesterYear(semester));
+            if (!supportedDate || supportedDate.date !== dueDate) continue;
         }
         if (dueTime && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(dueTime)) continue;
         const review = isReview(event.title);
@@ -95,7 +103,7 @@ function createScheduleAiExtractor({ aiClient, output = console }) {
                     workflow: "schedule_extraction",
                     tier: "fast"
                 });
-                return { status: "used", candidates: validateAiEvents(response, sourceText) };
+                return { status: "used", candidates: validateAiEvents(response, sourceText, { semester }) };
             } catch (error) {
                 output.log(JSON.stringify({
                     level: "warn",

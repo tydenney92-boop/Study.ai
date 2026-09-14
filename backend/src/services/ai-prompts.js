@@ -183,6 +183,12 @@ explicitly supported by the source. Never create tasks or invent dates, titles, 
 courses, or evidence. Office hours, class meetings, contact details, policies, room
 numbers, and textbook dates are not coursework. Exam review is not an exam.
 
+The input may be a machine-readable EVENT list, labeled fields, a delimited table,
+OCR text from a screenshot, a calendar export, or syllabus prose. Do not require a
+weekday, lecture number, syllabus heading, homework column, or nearby topic text.
+Treat explicit validated Type fields as authoritative and accept evidence spanning
+multiple lines.
+
 The course semester is ${semester || "unknown"}. Infer a missing year only when that
 semester supplies an unambiguous year. Use null when a date cannot be resolved.
 Return no more than 40 events and ONLY valid JSON with this schema:
