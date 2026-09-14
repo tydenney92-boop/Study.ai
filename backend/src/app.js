@@ -44,6 +44,7 @@ const { createTaskService } = require("./services/task.service");
 const { createDailyPlanService } = require("./services/daily-plan.service");
 const { createLmsService } = require("./services/lms.service");
 const { createScheduleImportService } = require("./services/schedule-import.service");
+const { createScheduleAiExtractor } = require("./services/schedule-ai-extractor");
 const { createOnboardingService } = require("./services/onboarding.service");
 const { createCredentialVault } = require("./services/credential-vault");
 const { createProviderRegistry } = require("./services/lms/provider-registry");
@@ -386,7 +387,12 @@ app.locals.lmsService = lmsService;
 const scheduleImportService = createScheduleImportService({
     coursesService,
     materialsRepository: repositories.materials,
-    repository: repositories.scheduleImports
+    repository: repositories.scheduleImports,
+    aiExtractor: createScheduleAiExtractor({
+        aiClient,
+        output: options.scheduleAiOutput || console
+    }),
+    aiUsageGuard
 });
 const authService = createAuthService({
     usersRepository: repositories.users,
@@ -524,7 +530,11 @@ app.use("/api/lms", createLmsRouter({
     oauthClient: canvasOAuthClient,
     clock: options.lmsClock
 }));
-app.use("/api/courses/:courseId/schedule-import", createScheduleImportRouter({ service: scheduleImportService }));
+app.use("/api/courses/:courseId/schedule-import", createScheduleImportRouter({
+    service: scheduleImportService,
+    materialService,
+    upload
+}));
 app.use(
     "/api/courses",
     createCoursesRouter({ coursesService })

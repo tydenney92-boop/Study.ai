@@ -361,57 +361,17 @@ test("interactive calendar remains contained and usable across desktop and mobil
     expect(errors).toEqual([]);
 });
 
-test("fake Canvas OAuth connects, maps, syncs, and updates without duplicates", async ({ page }) => {
-    const browserErrors = [];
-    page.on("pageerror", error => browserErrors.push(error.message));
-    page.on("console", message => {
-        if (message.type() === "error") browserErrors.push(message.text());
-    });
-    await signup(page, "CanvasImport");
-    const courseId = await createCourse(page, { name: "Existing Economics", code: "ECON 388", semester: "Fall 2026" });
+test("Canvas connection UI is dormant and schedule import is the visible Planner path", async ({ page }) => {
+    await signup(page, "SchedulePath");
+    await createCourse(page, { name: "Existing Economics", code: "ECON 388", semester: "Fall 2026" });
     await page.goto("/planner.html");
-    await page.getByRole("button", { name: "Import from LMS" }).click();
-    await page.getByRole("link", { name: "Connect Canvas" }).click();
-    await expect(page.getByRole("heading", { name: "Fake Canvas authorization" })).toBeVisible();
-    await page.getByRole("button", { name: "Authorize Study Signal" }).click();
-    await expect(page).toHaveURL(/planner\.html$/);
-    await expect(page.getByRole("heading", { name: "Connected Learning Platforms" })).toBeVisible();
-    await expect(page.getByText("Connected", { exact: true })).toBeVisible();
-    const mapping = page.locator(".lms-mapping-row select");
-    await mapping.selectOption(String(courseId));
-    await page.getByRole("button", { name: "Sync Now" }).click();
-    await expect(page.locator("#lms-sync-summary")).toContainText("Canvas synced");
-    await expect(page.locator("#lms-sync-summary")).toContainText("1 imported");
-    await page.getByRole("button", { name: "Close" }).click();
-    await expect(page.getByText("Canvas Problem Set")).toBeVisible();
-    await expect(page.locator(".source-badge", { hasText: "Canvas" })).toBeVisible();
-    const external = page.getByRole("link", { name: "Open in Canvas" }).first();
-    await expect(external).toHaveAttribute("href", "https://canvas.test/assignments/1");
-    await page.setViewportSize({ width: 390, height: 700 });
-    await page.getByRole("button", { name: "Import from LMS" }).click();
-    const mobileLayout = await page.locator("#lms-modal .planner-modal").evaluate(element => ({
-        left: element.getBoundingClientRect().left,
-        right: element.getBoundingClientRect().right,
-        viewport: document.documentElement.clientWidth
-    }));
-    expect(mobileLayout.left).toBeGreaterThanOrEqual(0);
-    expect(mobileLayout.right).toBeLessThanOrEqual(mobileLayout.viewport);
-    await Promise.all([
-        page.waitForResponse(response => response.url().includes(`/api/lms/`) && response.url().endsWith("/sync") && response.request().method() === "POST"),
-        page.getByRole("button", { name: "Sync Now" }).click()
-    ]);
-    await expect(page.locator("#lms-sync-summary")).toContainText("1 updated");
-    await page.getByRole("button", { name: "Close" }).click();
-    await expect(page.getByText("Canvas Problem Set")).toHaveCount(1);
-    const imported = await page.request.get("/api/tasks").then(response => response.json());
-    expect(imported.filter(task => task.externalId === "canvas-assignment-1")).toHaveLength(1);
-    expect(imported[0].dueAt).toBe("2026-10-03T05:59:00.000Z");
-    expect(imported[0].externalStatus).toBe("submitted");
-    expect(imported[0].externalSubmissionType).toBe("online_upload");
-    expect(browserErrors).toEqual([]);
+    await expect(page.getByRole("button", { name: "Import Assignment Schedule" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Import from LMS" })).toHaveCount(0);
+    await expect(page.locator("#lms-modal")).toHaveCount(0);
+    expect(await page.locator('script[src*="planner-lms"]').count()).toBe(0);
 });
 
-test("syllabus schedule import reviews, edits, excludes, confirms, and opens exam study recommendations", async ({ page }) => {
+test("schedule import uploads directly, reviews, edits, excludes, confirms, and opens exam study recommendations", async ({ page }) => {
     const browserErrors = [];
     page.on("pageerror", error => browserErrors.push(error.message));
     page.on("console", message => {
@@ -419,38 +379,95 @@ test("syllabus schedule import reviews, edits, excludes, confirms, and opens exa
     });
     await signup(page, "ScheduleImport");
     const courseId = await createCourse(page, { name: "Schedule Economics", code: "ECON 389", semester: "Fall 2026" });
-    const materialId = await uploadTextMaterial(page, courseId, {
-        filename: "syllabus.txt",
-        content: "Homework 1 — September 12\nQuiz 1 — September 19\nMidterm 1 — October 10 at 7:00 PM\nFinal paper due during finals week."
-    });
-    await api(page, "PATCH", `/api/courses/${courseId}/materials/${materialId}`, { materialRole: "syllabus" });
     await page.goto(`/course.html?courseId=${courseId}`);
-    const importButton = page.getByRole("button", { name: "Import from Syllabus" });
+    const importButton = page.getByRole("button", { name: "Import Assignment Schedule" });
     await expect(importButton).toBeVisible();
     await expect(page.locator("#course-task-actions")).toBeVisible();
     await importButton.click();
-    await expect(page.locator("#upload-schedule-material")).toHaveAttribute("href", `materials.html?courseId=${courseId}&upload=1&role=syllabus`);
-    await page.locator("#schedule-material").selectOption(String(materialId));
+    const { PNG_FIXTURE } = require("../test/helpers/image-fixtures");
+    await page.locator("#schedule-file").setInputFiles({
+        name: "assignment-schedule.png",
+        mimeType: "image/png",
+        buffer: PNG_FIXTURE
+    });
     await page.getByRole("button", { name: "Find Deadlines" }).click();
     await expect(page.locator(".schedule-candidate")).toHaveCount(4);
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(page.locator("#schedule-import-modal .app-modal")).toBeVisible();
     await expect(page.locator(".schedule-candidate").first()).toBeVisible();
+    const modalLayout = await page.locator("#schedule-import-modal .app-modal").evaluate(element => ({ left: element.getBoundingClientRect().left, right: element.getBoundingClientRect().right, viewport: document.documentElement.clientWidth }));
+    expect(modalLayout.left).toBeGreaterThanOrEqual(0);
+    expect(modalLayout.right).toBeLessThanOrEqual(modalLayout.viewport);
     const homework = page.locator(".schedule-candidate", { hasText: "Homework 1" });
+    await homework.locator(".candidate-title").fill("Homework 1 revised");
+    await homework.locator(".candidate-type").selectOption("project");
     await homework.locator(".candidate-date").fill("2026-09-13");
+    await homework.locator(".candidate-time").fill("13:30");
     const quiz = page.locator(".schedule-candidate", { hasText: "Quiz 1" });
     await quiz.locator("input[type=checkbox]").uncheck();
+    expect((await api(page, "GET", "/api/tasks")).body).toHaveLength(0);
     await page.getByRole("button", { name: "Import Selected Events" }).click();
-    await expect(page.locator("#schedule-confirm-copy")).toContainText("Create 2 Planner events?");
+    await expect(page.locator("#schedule-confirm-copy")).toContainText("Import 2 events?");
     await page.getByRole("button", { name: "Confirm Import" }).click();
     await page.goto(`/planner.html?courseId=${courseId}`);
-    await expect(page.getByText("Homework 1")).toBeVisible();
+    await expect(page.getByText("Homework 1 revised")).toBeVisible();
     await expect(page.getByText("Midterm 1")).toBeVisible();
-    await expect(page.locator(".source-badge", { hasText: "Syllabus" }).first()).toBeVisible();
+    await expect(page.locator(".source-badge", { hasText: "Schedule" }).first()).toBeVisible();
+    const tasks = (await api(page, "GET", "/api/tasks")).body;
+    const edited = tasks.find(task => task.title === "Homework 1 revised");
+    expect(edited.type).toBe("project");
+    expect(new Date(edited.dueAt).getHours()).toBe(13);
+    expect(new Date(edited.dueAt).getMinutes()).toBe(30);
     await page.getByRole("tab", { name: "Calendar" }).click();
     await page.locator('[data-date="2026-10-10"]').click();
     await page.locator(".calendar-day-panel").getByRole("link", { name: "What to Study" }).click();
     await expect(page).toHaveURL(new RegExp(`recommendations\\.html\\?courseId=${courseId}`));
+    expect(browserErrors).toEqual([]);
+});
+
+test("long schedule review remains scrollable and contained at every target width", async ({ page }) => {
+    const browserErrors = [];
+    page.on("pageerror", error => browserErrors.push(error.message));
+    page.on("console", message => {
+        if (message.type() === "error") browserErrors.push(message.text());
+    });
+    await signup(page, "ResponsiveSchedule");
+    const courseId = await createCourse(page, { name: "Responsive Schedule", code: "TEST 320", semester: "Fall 2026" });
+    await page.goto(`/course.html?courseId=${courseId}`);
+    await page.getByRole("button", { name: "Import Assignment Schedule" }).click();
+    const { JPEG_FIXTURE } = require("../test/helpers/image-fixtures");
+    await page.locator("#schedule-file").setInputFiles({ name: "long-schedule.jpg", mimeType: "image/jpeg", buffer: JPEG_FIXTURE });
+    await page.getByRole("button", { name: "Find Deadlines" }).click();
+    await expect(page.locator(".schedule-candidate")).toHaveCount(16);
+    for (const viewport of [{ width: 1440, height: 800 }, { width: 1024, height: 700 }, { width: 390, height: 700 }, { width: 320, height: 640 }]) {
+        await page.setViewportSize(viewport);
+        const layout = await page.locator("#schedule-import-modal").evaluate(element => {
+            const dialog = element.querySelector(".app-modal");
+            const content = element.querySelector(".schedule-import-content");
+            content.scrollTop = content.scrollHeight;
+            const actions = element.querySelector("#schedule-review-step .app-modal-actions").getBoundingClientRect();
+            const rect = dialog.getBoundingClientRect();
+            return {
+                documentWidth: document.documentElement.scrollWidth,
+                viewportWidth: document.documentElement.clientWidth,
+                dialogLeft: rect.left,
+                dialogRight: rect.right,
+                contentScrollable: content.scrollHeight > content.clientHeight,
+                reachedBottom: Math.abs(content.scrollHeight - content.clientHeight - content.scrollTop) <= 2,
+                actionsTop: actions.top,
+                actionsBottom: actions.bottom,
+                viewportHeight: window.innerHeight
+            };
+        });
+        expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
+        expect(layout.dialogLeft).toBeGreaterThanOrEqual(0);
+        expect(layout.dialogRight).toBeLessThanOrEqual(layout.viewportWidth);
+        expect(layout.contentScrollable).toBe(true);
+        expect(layout.reachedBottom).toBe(true);
+        expect(layout.actionsTop).toBeGreaterThanOrEqual(0);
+        expect(layout.actionsBottom).toBeLessThanOrEqual(layout.viewportHeight);
+        await expect(page.getByRole("button", { name: "Import Selected Events" })).toBeVisible();
+    }
     expect(browserErrors).toEqual([]);
 });
 
@@ -971,6 +988,7 @@ test("flashcards and Ask My Notes use real course material and persisted state",
 test("image notes are OCR-extracted and participate in Ask My Notes", async ({ page }) => {
     await signup(page, "Ocr");
     const courseId = await createCourse(page, { code: "OCR 101" });
+    const ocrBefore = (await api(page, "GET", "/api/e2e/ocr-counts")).body.total;
     await page.goto(`/materials.html?courseId=${courseId}&upload=1`);
     const { PNG_FIXTURE } = require("../test/helpers/image-fixtures");
     await page.locator("#file-input").setInputFiles({
@@ -989,7 +1007,7 @@ test("image notes are OCR-extracted and participate in Ask My Notes", async ({ p
     await page.locator("#send-message").click();
     await expect(page.locator(".message.assistant").last()).toContainText("market outcomes");
     await expect(page.locator(".message.assistant").last()).toContainText("photo-notes.png");
-    expect((await api(page, "GET", "/api/e2e/ocr-counts")).body.total).toBe(1);
+    expect((await api(page, "GET", "/api/e2e/ocr-counts")).body.total).toBe(ocrBefore + 1);
 });
 
 test("course study recommendations use persisted evidence and preserve course links", async ({ page }) => {

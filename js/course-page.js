@@ -133,14 +133,14 @@ function renderCourseTasks(tasks) {
     if (!selected.length) list.innerHTML = '<div class="friendly-empty"><strong>No upcoming items</strong><span>Add an assignment or exam for this course.</span></div>';
     selected.forEach(task => {
         const row = document.createElement("div"); row.className = "compact-task-row";
-        row.innerHTML = '<span class="compact-task-accent"></span><div><strong></strong><small></small><em class="source-badge" hidden></em></div><span class="compact-task-actions"><a class="text-link task-primary-action"></a><a class="text-link task-canvas-action" target="_blank" rel="noopener noreferrer" hidden>Open in Canvas</a></span>';
+        row.innerHTML = '<span class="compact-task-accent"></span><div><strong></strong><small></small><em class="source-badge" hidden></em></div><span class="compact-task-actions"><a class="text-link task-primary-action"></a><a class="text-link task-canvas-action" target="_blank" rel="noopener noreferrer" hidden>Open source</a></span>';
         window.StudySignalCourseColors.applyCourseColor(row, loadedCourse);
         row.querySelector("strong").textContent = task.title;
         const due = new Date(task.dueAt), days = Math.ceil((due - new Date()) / 86400000);
         row.querySelector("small").textContent = `${task.type} · ${days < 0 ? `${Math.abs(days)} days overdue` : days === 0 ? "Due today" : `${days} days away`}`;
         const badge = row.querySelector(".source-badge");
-        badge.hidden = !task.externalProvider;
-        badge.textContent = task.externalProvider ? `Canvas · ${String(task.externalStatus || "unsubmitted").replaceAll("_", " ")}` : "";
+        badge.hidden = !task.externalProvider && !task.scheduleSourceMaterialId;
+        badge.textContent = task.scheduleSourceMaterialId ? "Schedule" : task.externalProvider ? "Imported" : "";
         const action = row.querySelector(".task-primary-action");
         action.href = ["exam", "quiz"].includes(task.type) ? courseUrl("recommendations.html") : `planner.html?courseId=${courseId}`;
         action.textContent = ["exam", "quiz"].includes(task.type) ? "Open Study Recommendations" : "Open Planner";

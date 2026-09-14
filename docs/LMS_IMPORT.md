@@ -1,5 +1,11 @@
 # LMS import
 
+> **Product status: dormant/experimental.** The provider architecture remains in the
+> codebase for future evaluation, but Study Signal does not expose Canvas connection,
+> course mapping, or sync controls in the production UI. The supported import path is
+> **Import Assignment Schedule**, which accepts documents and screenshots without LMS
+> credentials. Do not present the configuration below as an available student feature.
+
 Study Signal imports LMS deadlines through server-side provider adapters. Canvas is the first production adapter; `learning_suite` remains reserved until BYU publishes a supported integration contract. Sync remains manual because the current deployment has no durable, single-consumer job queue.
 
 ## What the Canvas integration does

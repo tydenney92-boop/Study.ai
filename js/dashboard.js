@@ -87,14 +87,14 @@ function renderDashboardUpcoming(items) {
     }
     selected.forEach(task => {
         const row = document.createElement("div"); row.className = "compact-task-row";
-        row.innerHTML = '<input type="checkbox" aria-label="Mark complete"><span class="compact-task-accent"></span><div><strong></strong><small></small><em class="source-badge" hidden></em></div><span class="compact-task-actions"><a class="text-link task-primary-action">Open</a><a class="text-link task-canvas-action" target="_blank" rel="noopener noreferrer" hidden>Open in Canvas</a></span>';
+        row.innerHTML = '<input type="checkbox" aria-label="Mark complete"><span class="compact-task-accent"></span><div><strong></strong><small></small><em class="source-badge" hidden></em></div><span class="compact-task-actions"><a class="text-link task-primary-action">Open</a><a class="text-link task-canvas-action" target="_blank" rel="noopener noreferrer" hidden>Open source</a></span>';
         window.StudySignalCourseColors.applyCourseColor(row, task);
         row.querySelector("strong").textContent = task.title;
         const due = new Date(task.dueAt);
         row.querySelector("small").textContent = `${task.courseCode} · ${task.type} · ${due.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
         const badge = row.querySelector(".source-badge");
-        badge.hidden = !task.externalProvider;
-        badge.textContent = task.externalProvider ? `Canvas · ${String(task.externalStatus || "unsubmitted").replaceAll("_", " ")}` : "";
+        badge.hidden = !task.externalProvider && !task.scheduleSourceMaterialId;
+        badge.textContent = task.scheduleSourceMaterialId ? "Schedule" : task.externalProvider ? "Imported" : "";
         row.querySelector(".task-primary-action").href = ["exam", "quiz"].includes(task.type)
             ? `recommendations.html?courseId=${task.courseId}` : `planner.html?courseId=${task.courseId}`;
         const canvasAction = row.querySelector(".task-canvas-action");
