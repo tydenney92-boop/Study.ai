@@ -1521,6 +1521,27 @@ h1 { color: var(--color-ink); font-size: clamp(28px, 3vw, 34px); line-height: 1.
 .logout-button { min-height: 42px; border-color: rgba(255, 255, 255, .18); color: #b9c4d2; }
 .logout-button:hover { background: rgba(255, 255, 255, .07); color: white; }
 
+.demo-mode-banner {
+    position: fixed;
+    z-index: 1200;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: min(440px, calc(100vw - 40px));
+    padding: 11px 12px 11px 15px;
+    border: 1px solid #b9d7d2;
+    border-radius: 12px;
+    background: #f3fbfa;
+    box-shadow: var(--shadow-raised);
+    color: var(--color-ink);
+}
+.demo-mode-banner span { display: grid; gap: 2px; }
+.demo-mode-banner strong { color: var(--color-primary-hover); font-size: 12px; }
+.demo-mode-banner small { color: var(--color-text-muted); font-size: 11px; }
+.demo-mode-banner button { min-height: 38px; white-space: nowrap; }
+
 .material-choice { border-color: var(--color-border); border-radius: var(--radius-control); }
 .material-choice:hover, .material-choice.selected { border-color: var(--color-primary); background: var(--color-primary-soft); }
 .material-choice input { accent-color: var(--color-primary); }
@@ -1561,6 +1582,7 @@ h1 { color: var(--color-ink); font-size: clamp(28px, 3vw, 34px); line-height: 1.
     .header-actions > * { width: 100%; }
     .panel-header { gap: 14px; }
     .dashboard-panel { padding: 20px; }
+    .demo-mode-banner { right: 12px; bottom: 12px; max-width: calc(100vw - 100px); }
 }
 
 @media (prefers-reduced-motion: reduce) {

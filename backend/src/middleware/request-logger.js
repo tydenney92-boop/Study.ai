@@ -16,7 +16,8 @@ function createRequestLogger({ environment = "development", output = console }) 
                 method: req.method,
                 path: req.originalUrl.split("?")[0],
                 status: res.statusCode,
-                durationMs: Number(durationMs.toFixed(1))
+                durationMs: Number(durationMs.toFixed(1)),
+                demo: req.session?.isDemo === true
             };
             if (environment === "production") output.log(JSON.stringify(record));
         });

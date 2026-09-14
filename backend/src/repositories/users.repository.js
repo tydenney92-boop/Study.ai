@@ -3,24 +3,28 @@ function createUsersRepository(database) {
         findByEmail(email) {
             return database.prepare(`
                 SELECT id, name, email, password_hash AS passwordHash,
-                    created_at AS createdAt
+                    is_demo AS isDemo, created_at AS createdAt
                 FROM users
                 WHERE email = ? COLLATE NOCASE
             `).get(email);
         },
         findById(id) {
             return database.prepare(`
-                SELECT id, name, email, created_at AS createdAt
+                SELECT id, name, email, is_demo AS isDemo, created_at AS createdAt
                 FROM users
                 WHERE id = ?
             `).get(id);
         },
-        create({ name, email, passwordHash }) {
+        create({ name, email, passwordHash, isDemo = false }) {
             const result = database.prepare(`
-                INSERT INTO users (name, email, password_hash)
-                VALUES (?, ?, ?)
-            `).run(name, email, passwordHash);
+                INSERT INTO users (name, email, password_hash, is_demo)
+                VALUES (?, ?, ?, ?)
+            `).run(name, email, passwordHash, isDemo ? 1 : 0);
             return this.findById(Number(result.lastInsertRowid));
+        },
+        deleteDemoById(userId) {
+            return database.prepare("DELETE FROM users WHERE id = ? AND is_demo = 1")
+                .run(userId).changes > 0;
         },
         setPasswordHash(id, passwordHash, { onlyWhenMissing = false } = {}) {
             const result = database.prepare(`

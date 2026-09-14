@@ -71,6 +71,7 @@ if (typeof window !== "undefined" && typeof document !== "undefined") (function(
             document.querySelectorAll(".profile-avatar").forEach(element => {
                 element.textContent = response.user.name.charAt(0).toUpperCase();
             });
+            renderDemoMode(response.user);
             return response.user;
         } catch (error) {
             if (error.status !== 401) throw error;
@@ -91,6 +92,26 @@ if (typeof window !== "undefined" && typeof document !== "undefined") (function(
         } finally {
             window.location.replace("login.html");
         }
+    }
+
+    async function exitDemo() {
+        try {
+            await StudyAI.api.post("/api/auth/demo/exit", {});
+        } finally {
+            window.location.replace("login.html");
+        }
+    }
+
+    function renderDemoMode(user) {
+        if (!user.isDemo || document.querySelector("#demo-mode-banner")) return;
+        document.body.classList.add("demo-mode");
+        const banner = document.createElement("aside");
+        banner.id = "demo-mode-banner";
+        banner.className = "demo-mode-banner";
+        banner.setAttribute("aria-label", "Demo Mode");
+        banner.innerHTML = "<span><strong>Demo Mode</strong><small>Sample data only — changes disappear when you exit.</small></span><button class='secondary-tool-button' type='button'>Exit Demo</button>";
+        banner.querySelector("button").addEventListener("click", exitDemo);
+        document.body.appendChild(banner);
     }
 
     const sidebarBottom = document.querySelector(".sidebar-bottom");
@@ -267,7 +288,7 @@ if (typeof window !== "undefined" && typeof document !== "undefined") (function(
         sidebarBottom.appendChild(button);
     }
 
-    window.StudyAI.auth = { loadCurrentUser, logout };
+    window.StudyAI.auth = { loadCurrentUser, logout, exitDemo };
     updatePrimaryNavigationState();
     window.addEventListener("hashchange", updatePrimaryNavigationState);
     loadCurrentUser();

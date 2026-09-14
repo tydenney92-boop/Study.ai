@@ -15,6 +15,7 @@ const migration014 = require("./migrations/014-lms-import");
 const migration015 = require("./migrations/015-syllabus-schedule-import");
 const migration016 = require("./migrations/016-first-run-onboarding");
 const migration017 = require("./migrations/017-live-canvas-connection");
+const migration018 = require("./migrations/018-demo-users");
 const { tableExists } = require("./schema-helpers");
 const { createVerifiedBackup } = require("./sqlite-backup");
 
@@ -35,7 +36,8 @@ const migrations = [
     migration014,
     migration015,
     migration016,
-    migration017
+    migration017,
+    migration018
 ];
 
 function appliedMigrationIds(database) {

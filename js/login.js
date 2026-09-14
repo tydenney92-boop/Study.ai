@@ -29,3 +29,16 @@ loginForm.addEventListener("submit", async event => {
         button.disabled = false;
     }
 });
+
+document.querySelector("#try-demo")?.addEventListener("click", async event => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    loginError.textContent = "";
+    try {
+        await StudyAI.api.post("/api/auth/demo", {});
+        window.location.replace("index.html");
+    } catch (error) {
+        loginError.textContent = error.message;
+        button.disabled = false;
+    }
+});

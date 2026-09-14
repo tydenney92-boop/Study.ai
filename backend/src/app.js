@@ -32,6 +32,7 @@ const { createStudyGuideService } = require("./services/study-guide.service");
 const { createQuizGenerationService } = require("./services/quiz-generation.service");
 const { createQuizAttemptService } = require("./services/quiz-attempt.service");
 const { createAuthService } = require("./services/auth.service");
+const { createDemoService } = require("./services/demo.service");
 const { createGeneratedContentService } = require("./services/generated-content.service");
 const { createProgressService } = require("./services/progress.service");
 const { createFlashcardService } = require("./services/flashcard.service");
@@ -399,6 +400,10 @@ const authService = createAuthService({
     usersRepository: repositories.users,
     passwordRounds: config.passwordRounds
 });
+const demoService = createDemoService({
+    database: db,
+    usersRepository: repositories.users
+});
 const requireAuthentication = createRequireAuthentication({
     usersRepository: repositories.users
 });
@@ -460,6 +465,7 @@ registerHealthRoutes(app, { database: db, fileStorage, config });
 
 app.use("/api/auth", createAuthRouter({
     authService,
+    demoService,
     requireAuthentication,
     cookieName: config.sessionCookieName
 }));

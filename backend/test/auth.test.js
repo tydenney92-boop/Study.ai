@@ -85,6 +85,35 @@ test("logout destroys the session and protected APIs require authentication", as
     await agent.get("/api/courses").expect(401);
 });
 
+test("demo mode seeds isolated normal product data and removes it on exit", async t => {
+    const context = createTestApp();
+    t.after(context.cleanup);
+    const demo = request.agent(context.app);
+
+    const response = await demo.post("/api/auth/demo").send({}).expect(201);
+    assert.equal(response.body.user.isDemo, true);
+    assert.equal(response.body.user.name, "Demo Student");
+    const userId = response.body.user.id;
+    const courses = await demo.get("/api/courses").expect(200);
+    assert.deepEqual(courses.body.map(course => course.courseCode).sort(), ["ECON 378", "STRAT 401"]);
+    const econ = courses.body.find(course => course.courseCode === "ECON 378");
+    const tasks = await demo.get(`/api/courses/${econ.id}/tasks`).expect(200);
+    const materials = await demo.get(`/api/courses/${econ.id}/materials`).expect(200);
+    const recommendations = await demo.get(`/api/courses/${econ.id}/recommendations`).expect(200);
+    const plan = await demo.get("/api/daily-plan").expect(200);
+    const progress = await demo.get("/api/progress").expect(200);
+    assert.ok(tasks.body.some(task => task.type === "exam"));
+    assert.ok(materials.body.some(material => material.extractionStatus === "extracted"));
+    assert.ok(recommendations.body.sections.focusFirst.length > 0);
+    assert.ok(plan.body.plan.length > 0);
+    assert.ok(progress.body.totalAttempts > 0);
+    assert.ok(context.database.prepare("SELECT COUNT(*) AS count FROM flashcards WHERE user_id = ?").get(userId).count > 0);
+
+    await demo.post("/api/auth/demo/exit").send({}).expect(204);
+    await demo.get("/api/auth/me").expect(401);
+    assert.equal(context.database.prepare("SELECT COUNT(*) AS count FROM users WHERE id = ?").get(userId).count, 0);
+});
+
 test("authenticated users can create courses and cannot access another user's data", async t => {
     const context = createTestApp();
     t.after(context.cleanup);

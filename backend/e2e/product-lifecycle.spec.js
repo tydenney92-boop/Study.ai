@@ -80,6 +80,39 @@ test("authentication, canonical navigation, session persistence, and recent cour
     await expect(page.getByRole("link", { name: "Progress" })).toHaveClass(/active/);
 });
 
+test("demo mode provides a populated product tour and exits without retaining the sample account", async ({ page }) => {
+    const consoleErrors = [];
+    page.on("pageerror", error => consoleErrors.push(error.message));
+    page.on("console", message => { if (message.type() === "error") consoleErrors.push(message.text()); });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/login.html");
+    await page.getByRole("button", { name: "Try Demo" }).click();
+    await expect(page).toHaveURL(/index\.html$/);
+    await expect(page.locator("#demo-mode-banner")).toContainText("Demo Mode");
+    await expect(page.locator("#course-list")).toContainText("ECON 378");
+    await expect(page.locator("#course-list")).toContainText("STRAT 401");
+    const courses = (await api(page, "GET", "/api/courses")).body;
+    const econ = courses.find(course => course.courseCode === "ECON 378");
+
+    await page.goto("/today.html");
+    await expect(page.locator("#today-plan")).toContainText("Regression");
+    await page.goto("/planner.html");
+    await page.getByRole("tab", { name: "Calendar" }).click();
+    await expect(page.locator(".calendar-grid")).toBeVisible();
+    await page.goto("/progress.html");
+    await expect(page.locator("#progress-overview")).toContainText("ECON 378");
+    await page.goto(`/recommendations.html?courseId=${econ.id}`);
+    await expect(page.locator("#focus-first-list")).toContainText("regression");
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator("#demo-mode-banner")).toBeVisible();
+    const viewport = await page.evaluate(() => ({ width: document.documentElement.clientWidth, scrollWidth: document.documentElement.scrollWidth }));
+    expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.width);
+    await page.getByRole("button", { name: "Exit Demo" }).click();
+    await expect(page).toHaveURL(/login\.html$/);
+    expect(consoleErrors).toEqual([]);
+});
+
 test("first-run onboarding reaches a completed Today workflow without trapping navigation", async ({ page }) => {
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));

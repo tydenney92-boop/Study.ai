@@ -7,6 +7,7 @@ function publicUser(user) {
         id: user.id,
         name: user.name,
         email: user.email,
+        isDemo: Boolean(user.isDemo),
         createdAt: user.createdAt
     };
 }
