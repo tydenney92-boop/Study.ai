@@ -335,6 +335,64 @@ test("planner modal scrolls in a short window and the time picker preserves 24-h
     expect(consoleErrors).toEqual([]);
 });
 
+test("task modal has a roomy desktop grid and safely stacks at tablet and mobile widths", async ({ page }) => {
+    const consoleErrors = [];
+    page.on("pageerror", error => consoleErrors.push(error.message));
+    page.on("console", message => { if (message.type() === "error") consoleErrors.push(message.text()); });
+    await signup(page, "TaskModalLayout");
+    const courseId = await createCourse(page, { name: "Modal Layout", code: "LAYOUT 101" });
+
+    for (const { width, height, columns } of [
+        { width: 1440, height: 900, columns: 2 },
+        { width: 1024, height: 768, columns: 2 },
+        { width: 768, height: 768, columns: 1 },
+        { width: 390, height: 844, columns: 1 }
+    ]) {
+        await page.setViewportSize({ width, height });
+        await page.goto(`/planner.html?courseId=${courseId}&new=1&type=assignment`);
+        await expect(page.locator("#task-modal")).toHaveClass(/open/);
+        const layout = await page.locator("#task-modal .planner-modal").evaluate(element => {
+            const date = element.querySelector("#task-date").getBoundingClientRect();
+            const time = element.querySelector("#task-time-trigger").getBoundingClientRect();
+            const actions = element.querySelector(".app-modal-actions").getBoundingClientRect();
+            const body = element.querySelector(".app-modal-body");
+            const firstGrid = element.querySelector(".form-grid");
+            const box = element.getBoundingClientRect();
+            return {
+                modalWidth: box.width,
+                gridColumns: getComputedStyle(firstGrid).gridTemplateColumns.split(" ").length,
+                dateTop: date.top,
+                timeTop: time.top,
+                actionsBottom: actions.bottom,
+                viewportHeight: innerHeight,
+                bodyClientHeight: body.clientHeight,
+                bodyScrollHeight: body.scrollHeight,
+                documentWidth: document.documentElement.clientWidth,
+                pageWidth: document.documentElement.scrollWidth
+            };
+        });
+        expect(layout.gridColumns).toBe(columns);
+        expect(layout.actionsBottom).toBeLessThanOrEqual(layout.viewportHeight);
+        expect(layout.pageWidth).toBeLessThanOrEqual(layout.documentWidth);
+        if (columns === 2) {
+            expect(layout.dateTop).toBeCloseTo(layout.timeTop, 0);
+        } else {
+            expect(layout.timeTop).toBeGreaterThan(layout.dateTop);
+        }
+        if (width === 1440) {
+            expect(layout.modalWidth).toBeGreaterThanOrEqual(700);
+            expect(layout.modalWidth).toBeLessThanOrEqual(850);
+            expect(layout.bodyScrollHeight).toBeLessThanOrEqual(layout.bodyClientHeight);
+        }
+    }
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/planner.html?courseId=${courseId}&new=1&type=exam`);
+    await expect(page.locator("#task-modal-title")).toHaveText("Add Exam");
+    await expect(page.locator("#task-date")).toHaveJSProperty("offsetTop", await page.locator("#task-time-trigger").evaluate(element => element.offsetTop));
+    expect(consoleErrors).toEqual([]);
+});
+
 test("interactive calendar remains contained and usable across desktop and mobile widths", async ({ page }) => {
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
