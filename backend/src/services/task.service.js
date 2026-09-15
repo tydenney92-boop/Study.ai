@@ -2,6 +2,7 @@ const { AppError } = require("../utils/app-error");
 const { positiveInteger, stringField, validationError } = require("../utils/validation");
 const TYPES = new Set(["assignment", "exam", "quiz", "reading", "project", "paper", "other"]);
 const PRIORITIES = new Set(["low", "normal", "high"]);
+const MAX_BULK_DELETE_TASKS = 100;
 
 function notFound() { return new AppError({ code: "NOT_FOUND", message: "Task not found.", status: 404 }); }
 function iso(value, field, optional = false) {
@@ -17,6 +18,19 @@ function optionalId(value, field) {
     return positiveInteger(value, field);
 }
 function createTaskService({ coursesService, unitsRepository, materialsRepository, tasksRepository }) {
+    function bulkTaskIds(value) {
+        if (!Array.isArray(value) || value.length === 0) {
+            throw validationError("taskIds must be a non-empty array.", { field: "taskIds" });
+        }
+        if (value.length > MAX_BULK_DELETE_TASKS) {
+            throw validationError(`A maximum of ${MAX_BULK_DELETE_TASKS} tasks can be deleted at once.`, { field: "taskIds" });
+        }
+        const ids = value.map((id, index) => positiveInteger(id, `taskIds[${index}]`));
+        if (new Set(ids).size !== ids.length) {
+            throw validationError("taskIds must not contain duplicates.", { field: "taskIds" });
+        }
+        return ids;
+    }
     function validate(courseId, userId, input, current = {}) {
         const task = { ...current };
         if (input.title !== undefined || !current.id) task.title = stringField(input, "title", { maxLength: 200 });
@@ -62,7 +76,13 @@ function createTaskService({ coursesService, unitsRepository, materialsRepositor
         listCourse(courseId, userId, filters) { coursesService.requireOwned(courseId, userId); return this.list(userId, { ...filters, courseId }); },
         create(courseId, userId, input) { coursesService.requireOwned(courseId, userId); if(["externalProvider","externalId","externalUpdatedAt"].some(key=>input[key]!==undefined))throw validationError("External task identity is managed by LMS imports."); return decorate(tasksRepository.createOwned(courseId, userId, validate(courseId, userId, input))); },
         update(courseId, taskId, userId, input) { coursesService.requireOwned(courseId, userId); const current = tasksRepository.findOwned(taskId, courseId, userId); if (!current) throw notFound(); if(current.externalProvider&&["title","type","description","dueAt","startAt"].some(key=>input[key]!==undefined))throw validationError("Imported task details are managed by the LMS; only local completion can be changed."); return decorate(tasksRepository.updateOwned(taskId, courseId, userId, validate(courseId, userId, input, current))); },
-        delete(courseId, taskId, userId) { coursesService.requireOwned(courseId, userId); if (!tasksRepository.deleteOwned(taskId, courseId, userId)) throw notFound(); return { deleted: true, id: taskId }; }
+        delete(courseId, taskId, userId) { coursesService.requireOwned(courseId, userId); if (!tasksRepository.deleteOwned(taskId, courseId, userId)) throw notFound(); return { deleted: true, id: taskId }; },
+        bulkDelete(userId, taskIds) {
+            const ids = bulkTaskIds(taskIds);
+            const deletedCount = tasksRepository.bulkDeleteOwned(ids, userId);
+            if (deletedCount !== ids.length) throw notFound();
+            return { deletedCount };
+        }
     };
 }
-module.exports = { createTaskService, TYPES };
+module.exports = { createTaskService, TYPES, MAX_BULK_DELETE_TASKS };

@@ -72,6 +72,22 @@ function createTasksRepository(database) {
             return database.prepare(`DELETE FROM course_tasks WHERE id=? AND course_id=?
                 AND EXISTS (SELECT 1 FROM courses WHERE id=? AND user_id=?)`
             ).run(taskId, courseId, courseId, userId).changes > 0;
+        },
+        bulkDeleteOwned(taskIds, userId) {
+            const placeholders = taskIds.map(() => "?").join(", ");
+            const transaction = database.transaction(() => {
+                const owned = database.prepare(`SELECT tasks.id FROM course_tasks tasks
+                    JOIN courses ON courses.id = tasks.course_id
+                    WHERE tasks.id IN (${placeholders}) AND tasks.removed_at IS NULL
+                      AND courses.user_id = ?`
+                ).all(...taskIds, userId);
+                if (owned.length !== taskIds.length) return 0;
+                return database.prepare(`DELETE FROM course_tasks WHERE id IN (${placeholders})
+                    AND EXISTS (SELECT 1 FROM courses WHERE courses.id = course_tasks.course_id
+                        AND courses.user_id = ?)`
+                ).run(...taskIds, userId).changes;
+            });
+            return transaction();
         }
     };
 }

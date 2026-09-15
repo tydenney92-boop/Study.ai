@@ -13,6 +13,10 @@ let editingUnit = null;
 let pendingDeleteUnit = null;
 let reorderPending = false;
 let courseDeletePending = false;
+let courseTasks = [];
+let courseSelectionMode = false;
+let selectedCourseTaskIds = new Set();
+let courseBulkDeleting = false;
 
 if (!courseId) StudyAI.courseContext.goToMyCourses("Choose a course to continue.");
 
@@ -69,8 +73,8 @@ function renderUnits() {
 async function loadCourse() {
     if (!courseId) return;
     try {
-        let courseTasks;
-        [loadedCourse, units, materials, courseTasks] = await Promise.all([
+        let loadedTasks;
+        [loadedCourse, units, materials, loadedTasks] = await Promise.all([
             StudyAI.api.get(`/api/courses/${courseId}`),
             StudyAI.api.get(`/api/courses/${courseId}/units`),
             StudyAI.api.get(`/api/courses/${courseId}/materials`),
@@ -112,6 +116,7 @@ async function loadCourse() {
             action.href = courseUrl("materials.html", { upload: 1, role: "general" });
         }
         renderUnits();
+        courseTasks = loadedTasks;
         renderCourseTasks(courseTasks);
     } catch (error) {
         if (error.status === 404) {
@@ -129,10 +134,12 @@ document.querySelector("#dismiss-course-onboarding").addEventListener("click", (
 
 function renderCourseTasks(tasks) {
     const list = document.querySelector("#course-upcoming-tasks"); list.innerHTML = "";
-    const selected = tasks.slice(0, 5);
-    if (!selected.length) list.innerHTML = '<div class="friendly-empty"><strong>No upcoming items</strong><span>Add an assignment or exam for this course.</span></div>';
-    selected.forEach(task => {
-        const row = document.createElement("div"); row.className = "compact-task-row";
+    const visible = courseSelectionMode ? tasks : tasks.slice(0, 5);
+    if (!visible.length) list.innerHTML = '<div class="friendly-empty"><strong>No upcoming items</strong><span>Add an assignment or exam for this course.</span></div>';
+    visible.forEach(task => {
+        const row = document.createElement("div"); row.className = `compact-task-row${courseSelectionMode ? " bulk-selecting" : ""}`;
+        if (courseSelectionMode) row.innerHTML = '<input type="checkbox"><span class="compact-task-accent"></span><div><strong></strong><small></small><em class="source-badge" hidden></em></div>';
+        else
         row.innerHTML = '<span class="compact-task-accent"></span><div><strong></strong><small></small><em class="source-badge" hidden></em></div><span class="compact-task-actions"><a class="text-link task-primary-action"></a><a class="text-link task-canvas-action" target="_blank" rel="noopener noreferrer" hidden>Open source</a></span>';
         window.StudySignalCourseColors.applyCourseColor(row, loadedCourse);
         row.querySelector("strong").textContent = task.title;
@@ -141,18 +148,75 @@ function renderCourseTasks(tasks) {
         const badge = row.querySelector(".source-badge");
         badge.hidden = !task.externalProvider && !task.scheduleSourceMaterialId;
         badge.textContent = task.scheduleSourceMaterialId ? "Schedule" : task.externalProvider ? "Imported" : "";
-        const action = row.querySelector(".task-primary-action");
-        action.href = ["exam", "quiz"].includes(task.type) ? courseUrl("recommendations.html") : `planner.html?courseId=${courseId}`;
-        action.textContent = ["exam", "quiz"].includes(task.type) ? "Open Study Recommendations" : "Open Planner";
-        const canvasAction = row.querySelector(".task-canvas-action");
-        canvasAction.href = task.externalUrl || "";
-        canvasAction.hidden = !task.externalUrl;
+        if (courseSelectionMode) {
+            const check = row.querySelector("input"); check.checked = selectedCourseTaskIds.has(task.id); check.setAttribute("aria-label", `Select ${task.title}`);
+            check.onchange = () => { check.checked ? selectedCourseTaskIds.add(task.id) : selectedCourseTaskIds.delete(task.id); updateCourseBulkActions(); };
+        } else {
+            const action = row.querySelector(".task-primary-action");
+            action.href = ["exam", "quiz"].includes(task.type) ? courseUrl("recommendations.html") : `planner.html?courseId=${courseId}`;
+            action.textContent = ["exam", "quiz"].includes(task.type) ? "Open Study Recommendations" : "Open Planner";
+            const canvasAction = row.querySelector(".task-canvas-action"); canvasAction.href = task.externalUrl || ""; canvasAction.hidden = !task.externalUrl;
+        }
         list.appendChild(row);
     });
     document.querySelector("#add-course-assignment").href = `planner.html?courseId=${courseId}&new=1&type=assignment`;
     document.querySelector("#add-course-exam").href = `planner.html?courseId=${courseId}&new=1&type=exam`;
     document.querySelector("#all-course-tasks").href = `planner.html?courseId=${courseId}`;
+    updateCourseBulkActions();
 }
+
+function updateCourseBulkActions() {
+    const count = selectedCourseTaskIds.size;
+    document.querySelector("#course-bulk-actions").hidden = !courseSelectionMode;
+    document.querySelector("#course-select-mode").textContent = courseSelectionMode ? "Done Selecting" : "Select";
+    document.querySelector("#course-selected-count").textContent = `${count} selected`;
+    document.querySelector("#course-delete-selected").disabled = count === 0;
+}
+function closeCourseBulkDelete() {
+    if (courseBulkDeleting) return;
+    document.querySelector("#course-bulk-delete-modal").classList.remove("open");
+    document.querySelector("#course-bulk-delete-error").textContent = "";
+}
+
+document.querySelector("#course-select-mode").addEventListener("click", () => {
+    courseSelectionMode = !courseSelectionMode;
+    if (!courseSelectionMode) selectedCourseTaskIds.clear();
+    renderCourseTasks(courseTasks);
+});
+document.querySelector("#course-select-all").addEventListener("click", () => {
+    courseTasks.forEach(task => selectedCourseTaskIds.add(task.id));
+    renderCourseTasks(courseTasks);
+});
+document.querySelector("#course-clear-selection").addEventListener("click", () => {
+    selectedCourseTaskIds.clear(); renderCourseTasks(courseTasks);
+});
+document.querySelector("#course-delete-selected").addEventListener("click", () => {
+    const count = selectedCourseTaskIds.size;
+    if (!count) return;
+    document.querySelector("#course-bulk-delete-title").textContent = `Delete ${count} event${count === 1 ? "" : "s"}?`;
+    document.querySelector("#course-bulk-delete-summary").textContent = `${loadedCourse.courseCode}: ${count} event${count === 1 ? "" : "s"}`;
+    const confirm = document.querySelector("#confirm-course-bulk-delete");
+    confirm.textContent = `Delete ${count} Event${count === 1 ? "" : "s"}`;
+    document.querySelector("#course-bulk-delete-modal").classList.add("open");
+});
+document.querySelector("#close-course-bulk-delete").addEventListener("click", closeCourseBulkDelete);
+document.querySelector("#cancel-course-bulk-delete").addEventListener("click", closeCourseBulkDelete);
+document.querySelector("#confirm-course-bulk-delete").addEventListener("click", async event => {
+    if (courseBulkDeleting || !selectedCourseTaskIds.size) return;
+    courseBulkDeleting = true;
+    const button = event.currentTarget; button.disabled = true;
+    try {
+        const result = await StudyAI.api.post("/api/tasks/bulk-delete", { taskIds: [...selectedCourseTaskIds] });
+        selectedCourseTaskIds.clear(); courseSelectionMode = false; courseBulkDeleting = false;
+        closeCourseBulkDelete(); await loadCourse();
+        StudyAI.ui.notify(`${result.deletedCount} event${result.deletedCount === 1 ? "" : "s"} deleted`, { type: "success" });
+    } catch (error) {
+        await loadCourse();
+        document.querySelector("#course-bulk-delete-error").textContent = error.message;
+    } finally {
+        courseBulkDeleting = false; button.disabled = false;
+    }
+});
 
 function openUnitModal(unit = null) {
     if (!courseId) return;

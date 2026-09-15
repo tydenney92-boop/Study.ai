@@ -484,6 +484,38 @@ test("Canvas connection UI is dormant and schedule import is the visible Planner
     expect(await page.locator('script[src*="planner-lms"]').count()).toBe(0);
 });
 
+test("Planner and course pages bulk-select tasks with a confirmed, course-scoped deletion", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    await signup(page, "BulkTasks");
+    const courseId = await createCourse(page, { name: "Bulk Philosophy", code: "PHIL 213", semester: "Fall 2026" });
+    for (const [title, type] of [["Essay draft", "assignment"], ["Midterm", "exam"], ["Reading notes", "reading"]]) {
+        const created = await api(page, "POST", `/api/courses/${courseId}/tasks`, { title, type, dueAt: "2026-10-10T23:59:00.000Z" });
+        expect(created.status).toBe(201);
+    }
+    await page.goto(`/course.html?courseId=${courseId}`);
+    await page.getByRole("button", { name: "Select" }).click();
+    await page.getByRole("button", { name: "Select All" }).click();
+    await page.getByRole("checkbox", { name: "Select Reading notes" }).uncheck();
+    await page.getByRole("button", { name: "Delete Selected" }).click();
+    await expect(page.locator("#course-bulk-delete-title")).toContainText("Delete 2 events?");
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect(page.locator("#course-upcoming-tasks")).toContainText("Essay draft");
+    await page.getByRole("button", { name: "Delete Selected" }).click();
+    await page.getByRole("button", { name: "Delete 2 Events" }).click();
+    await expect(page.locator("#course-upcoming-tasks")).not.toContainText("Essay draft");
+    await expect(page.locator("#course-upcoming-tasks")).toContainText("Reading notes");
+    await page.goto(`/planner.html?courseId=${courseId}`);
+    await page.getByRole("button", { name: "Select" }).click();
+    await page.getByRole("button", { name: "Select All" }).click();
+    await expect(page.locator("#planner-selected-count")).toContainText("1 selected");
+    await page.setViewportSize({ width: 390, height: 844 });
+    const layout = await page.locator("#planner-bulk-actions").evaluate(element => ({ width: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth, deleteVisible: Boolean(element.querySelector("#planner-delete-selected")?.offsetParent) }));
+    expect(layout.width).toBeLessThanOrEqual(layout.viewport);
+    expect(layout.deleteVisible).toBe(true);
+    expect(errors).toEqual([]);
+});
+
 test("schedule import uploads directly, reviews, edits, excludes, confirms, and opens exam study recommendations", async ({ page }) => {
     const browserErrors = [];
     page.on("pageerror", error => browserErrors.push(error.message));

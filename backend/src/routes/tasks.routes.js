@@ -20,6 +20,10 @@ function filters(query) {
 function createTasksRouter({ taskService }) {
     const router = express.Router();
     router.get("/", (req, res) => res.json(taskService.list(req.user.id, filters(req.query))));
+    router.post("/bulk-delete", (req, res) => {
+        requestObject(req.body);
+        res.json(taskService.bulkDelete(req.user.id, req.body.taskIds));
+    });
     return router;
 }
 function createCourseTasksRouter({ taskService }) {

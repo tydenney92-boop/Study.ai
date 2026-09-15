@@ -67,10 +67,14 @@
         </section>
         <section class="dashboard-panel course-planner-panel">
             <div class="panel-header"><div><h2>Assignments &amp; Exams</h2><p>Upcoming deadlines for this course.</p></div><div class="course-task-actions" id="course-task-actions" role="group" aria-label="Course assignment actions" hidden><a class="primary-button" id="add-course-assignment">+ Add Task</a><button type="button" class="secondary-tool-button" id="import-course-schedule">Import Assignment Schedule</button><a class="secondary-tool-button" id="add-course-exam">+ Add Exam</a></div></div>
+            <div class="course-bulk-heading"><button type="button" class="secondary-tool-button" id="course-select-mode">Select</button></div>
+            <div id="course-bulk-actions" class="bulk-action-bar" hidden aria-live="polite"><strong id="course-selected-count">0 selected</strong><div><button type="button" class="text-button" id="course-select-all">Select All</button><button type="button" class="text-button" id="course-clear-selection">Clear</button><button type="button" class="danger-button" id="course-delete-selected" disabled>Delete Selected</button></div></div>
             <div id="course-upcoming-tasks" class="compact-task-list"><div class="friendly-empty">Loading deadlines…</div></div>
             <a class="text-link" id="all-course-tasks">View all course planner items →</a>
         </section>
     </main>
+
+    <div class="app-modal-overlay" id="course-bulk-delete-modal"><div class="app-modal compact-modal" role="dialog" aria-modal="true" aria-labelledby="course-bulk-delete-title"><div class="app-modal-header"><div><p class="eyebrow">REMOVE PLANNER ITEMS</p><h2 id="course-bulk-delete-title">Delete events?</h2></div><button class="icon-button" id="close-course-bulk-delete" aria-label="Close">×</button></div><p>These events will be permanently removed from Study Signal.</p><p id="course-bulk-delete-summary" class="bulk-course-summary"></p><p class="form-error" id="course-bulk-delete-error" role="alert"></p><div class="app-modal-actions"><button type="button" class="secondary-tool-button" id="cancel-course-bulk-delete">Cancel</button><button type="button" class="danger-button" id="confirm-course-bulk-delete">Delete Events</button></div></div></div>
 
     <div class="app-modal-overlay" id="unit-modal">
         <div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="unit-modal-title">
