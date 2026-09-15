@@ -372,6 +372,8 @@ function createDailyPlanService({
                 generatedAt: now.toISOString(),
                 budgetMinutes: minutes,
                 allocatedMinutes: plan.reduce((sum, item) => sum + item.minutes, 0),
+                unallocatedMinutes: minutes - plan.reduce((sum, item) => sum + item.minutes, 0),
+                activityCount: plan.length,
                 upcoming,
                 exams: exams.slice(0, 3),
                 plan,

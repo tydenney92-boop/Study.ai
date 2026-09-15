@@ -51,24 +51,50 @@ test("explicit exam relevance raises recommendation priority", () => {
     assert.ok(explicit > ordinary);
 });
 
-test("plans fit 20, 45, and 90 minute budgets without exceeding them", () => {
+test("plans fit 20, 30, 45, 60, and 90 minute budgets without exceeding them", () => {
     const candidates = [
         candidate("a", 1, 100, 15, 20, 30),
         candidate("b", 1, 90, 10, 15, 25),
         candidate("c", 2, 80, 5, 15, 30),
         candidate("d", 2, 70, 10, 20, 30)
     ];
-    for (const budget of [20, 45, 90]) {
+    for (const budget of [20, 30, 45, 60, 90]) {
         const plan = allocatePlan(candidates, budget);
         const allocated = plan.reduce((sum, item) => sum + item.minutes, 0);
         assert.ok(allocated <= budget);
         assert.ok(plan.every(item => item.minutes <= budget));
         assert.ok(plan.every(item => item.minutes % 5 === 0));
         assert.equal(new Set(plan.map(item => item.id)).size, plan.length);
+        assert.ok(plan.length <= (budget <= 20 ? 2 : budget <= 45 ? 3 : 4));
     }
     assert.equal(allocatePlan(candidates, 20).reduce((sum, item) => sum + item.minutes, 0), 20);
     assert.equal(allocatePlan(candidates, 45).reduce((sum, item) => sum + item.minutes, 0), 45);
     assert.equal(allocatePlan(candidates, 90).reduce((sum, item) => sum + item.minutes, 0), 90);
+});
+
+test("shorter plans retain urgent work while larger plans expand deterministically", () => {
+    const candidates = [
+        candidate("urgent-exam", 1, 120, 15, 20, 30),
+        candidate("useful-review", 2, 65, 10, 15, 20),
+        candidate("lower-reading", 3, 15, 10, 15, 20),
+        candidate("another-review", 4, 55, 10, 15, 20)
+    ];
+    const short = allocatePlan(candidates, 20);
+    const expanded = allocatePlan(candidates, 60);
+    assert.equal(short[0].id, "urgent-exam");
+    assert.ok(!short.some(item => item.id === "lower-reading"));
+    assert.ok(expanded.some(item => item.id === "urgent-exam"));
+    assert.ok(expanded.length >= short.length);
+});
+
+test("allocation leaves time unfilled when no evidence-backed activity can fit", () => {
+    const focusedWork = candidate("focused-work", 1, 100, 15, 15, 15);
+    const plan = allocatePlan([focusedWork], 20);
+    assert.equal(plan.length, 1);
+    assert.equal(plan[0].minutes, 15);
+    assert.equal(20 - plan.reduce((sum, item) => sum + item.minutes, 0), 5);
+    const tooShort = allocatePlan([focusedWork], 10);
+    assert.equal(tooShort.length, 0);
 });
 
 test("multi-course allocation balances similarly important work", () => {
@@ -98,6 +124,8 @@ test("overdue work and unreviewed exam material surface from owned persisted dat
     const response = await authenticatedRequest(context.app).get("/api/daily-plan?minutes=45").expect(200);
     assert.equal(response.body.budgetMinutes, 45);
     assert.ok(response.body.allocatedMinutes <= 45);
+    assert.equal(response.body.unallocatedMinutes, 45 - response.body.allocatedMinutes);
+    assert.equal(response.body.activityCount, response.body.plan.length);
     assert.ok(response.body.upcoming.some(item => item.title === "Overdue problem set" && item.overdue));
     assert.ok(response.body.plan.some(item => /Exam topics/i.test(item.title)));
     assert.ok(response.body.plan.some(item => item.reasons.some(reason => /exam scope|Midterm/i.test(reason))));
@@ -138,6 +166,7 @@ test("daily-plan API validates budgets and supports deterministic exclusions", a
     const refreshed = await authenticatedRequest(context.app).get(`/api/daily-plan?minutes=20&exclude=${excluded}`).expect(200);
     assert.ok(refreshed.body.plan.every(item => item.id !== first.body.plan[0].id));
     await authenticatedRequest(context.app).get("/api/daily-plan?minutes=3").expect(400);
+    await authenticatedRequest(context.app).get("/api/daily-plan?minutes=37").expect(200);
     await authenticatedRequest(context.app).get("/api/daily-plan?timezoneOffset=900").expect(400);
 });
 

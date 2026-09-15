@@ -1270,8 +1270,23 @@ test("Today starts an ordered Study Session and completes an evidence-backed pla
 
     await page.goto("/today.html");
     await expect(page.getByRole("heading", { name: "What should I do next?" })).toBeVisible();
+    await page.getByRole("button", { name: "Custom" }).click();
+    await page.locator("#custom-minutes").fill("3");
+    await page.locator("#custom-time-form").getByRole("button", { name: "Use time" }).click();
+    expect(await page.locator("#custom-minutes").evaluate(input => input.validity.rangeUnderflow)).toBe(true);
+    await page.locator("#custom-minutes").fill("35");
+    await page.locator("#custom-time-form").getByRole("button", { name: "Use time" }).click();
+    await expect(page.locator("#today-plan-summary")).toContainText("35 minutes planned across");
+    await page.getByRole("button", { name: "30", exact: true }).click();
+    await expect(page.locator("#today-plan-summary")).toContainText("30 minutes planned across");
+    const shortPlanTitles = await page.locator(".today-plan-card h3").allTextContents();
+    await page.getByRole("button", { name: "60", exact: true }).click();
+    await expect(page.locator("#today-plan-summary")).toContainText("60 minutes planned across");
+    const expandedPlanTitles = await page.locator(".today-plan-card h3").allTextContents();
+    expect(expandedPlanTitles.length).toBeGreaterThanOrEqual(shortPlanTitles.length);
+    expect(expandedPlanTitles).toContain(shortPlanTitles[0]);
     await page.getByRole("button", { name: "45" }).click();
-    await expect(page.locator("#today-plan-summary")).toContainText("45 minutes");
+    await expect(page.locator("#today-plan-summary")).toContainText("45 minutes planned across");
     const activities = page.locator(".today-plan-card");
     await expect(activities).toHaveCount(3);
     const allocated = await activities.locator(".today-plan-minutes").allTextContents();

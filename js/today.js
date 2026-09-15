@@ -131,7 +131,7 @@
         empty.innerHTML = "";
         empty.hidden = true;
         summary.textContent = response.plan.length
-            ? `${response.allocatedMinutes} of ${response.budgetMinutes} minutes planned from current evidence.`
+            ? `${response.allocatedMinutes} of ${response.budgetMinutes} minutes planned across ${response.activityCount} ${response.activityCount === 1 ? "activity" : "activities"}${response.unallocatedMinutes ? ` · ${response.unallocatedMinutes} min unallocated` : ""}.`
             : "No evidence-backed activities are available for this time window.";
         if (!response.plan.length) {
             start.hidden = true;
