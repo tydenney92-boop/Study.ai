@@ -8,6 +8,20 @@
     const presets = [20, 30, 45, 60, 90];
     let budget = readBudget();
     let loadVersion = 0;
+    let currentPlan = null;
+
+    function startSession(response) {
+        const session = {
+            version: 1,
+            activities: response.plan,
+            currentIndex: 0,
+            statuses: {},
+            startedAt: Date.now(),
+            elapsedMs: 0,
+            pausedAt: null
+        };
+        sessionStorage.setItem("studySignal:study-session", JSON.stringify(session));
+    }
 
     function readBudget() {
         const stored = Number(localStorage.getItem(budgetKey));
@@ -132,7 +146,6 @@
             return;
         }
         start.hidden = false;
-        start.href = response.plan[0].action.href;
         response.plan.forEach(item => {
             const card = document.createElement("article");
             card.className = "today-plan-card";
@@ -180,6 +193,7 @@
             if (excluded.length) params.set("exclude", excluded.join(","));
             const response = await StudyAI.api.get(`/api/daily-plan?${params}`);
             if (version !== loadVersion) return;
+            currentPlan = response;
             renderUpcoming(response.upcoming);
             renderExams(response.exams);
             renderPlan(response);
@@ -224,6 +238,13 @@
         loadPlan();
     });
     document.querySelector("#refresh-plan").addEventListener("click", loadPlan);
+    document.querySelector("#start-study-session").addEventListener("click", event => {
+        if (!currentPlan?.plan?.length) {
+            event.preventDefault();
+            return;
+        }
+        startSession(currentPlan);
+    });
     syncBudgetControls();
     loadPlan();
     StudyAI.api.patch("/api/onboarding", { action: "view_today" }).catch(() => {});

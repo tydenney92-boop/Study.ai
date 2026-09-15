@@ -140,3 +140,18 @@ test("daily-plan API validates budgets and supports deterministic exclusions", a
     await authenticatedRequest(context.app).get("/api/daily-plan?minutes=3").expect(400);
     await authenticatedRequest(context.app).get("/api/daily-plan?timezoneOffset=900").expect(400);
 });
+
+test("daily-plan reasons are source evidence and never padded by the presentation layer", async t => {
+    const context = createTestApp({ clock: () => now });
+    t.after(context.cleanup);
+    await authenticatedRequest(context.app).post("/api/courses/1/tasks").send({
+        title: "Evidence-only assignment", type: "assignment", dueAt: "2026-09-11T12:00:00.000Z"
+    }).expect(201);
+
+    const response = await authenticatedRequest(context.app).get("/api/daily-plan?minutes=20").expect(200);
+    const activity = response.body.plan.find(item => item.title === "Evidence-only assignment");
+    assert.ok(activity);
+    assert.deepEqual(activity.reasons, ["Due in 1 day"]);
+    assert.equal(activity.action.href, "planner.html?courseId=1");
+    assert.equal(activity.source.taskType, "assignment");
+});

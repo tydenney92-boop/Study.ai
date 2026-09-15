@@ -1196,7 +1196,7 @@ test("course study recommendations use persisted evidence and preserve course li
     expect(materialId).toBeGreaterThan(0);
 });
 
-test("Today builds a time-bounded plan, opens the first activity, and refreshes after study", async ({ page }) => {
+test("Today starts an ordered Study Session and completes an evidence-backed plan", async ({ page }) => {
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
     page.on("console", message => {
@@ -1250,18 +1250,22 @@ test("Today builds a time-bounded plan, opens the first activity, and refreshes 
         priority: "high"
     });
     expect(task.status).toBe(201);
-    const card = await api(page, "POST", `/api/courses/${secondCourseId}/flashcards`, {
-        front: "What creates a defensible advantage?",
-        back: "A difficult-to-copy system of reinforcing choices."
-    });
-    expect(card.status).toBe(201);
-    const review = await api(
-        page,
-        "POST",
-        `/api/courses/${secondCourseId}/flashcards/${card.body.id}/reviews`,
-        { outcome: "still_learning" }
-    );
-    expect(review.status).toBe(201);
+    for (const [front, back] of [
+        ["What creates a defensible advantage?", "A difficult-to-copy system of reinforcing choices."],
+        ["What is competitive scope?", "The breadth of markets and activities a firm chooses."],
+        ["What is a trade-off?", "A choice that requires giving up one valuable alternative."],
+        ["What is fit?", "How activities reinforce one another in a strategy."]
+    ]) {
+        const card = await api(page, "POST", `/api/courses/${secondCourseId}/flashcards`, { front, back });
+        expect(card.status).toBe(201);
+        const review = await api(
+            page,
+            "POST",
+            `/api/courses/${secondCourseId}/flashcards/${card.body.id}/reviews`,
+            { outcome: "still_learning" }
+        );
+        expect(review.status).toBe(201);
+    }
 
     await page.goto("/today.html");
     await expect(page.getByRole("heading", { name: "What should I do next?" })).toBeVisible();
@@ -1276,6 +1280,11 @@ test("Today builds a time-bounded plan, opens the first activity, and refreshes 
     await expect(page.locator("#today-upcoming")).toContainText("Case analysis");
     await expect(page.locator("#today-exams")).toContainText("Economics Midterm");
     await expect(page.getByRole("link", { name: "Today" })).toHaveClass(/active/);
+    const todayTitles = await activities.locator("h3").allTextContents();
+    const todayMinutes = (await activities.locator(".today-plan-minutes").allTextContents())
+        .map(value => Number(value.match(/\d+/)[0]));
+    const todayReasons = await activities.first().locator(".today-plan-why li").allTextContents();
+    const todayActionHrefs = await activities.locator(".today-plan-actions a").evaluateAll(links => links.map(link => link.getAttribute("href")));
 
     for (const [width, height] of [[1440, 900], [1024, 768], [390, 844], [320, 700]]) {
         await page.setViewportSize({ width, height });
@@ -1293,12 +1302,39 @@ test("Today builds a time-bounded plan, opens the first activity, and refreshes 
     }
 
     await page.locator("#start-study-session").click();
+    await expect(page).toHaveURL(/study-session\.html$/);
+    await expect(page.locator(".session-activity-card")).toContainText("1 of 3");
+    await expect(page.locator(".session-activity-card h2")).toHaveText(todayTitles[0]);
+    await expect(page.locator(".session-reasons li")).toHaveText(todayReasons);
+    await expect(page.locator(".session-start-action")).toHaveAttribute("href", todayActionHrefs[0]);
+    await page.locator(".session-start-action").click();
     await expect(page).toHaveURL(new RegExp(`quiz\\.html\\?courseId=${priorityCourseId}.*quizId=`));
-    await completeFiveQuestionQuiz(page);
-    await page.goto("/today.html");
-    await page.locator("#refresh-plan").click();
-    await expect(page.locator("#today-plan-summary")).toContainText("45 minutes");
-    await expect(page.locator(".today-plan-card").first()).toBeVisible();
+    await page.goBack();
+    await expect(page.locator(".session-activity-card")).toContainText("1 of 3");
+    await page.getByRole("button", { name: "Done" }).click();
+    await expect(page.locator(".session-activity-card")).toContainText("2 of 3");
+    await expect(page.locator(".session-activity-card h2")).toHaveText(todayTitles[1]);
+    await page.getByRole("button", { name: "Skip" }).click();
+    await expect(page.locator(".session-activity-card")).toContainText("3 of 3");
+    await expect(page.locator(".session-start-action")).toHaveAttribute("href", todayActionHrefs[2]);
+    await page.locator(".session-start-action").click();
+    await expect(page).toHaveURL(new RegExp(`material\\.html\\?courseId=${priorityCourseId}.*materialId=${materialId}`));
+    await page.goBack();
+    await page.getByRole("button", { name: "Done" }).click();
+    await expect(page.locator(".session-summary")).toContainText("Study session complete");
+    await expect(page.locator(".session-summary")).toContainText(
+        `2 activities completed · ${todayMinutes[0] + todayMinutes[2]} minutes planned`
+    );
+    await expect(page.locator(".session-summary")).toContainText("ECON 415");
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    const sessionLayout = await page.locator(".study-session-page").evaluate(element => ({
+        documentWidth: document.documentElement.scrollWidth,
+        viewportWidth: window.innerWidth,
+        pageWidth: element.getBoundingClientRect().width
+    }));
+    expect(sessionLayout.documentWidth).toBeLessThanOrEqual(sessionLayout.viewportWidth);
+    expect(sessionLayout.pageWidth).toBeGreaterThan(0);
     expect(errors).toEqual([]);
 });
 
@@ -1320,6 +1356,32 @@ test("Today Done completes a linked Planner assignment", async ({ page }) => {
     const saved = (await api(page, "GET", `/api/courses/${courseId}/tasks`)).body
         .find(item => item.id === task.body.id);
     expect(saved.completed).toBe(true);
+});
+
+test("Study Session preserves the Today flashcard action context", async ({ page }) => {
+    await signup(page, "SessionCards");
+    const courseId = await createCourse(page, { name: "Memory Systems", code: "MEM 210" });
+    const card = await api(page, "POST", `/api/courses/${courseId}/flashcards`, {
+        front: "What is spaced repetition?", back: "Reviewing material at increasing intervals."
+    });
+    expect(card.status).toBe(201);
+
+    await page.goto("/today.html");
+    await page.getByRole("button", { name: "20", exact: true }).click();
+    const activity = page.locator(".today-plan-card", { hasText: "flashcards" }).first();
+    await expect(activity).toBeVisible();
+    const actionHref = await activity.locator(".today-plan-actions a").getAttribute("href");
+    await expect(activity.locator(".today-plan-why")).toContainText("not reviewed yet");
+    await page.locator("#start-study-session").click();
+    await expect(page.locator(".session-start-action")).toHaveAttribute("href", actionHref);
+    await page.locator(".session-start-action").click();
+    await expect(page).toHaveURL(new RegExp(`flashcards\\.html\\?courseId=${courseId}`));
+    await page.goBack();
+    await page.getByRole("button", { name: "Done" }).click();
+    while (await page.locator(".session-activity-card").count()) {
+        await page.getByRole("button", { name: "Done" }).click();
+    }
+    await expect(page.locator(".session-summary")).toContainText("Study session complete");
 });
 
 test("two browser contexts remain isolated across data and destructive APIs", async ({ browser }) => {

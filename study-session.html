@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Session | Study Signal</title>
+    <link rel="stylesheet" href="css/style.css?v=20260830-theme-fix">
+    <link rel="stylesheet" href="css/study-session.css?v=20260915">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand"><div class="brand-icon">S</div><span>Study Signal</span></div>
+        <nav class="sidebar-nav">
+            <a href="today.html" class="nav-item active"><span>☀</span>Today</a>
+            <a href="index.html" class="nav-item"><span>⌂</span>Dashboard</a>
+            <a href="index.html#courses" class="nav-item"><span>▣</span>My Courses</a>
+            <a href="planner.html" class="nav-item"><span>▦</span>Planner</a>
+            <a href="progress.html" class="nav-item"><span>◔</span>Progress</a>
+        </nav>
+        <div class="sidebar-bottom"><div class="profile-card"><div class="profile-avatar"></div><div><strong></strong><small>Student</small></div></div></div>
+    </aside>
+    <main class="main-content study-session-page">
+        <header class="study-session-header">
+            <a class="back-link" href="today.html">← Back to Today</a>
+            <div class="study-session-heading"><div><p class="eyebrow">FOCUSED WORK</p><h1>Study Session</h1></div><div class="session-timer" aria-live="polite"><span>Elapsed</span><strong id="session-elapsed">0:00</strong><button id="timer-toggle" class="text-button" type="button">Pause</button></div></div>
+        </header>
+        <section id="study-session" class="study-session-shell" aria-live="polite"></section>
+    </main>
+    <script src="js/config.js"></script>
+    <script src="js/course-colors.js?v=20260830-theme-fix"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js?v=20260910-today"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/study-session.js?v=20260915"></script>
+</body>
+</html>
