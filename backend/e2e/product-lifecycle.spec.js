@@ -1176,6 +1176,7 @@ test("course study recommendations use persisted evidence and preserve course li
     await expect(page.locator("#exam-plan-summary")).toContainText("Midterm 1");
     await expect(page.locator("#focus-first-list")).toContainText("elasticity");
     await expect(page.locator("#focus-first-list")).toContainText("Still Learning");
+    await expect(page.locator("#focus-first-list .recommendation-priority").first()).toHaveText("high priority");
     await expect(page.locator("#recommendation-exam-sources")).toHaveText("1");
     await expect(page.locator("#recommendations-back")).toHaveAttribute(
         "href",
@@ -1222,11 +1223,11 @@ test("Today starts an ordered Study Session and completes an evidence-backed pla
     }
     await expect(page.locator("#attempt-save-status")).toContainText("Attempt saved");
 
-    const tomorrow = new Date(Date.now() + 86_400_000);
+    const examDate = new Date(Date.now() + 4 * 86_400_000);
     const tomorrowDate = [
-        tomorrow.getFullYear(),
-        String(tomorrow.getMonth() + 1).padStart(2, "0"),
-        String(tomorrow.getDate()).padStart(2, "0")
+        examDate.getFullYear(),
+        String(examDate.getMonth() + 1).padStart(2, "0"),
+        String(examDate.getDate()).padStart(2, "0")
     ].join("-");
     const examPlan = await api(page, "PUT", `/api/courses/${priorityCourseId}/exam-plan`, {
         examName: "Economics Midterm",
@@ -1277,6 +1278,9 @@ test("Today starts an ordered Study Session and completes an evidence-backed pla
     expect(allocated.reduce((sum, value) => sum + Number(value.match(/\d+/)[0]), 0)).toBeLessThanOrEqual(45);
     await expect(activities.first()).toContainText("ECON 415");
     await expect(activities.first()).toContainText(/quiz miss|Midterm|exam-planning source/i);
+    await expect(activities.first().locator(".today-plan-why")).toContainText("Economics Midterm in 4 days");
+    await expect(activities.first().locator(".today-plan-why")).toContainText("recorded quiz misses");
+    await expect(activities.first().locator(".recommendation-priority")).toHaveText("high priority");
     await expect(page.locator("#today-upcoming")).toContainText("Case analysis");
     await expect(page.locator("#today-exams")).toContainText("Economics Midterm");
     await expect(page.getByRole("link", { name: "Today" })).toHaveClass(/active/);
@@ -1365,15 +1369,17 @@ test("Study Session preserves the Today flashcard action context", async ({ page
         front: "What is spaced repetition?", back: "Reviewing material at increasing intervals."
     });
     expect(card.status).toBe(201);
+    await api(page, "POST", `/api/courses/${courseId}/flashcards/${card.body.id}/reviews`, { outcome: "still_learning" });
 
     await page.goto("/today.html");
     await page.getByRole("button", { name: "20", exact: true }).click();
     const activity = page.locator(".today-plan-card", { hasText: "flashcards" }).first();
     await expect(activity).toBeVisible();
     const actionHref = await activity.locator(".today-plan-actions a").getAttribute("href");
-    await expect(activity.locator(".today-plan-why")).toContainText("not reviewed yet");
+    await expect(activity.locator(".today-plan-why")).toContainText("Still Learning flashcard review");
     await page.locator("#start-study-session").click();
     await expect(page.locator(".session-start-action")).toHaveAttribute("href", actionHref);
+    await expect(page.locator(".session-reasons")).toContainText("Still Learning flashcard review");
     await page.locator(".session-start-action").click();
     await expect(page).toHaveURL(new RegExp(`flashcards\\.html\\?courseId=${courseId}`));
     await page.goBack();

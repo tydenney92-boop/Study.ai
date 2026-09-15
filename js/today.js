@@ -150,12 +150,20 @@
             const card = document.createElement("article");
             card.className = "today-plan-card";
             card.dataset.planId = item.id;
-            card.innerHTML = '<span class="today-plan-rank"></span><span class="today-plan-accent"></span><div class="today-plan-body"><span class="today-plan-course"></span><div class="today-plan-title-row"><h3></h3><span class="today-plan-minutes"></span></div><ul class="today-plan-why" aria-label="Why this activity"></ul></div><div class="today-plan-actions"><a class="primary-button"></a><button class="text-button done-plan-item" type="button">Done</button><button class="text-button skip-plan-item" type="button">Skip</button></div>';
+            card.innerHTML = '<span class="today-plan-rank"></span><span class="today-plan-accent"></span><div class="today-plan-body"><span class="today-plan-course"></span><div class="today-plan-title-row"><h3></h3><span class="today-plan-minutes"></span></div><span class="recommendation-priority"></span><p class="recommendation-summary" hidden></p><ul class="today-plan-why" aria-label="Why this activity"></ul></div><div class="today-plan-actions"><a class="primary-button"></a><button class="text-button done-plan-item" type="button">Done</button><button class="text-button skip-plan-item" type="button">Skip</button></div>';
             courseColorTarget(card, item.course);
             card.querySelector(".today-plan-rank").textContent = item.rank;
             card.querySelector(".today-plan-course").textContent = `${item.course.code} · ${item.type.replaceAll("_", " ")}`;
             card.querySelector("h3").textContent = item.title;
             card.querySelector(".today-plan-minutes").textContent = `${item.minutes} min`;
+            const priority = card.querySelector(".recommendation-priority");
+            priority.textContent = `${item.priority || "medium"} priority`;
+            priority.classList.add(`priority-${item.priority || "medium"}`);
+            const explanation = card.querySelector(".recommendation-summary");
+            if (item.explanation) {
+                explanation.hidden = false;
+                explanation.textContent = item.explanation;
+            }
             const reasons = card.querySelector(".today-plan-why");
             item.reasons.forEach(reason => {
                 const entry = document.createElement("li");

@@ -93,9 +93,13 @@ test("recommendations combine quiz weakness, flashcard weakness, and explicit ex
     const top = response.body.sections.focusFirst[0];
     assert.match(top.topic, /elasticity/i);
     assert.equal(top.confidence, "strong");
-    assert.match(top.reason, /2 missed quiz answers/);
-    assert.match(top.reason, /2 Still Learning reviews/);
-    assert.match(top.reason, /explicitly listed/);
+    assert.match(top.reason, /recent quiz results show weakness/i);
+    assert.deepEqual(top.reasons, [
+        "Explicit exam source match",
+        "2 recorded quiz misses",
+        "2 Still Learning flashcard reviews"
+    ]);
+    assert.equal(top.priority, "high");
     assert.equal(top.action.href, `quiz.html?courseId=1&quizId=${quizId}`);
 });
 
@@ -123,7 +127,8 @@ test("strong performance lowers priority and sparse evidence remains honest", as
         .get("/api/courses/1/recommendations").expect(200);
     assert.equal(response.body.sections.focusFirst.length, 0);
     assert.equal(response.body.sections.keepFresh.length, 1);
-    assert.match(response.body.sections.keepFresh[0].reason, /correct quiz answer/);
+    assert.deepEqual(response.body.sections.keepFresh[0].reasons, ["1 correct quiz answer"]);
+    assert.equal(response.body.sections.keepFresh[0].priority, "low");
     assert.equal(response.body.hasExamSpecificEvidence, false);
 });
 

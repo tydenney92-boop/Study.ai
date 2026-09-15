@@ -41,10 +41,13 @@ function renderExamPlan(plan) {
 
 function recommendationCard(item) {
     const element = document.createElement("article"); element.className = "recommendation-card";
-    element.innerHTML = '<div class="recommendation-card-heading"><h3></h3><span class="evidence-level"></span></div><p class="recommendation-reason"></p><div class="recommendation-signals"></div><div class="recommendation-evidence"></div><div class="recommendation-actions"></div>';
+    element.innerHTML = '<div class="recommendation-card-heading"><h3></h3><div class="recommendation-labels"><span class="recommendation-priority"></span><span class="evidence-level"></span></div></div><p class="recommendation-reason" hidden></p><ul class="recommendation-why" aria-label="Why this activity is recommended"></ul><div class="recommendation-signals"></div><div class="recommendation-evidence"></div><div class="recommendation-actions"></div>';
     element.querySelector("h3").textContent = item.topic;
+    const priority = element.querySelector(".recommendation-priority"); priority.textContent = `${item.priority} priority`; priority.classList.add(`priority-${item.priority}`);
     const confidence = element.querySelector(".evidence-level"); confidence.textContent = `${item.confidence} evidence`; confidence.classList.add(`evidence-${item.confidence}`);
-    element.querySelector(".recommendation-reason").textContent = item.reason;
+    const reason = element.querySelector(".recommendation-reason");
+    if (item.reason) { reason.hidden = false; reason.textContent = item.reason; }
+    item.reasons.forEach(text => { const entry = document.createElement("li"); entry.textContent = text; element.querySelector(".recommendation-why").appendChild(entry); });
     const signals = element.querySelector(".recommendation-signals");
     if (item.examRelevance.listed) {
         const listed = document.createElement("span"); listed.className = "exam-listed"; listed.textContent = "Likely tested / explicitly listed"; signals.appendChild(listed);

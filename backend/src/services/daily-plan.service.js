@@ -1,5 +1,6 @@
 const DAY_MS = 86_400_000;
 const DEFAULT_MINUTES = 45;
+const { buildRecommendationExplanation, priorityForRecommendation, priorityForTask } = require("./recommendation-explanations");
 
 function daysUntil(value, now = new Date(), timezoneOffset = 0) {
     const target = value instanceof Date ? value : new Date(value);
@@ -182,6 +183,7 @@ function createDailyPlanService({
                 if (score <= 0) continue;
                 const estimated = Number(task.estimatedMinutes || 15);
                 const preferred = Math.max(10, Math.min(30, Math.round(estimated / 5) * 5));
+                const explanation = buildRecommendationExplanation({ taskDays: days, taskTitle: task.type === "assignment" ? "Assignment" : task.title });
                 candidates.push({
                     id: `task:${task.id}`,
                     type: "task",
@@ -191,7 +193,9 @@ function createDailyPlanService({
                     minimum: 5,
                     preferred,
                     maximum: Math.max(20, preferred),
-                    reasons: [dueReason(days)].filter(Boolean),
+                    reasons: explanation.reasons,
+                    explanation: explanation.summary,
+                    priority: priorityForTask(score),
                     action: { label: "Work on Assignment", href: `planner.html?courseId=${course.id}` },
                     source: { taskId: task.id, taskType: task.type }
                 });
@@ -204,15 +208,10 @@ function createDailyPlanService({
                     for (const item of items) {
                         const profile = profileForAction(item.action);
                         const signals = item.signals || {};
-                        const reasons = [];
-                        if (exam && exam.days >= 0 && exam.days <= 21) reasons.push(dueReason(exam.days, exam.title));
-                        if (signals.explicitExam) reasons.push("Listed in a selected exam-planning source");
-                        else if (signals.examScoped) reasons.push("Included in your selected exam scope");
-                        if (signals.quizMisses) reasons.push(`${signals.quizMisses} recorded quiz miss${signals.quizMisses === 1 ? "" : "es"}`);
-                        if (signals.flashcardIncorrect) reasons.push(`${signals.flashcardIncorrect} Still Learning review${signals.flashcardIncorrect === 1 ? "" : "s"}`);
-                        else if (signals.hasFlashcard && signals.flashcardReviews === 0) reasons.push("Flashcards not reviewed yet");
-                        if (signals.reviewGap) reasons.push("No recorded practice yet");
-                        if (!reasons.length) reasons.push(item.reason.replace(/^Based on\s+/i, "").replace(/\.$/, ""));
+                        const explanation = buildRecommendationExplanation({
+                            signals, examDays: exam && exam.days >= 0 && exam.days <= 21 ? exam.days : null,
+                            examTitle: exam?.title
+                        });
                         candidates.push({
                             id: `recommendation:${course.id}:${profile.kind}:${stablePart(item.topic)}`,
                             type: profile.kind,
@@ -222,7 +221,9 @@ function createDailyPlanService({
                             minimum: profile.minimum,
                             preferred: profile.preferred,
                             maximum: profile.maximum,
-                            reasons: [...new Set(reasons)].slice(0, 3),
+                            reasons: explanation.reasons,
+                            explanation: explanation.summary,
+                            priority: priorityForRecommendation(tier),
                             action: { label: profile.label, href: item.action.href },
                             source: { recommendationTier: tier, materialIds: item.materialIds }
                         });
@@ -241,6 +242,11 @@ function createDailyPlanService({
                     const activityCount = material.quizAttemptCount + material.flashcardReviews + material.studyGuideCount + material.askNotesCount;
                     if (activityCount > 0 || responseMaterialIds.has(material.id)) continue;
                     const selectedForExam = examMaterialIds.has(material.id);
+                    const explanation = buildRecommendationExplanation({
+                        examDays: exam?.days >= 0 && exam.days <= 21 ? exam.days : null,
+                        examTitle: exam?.title, materialUnreviewed: true,
+                        signals: { examScoped: selectedForExam }
+                    });
                     candidates.push({
                         id: `material:${course.id}:${material.id}`,
                         type: "material",
@@ -248,7 +254,9 @@ function createDailyPlanService({
                         title: material.name,
                         score: 14 + (selectedForExam ? 18 : 0) + examUrgency(exam?.days ?? null),
                         minimum: 10, preferred: 15, maximum: 25,
-                        reasons: [selectedForExam ? "Selected in your exam plan" : "No recorded study activity yet"],
+                        reasons: explanation.reasons,
+                        explanation: explanation.summary,
+                        priority: selectedForExam || exam?.days <= 7 ? "high" : "low",
                         action: { label: "Review Material", href: `material.html?courseId=${course.id}&materialId=${material.id}` },
                         source: { materialIds: [material.id] }
                     });
@@ -266,6 +274,11 @@ function createDailyPlanService({
                     const unseen = cards.filter(card => card.correctCount + card.incorrectCount === 0).length;
                     if (!low && !unseen) continue;
                     const material = courseMaterials.find(item => item.id === materialId);
+                    const explanation = buildRecommendationExplanation({
+                        examDays: exam?.days >= 0 && exam.days <= 14 ? exam.days : null,
+                        examTitle: exam?.title,
+                        signals: { lowMasteryCards: low, hasFlashcard: true, flashcardReviews: cards.length - unseen }
+                    });
                     candidates.push({
                         id: `flashcards:${course.id}:${materialId || "course"}`,
                         type: "flashcards",
@@ -273,41 +286,49 @@ function createDailyPlanService({
                         title: `${material?.name || course.courseCode} flashcards`,
                         score: 34 + low * 7 + unseen * 2 + examUrgency(exam?.days ?? null),
                         minimum: 10, preferred: 15, maximum: 25,
-                        reasons: [
-                            low ? `${low} card${low === 1 ? "" : "s"} still learning` : null,
-                            unseen ? `${unseen} card${unseen === 1 ? "" : "s"} not reviewed yet` : null,
-                            exam && exam.days <= 14 ? dueReason(exam.days, exam.title) : null
-                        ].filter(Boolean),
+                        reasons: explanation.reasons,
+                        explanation: explanation.summary,
+                        priority: exam?.days <= 7 || low >= 2 ? "high" : "medium",
                         action: { label: "Review Flashcards", href: `flashcards.html?courseId=${course.id}${materialId ? `&materialId=${materialId}` : ""}` },
                         source: { materialIds: materialId ? [materialId] : [] }
                     });
                 }
 
                 const guides = snapshot.guides.filter(guide => guide.courseId === course.id);
-                if (guides.length && exam && exam.days >= 0 && exam.days <= 14) candidates.push({
+                if (guides.length && exam && exam.days >= 0 && exam.days <= 14) {
+                    const explanation = buildRecommendationExplanation({ examDays: exam.days, examTitle: exam.title, savedStudyGuide: true });
+                    candidates.push({
                     id: `study-guide:${course.id}:${guides[0].id}`,
                     type: "study_guide",
                     course: { id: course.id, code: course.courseCode, name: course.courseName },
                     title: `${exam.title} study guide`,
                     score: 24 + examUrgency(exam.days),
                     minimum: 15, preferred: 20, maximum: 30,
-                    reasons: [dueReason(exam.days, exam.title), "Saved study guide available"],
+                    reasons: explanation.reasons,
+                    explanation: explanation.summary,
+                    priority: exam.days <= 7 ? "high" : "medium",
                     action: { label: "Open Study Guide", href: `history.html?courseId=${course.id}` },
                     source: { studyGuideId: guides[0].id, materialIds: guides[0].materialIds }
-                });
+                    });
+                }
 
                 const hasCourseStudyCandidate = candidates.some(candidate => candidate.course.id === course.id && candidate.type !== "task");
-                if (exam && !hasCourseStudyCandidate) candidates.push({
+                if (exam && !hasCourseStudyCandidate) {
+                    const explanation = buildRecommendationExplanation({ examDays: exam.days, examTitle: exam.title });
+                    candidates.push({
                     id: `exam-plan:${course.id}:${stablePart(exam.title + exam.dueAt)}`,
                     type: "recommendations",
                     course: { id: course.id, code: course.courseCode, name: course.courseName },
                     title: `Prepare for ${exam.title}`,
                     score: 30 + examUrgency(exam.days),
                     minimum: 10, preferred: 15, maximum: 25,
-                    reasons: [dueReason(exam.days, exam.title)],
+                    reasons: explanation.reasons,
+                    explanation: explanation.summary,
+                    priority: exam.days <= 7 ? "high" : "medium",
                     action: { label: "Open What to Study", href: `recommendations.html?courseId=${course.id}` },
                     source: { examId: exam.id }
-                });
+                    });
+                }
             }
 
             const deduped = [...new Map(candidates.sort((a, b) => b.score - a.score)

@@ -1,4 +1,5 @@
 const { normalizeLexicalText, lexicalTerms } = require("./lexical-retrieval-backend");
+const { buildRecommendationExplanation, priorityForRecommendation } = require("./recommendation-explanations");
 
 const TOPIC_STOP_WORDS = new Set([
     "explain", "which", "would", "could", "should", "about", "question",
@@ -55,24 +56,31 @@ function evidenceLevel(candidate) {
     return "limited";
 }
 
-function reason(candidate) {
-    const parts = [];
-    if (candidate.explicitExam) parts.push("explicitly listed in a selected exam-planning source");
-    else if (candidate.examScoped) parts.push("included in your selected exam scope");
-    if (candidate.quizMisses) parts.push(`${candidate.quizMisses} missed quiz answer${candidate.quizMisses === 1 ? "" : "s"}`);
-    else if (candidate.quizCorrect) parts.push(`${candidate.quizCorrect} correct quiz answer${candidate.quizCorrect === 1 ? "" : "s"}`);
-    if (candidate.flashcardIncorrect) parts.push(`${candidate.flashcardIncorrect} Still Learning review${candidate.flashcardIncorrect === 1 ? "" : "s"}`);
-    else if (candidate.hasFlashcard && candidate.flashcardReviews === 0) parts.push("flashcards not reviewed yet");
-    else if (candidate.hasFlashcard) parts.push(`flashcard mastery ${candidate.bestMastery}/5`);
-    if (!parts.length) parts.push("limited study activity so far");
-    return `Based on ${parts.join(", and ")}.`;
+function daysUntilDate(date) {
+    if (!date) return null;
+    const target = new Date(`${date}T12:00:00`);
+    if (Number.isNaN(target.getTime())) return null;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
+    return Math.round((target - today) / 86_400_000);
 }
 
-function publicItem(candidate, courseId) {
+function publicItem(candidate, courseId, { tier, examName, examDate }) {
     const actions = hrefs(courseId, candidate);
+    const explanation = buildRecommendationExplanation({
+        signals: {
+            quizMisses: candidate.quizMisses, quizCorrect: candidate.quizCorrect, flashcardIncorrect: candidate.flashcardIncorrect,
+            flashcardReviews: candidate.flashcardReviews, hasFlashcard: candidate.hasFlashcard,
+            explicitExam: candidate.explicitExam, examScoped: candidate.examScoped,
+            lowMasteryCards: candidate.hasFlashcard && candidate.flashcardReviews > 0 && candidate.bestMastery <= 2 ? 1 : 0
+        },
+        examDays: daysUntilDate(examDate), examTitle: examName || "Exam"
+    });
     return {
         topic: candidate.label,
-        reason: reason(candidate),
+        reason: explanation.summary || "",
+        reasons: explanation.reasons,
+        priority: priorityForRecommendation(tier),
         confidence: evidenceLevel(candidate),
         evidence: [...new Set(candidate.evidence.map(item => item.label))],
         evidenceDetails: candidate.evidence,
@@ -264,9 +272,9 @@ function createRecommendationsService({
                     plan.materialIds.length || plan.sourceMaterialIds.length),
                 isNewCourse: materials.length === 0 && attempts.length + reviewCount === 0,
                 sections: {
-                    focusFirst: focusFirst.map(item => publicItem(item, courseId)),
-                    reviewNext: reviewNext.map(item => publicItem(item, courseId)),
-                    keepFresh: keepFresh.map(item => publicItem(item, courseId))
+                    focusFirst: focusFirst.map(item => publicItem(item, courseId, { tier: "focusFirst", examName: plan.examName, examDate: plan.examDate })),
+                    reviewNext: reviewNext.map(item => publicItem(item, courseId, { tier: "reviewNext", examName: plan.examName, examDate: plan.examDate })),
+                    keepFresh: keepFresh.map(item => publicItem(item, courseId, { tier: "keepFresh", examName: plan.examName, examDate: plan.examDate }))
                 }
             };
         }

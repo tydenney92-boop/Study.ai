@@ -151,7 +151,8 @@ test("daily-plan reasons are source evidence and never padded by the presentatio
     const response = await authenticatedRequest(context.app).get("/api/daily-plan?minutes=20").expect(200);
     const activity = response.body.plan.find(item => item.title === "Evidence-only assignment");
     assert.ok(activity);
-    assert.deepEqual(activity.reasons, ["Due in 1 day"]);
+    assert.deepEqual(activity.reasons, ["Assignment tomorrow"]);
+    assert.equal(activity.priority, "high");
     assert.equal(activity.action.href, "planner.html?courseId=1");
     assert.equal(activity.source.taskType, "assignment");
 });

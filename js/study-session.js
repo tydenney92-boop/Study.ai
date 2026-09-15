@@ -108,19 +108,28 @@
         if (!activity) return finishSession();
         timerToggle.hidden = false;
         const ordinal = session.currentIndex + 1;
-        container.innerHTML = '<article class="session-activity-card"><div class="session-progress"><span></span><strong></strong></div><span class="session-course"></span><h2></h2><div class="session-reasons"><h3>Why</h3><ul></ul></div><p class="session-estimate"></p><div class="session-actions"><a class="primary-button session-start-action">Start</a><div class="session-advance-actions"><button class="secondary-tool-button session-done" type="button">Done</button><button class="text-button session-skip" type="button">Skip</button><button class="text-button session-next" type="button">Next</button></div></div></article>';
+        container.innerHTML = '<article class="session-activity-card"><div class="session-progress"><span></span><strong></strong></div><span class="session-course"></span><h2></h2><span class="recommendation-priority"></span><p class="recommendation-summary" hidden></p><div class="session-reasons" hidden><h3>Why</h3><ul></ul></div><p class="session-estimate"></p><div class="session-actions"><a class="primary-button session-start-action">Start</a><div class="session-advance-actions"><button class="secondary-tool-button session-done" type="button">Done</button><button class="text-button session-skip" type="button">Skip</button><button class="text-button session-next" type="button">Next</button></div></div></article>';
         const card = container.querySelector(".session-activity-card");
         courseColorTarget(card, activity.course);
         card.querySelector(".session-progress span").textContent = `${ordinal} of ${session.activities.length}`;
         card.querySelector(".session-progress strong").textContent = `${activity.type.replaceAll("_", " ")} · ${activity.minutes} min`;
         card.querySelector(".session-course").textContent = activity.course.code;
         card.querySelector("h2").textContent = activity.title;
+        const priority = card.querySelector(".recommendation-priority");
+        priority.textContent = `${activity.priority || "medium"} priority`;
+        priority.classList.add(`priority-${activity.priority || "medium"}`);
+        const summary = card.querySelector(".recommendation-summary");
+        if (activity.explanation) {
+            summary.hidden = false;
+            summary.textContent = activity.explanation;
+        }
         const reasons = card.querySelector(".session-reasons ul");
         activity.reasons.forEach(reason => {
             const item = document.createElement("li");
             item.textContent = reason;
             reasons.appendChild(item);
         });
+        card.querySelector(".session-reasons").hidden = !activity.reasons.length;
         card.querySelector(".session-estimate").textContent = `Estimated time: ${activity.minutes} min`;
         const start = card.querySelector(".session-start-action");
         start.textContent = activity.action.label;

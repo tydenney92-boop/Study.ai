@@ -941,7 +941,14 @@ h1 {
 }
 
 .recommendation-card h3 { margin: 0; color: #172033; font-size: 16px; line-height: 1.35; }
+.recommendation-labels { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.recommendation-priority { width: max-content; padding: 4px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: capitalize; }
+.priority-high { color: #9a3c2d; background: #fff0eb; }
+.priority-medium { color: var(--color-primary-hover); background: var(--color-primary-soft); }
+.priority-low { color: #596678; background: #eef1f4; }
 .recommendation-reason { margin: 9px 0 12px; color: #606b7d; line-height: 1.5; }
+.recommendation-summary { margin: 0; color: var(--color-text-muted); font-size: 12px; line-height: 1.45; }
+.recommendation-why { display: grid; gap: 4px; margin: 0 0 12px; padding-left: 19px; color: #596678; font-size: 12px; }
 .recommendation-evidence { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
 .recommendation-evidence span, .evidence-level {
     padding: 4px 8px;
