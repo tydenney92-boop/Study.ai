@@ -161,6 +161,12 @@ button:disabled {
 .nav-item span {
     width: 20px;
 
+    height: 20px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
     text-align: center;
 
     font-size: 17px;
@@ -517,6 +523,16 @@ h1 {
 
     border-radius: 5px;
     background: var(--course-accent, #2F7F7A);
+}
+
+.nav-item .nav-icon svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
 }
 
 

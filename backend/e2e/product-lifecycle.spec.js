@@ -19,6 +19,28 @@ test("authentication, canonical navigation, session persistence, and recent cour
     await page.reload();
     await expect(page.locator(".profile-card strong")).toHaveText(account.name);
 
+    await page.goto("/today.html");
+    for (const href of ["today.html", "index.html", "index.html#courses", "planner.html"]) {
+        await expect(page.locator(`.sidebar-nav a[href="${href}"] .nav-icon svg`)).toBeVisible();
+    }
+    const desktopIcons = await page.locator(".sidebar-nav").evaluate(nav => ({
+        activeColor: getComputedStyle(nav.querySelector(".nav-item.active")).color,
+        inactiveColor: getComputedStyle(nav.querySelector("a[href='index.html']")).color,
+        width: document.documentElement.scrollWidth,
+        viewport: window.innerWidth
+    }));
+    expect(desktopIcons.activeColor).not.toBe(desktopIcons.inactiveColor);
+    expect(desktopIcons.width).toBeLessThanOrEqual(desktopIcons.viewport);
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobileIcons = await page.locator(".sidebar-nav").evaluate(nav => ({
+        iconWidth: nav.querySelector(".nav-icon svg").getBoundingClientRect().width,
+        width: document.documentElement.scrollWidth,
+        viewport: window.innerWidth
+    }));
+    expect(mobileIcons.iconWidth).toBeGreaterThan(0);
+    expect(mobileIcons.width).toBeLessThanOrEqual(mobileIcons.viewport);
+    await page.setViewportSize({ width: 1440, height: 900 });
+
     await page.getByRole("link", { name: "My Courses" }).click();
     await expect(page).toHaveURL(/index\.html#courses$/);
     await expect(page.getByRole("link", { name: "My Courses" })).toHaveClass(/active/);

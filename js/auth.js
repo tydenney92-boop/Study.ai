@@ -116,21 +116,50 @@ if (typeof window !== "undefined" && typeof document !== "undefined") (function(
 
     const sidebarBottom = document.querySelector(".sidebar-bottom");
     const sidebarNavigation = document.querySelector(".sidebar-nav");
+    const navigationIcons = {
+        today: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>',
+        dashboard: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>',
+        courses: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21zM20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5A2.5 2.5 0 0 1 20 21z"></path></svg>',
+        planner: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4.5" width="18" height="16" rx="2"></rect><path d="M8 2v5M16 2v5M3 9h18M8 15l2 2 5-5"></path></svg>'
+    };
+
+    function iconForLink(link) {
+        const href = link.getAttribute("href");
+        if (href === "today.html") return navigationIcons.today;
+        if (href === "index.html") return navigationIcons.dashboard;
+        if (href === "index.html#courses") return navigationIcons.courses;
+        if (href === "planner.html") return navigationIcons.planner;
+        return null;
+    }
+
+    function applyNavigationIcons() {
+        if (!sidebarNavigation) return;
+        sidebarNavigation.querySelectorAll(".nav-item").forEach(link => {
+            const icon = iconForLink(link);
+            const container = link.querySelector("span");
+            if (icon && container) {
+                container.classList.add("nav-icon");
+                container.innerHTML = icon;
+            }
+        });
+    }
+
     if (sidebarNavigation && !sidebarNavigation.querySelector("[href='today.html']")) {
         const todayLink = document.createElement("a");
         todayLink.href = "today.html";
         todayLink.className = "nav-item";
-        todayLink.innerHTML = "<span>☀</span>Today";
+        todayLink.innerHTML = `<span class="nav-icon">${navigationIcons.today}</span>Today`;
         sidebarNavigation.prepend(todayLink);
     }
     if (sidebarNavigation && !sidebarNavigation.querySelector("[href='planner.html']")) {
         const plannerLink = document.createElement("a");
         plannerLink.href = "planner.html";
         plannerLink.className = "nav-item";
-        plannerLink.innerHTML = "<span>▦</span>Planner";
+        plannerLink.innerHTML = `<span class="nav-icon">${navigationIcons.planner}</span>Planner`;
         const progressLink = sidebarNavigation.querySelector("[href='progress.html']");
         sidebarNavigation.insertBefore(plannerLink, progressLink || null);
     }
+    applyNavigationIcons();
     const currentCourseId = new URLSearchParams(window.location.search).get("courseId");
     const semesterStateKey = "studySignal:sidebar-semesters";
 
