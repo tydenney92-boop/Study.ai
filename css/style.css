@@ -1546,7 +1546,7 @@ h1 { color: var(--color-ink); font-size: clamp(28px, 3vw, 34px); line-height: 1.
 
 .demo-mode-banner {
     position: fixed;
-    z-index: 1200;
+    z-index: 900;
     right: 20px;
     bottom: 20px;
     display: flex;
@@ -1633,3 +1633,35 @@ h1 { color: var(--color-ink); font-size: clamp(28px, 3vw, 34px); line-height: 1.
 @media (max-width: 500px) { .compact-task-row { grid-template-columns: auto 4px minmax(0, 1fr); } .compact-task-actions { grid-column: 3; justify-items: start; grid-auto-flow: column; } }
 .course-planner-panel { margin-top: 22px; }
 .course-planner-panel > .text-link { display: inline-block; margin-top: 14px; }
+
+/* Match the schedule review dialog width to its three-column field grid. */
+.schedule-import-modal { width: min(800px, 100%); }
+.schedule-import-content { overflow-x: hidden; }
+.schedule-candidate, .candidate-fields, .candidate-fields > div { min-width: 0; }
+.schedule-candidate { grid-template-columns: auto minmax(0, 1fr); }
+.candidate-fields input, .candidate-fields select { min-width: 0; }
+.candidate-fields { grid-template-columns: minmax(140px, 2fr) minmax(100px, 1fr) minmax(260px, 1.4fr); }
+
+@media (max-width: 720px) {
+    .schedule-import-modal { max-height: calc(100dvh - 24px); padding: 18px; }
+    .candidate-fields { grid-template-columns: 1fr; }
+    .candidate-fields > div { grid-column: 1; flex-wrap: wrap; }
+    .candidate-fields small, .candidate-fields blockquote, .candidate-reconcile { grid-column: 1; }
+    .candidate-time-label { flex: 1; }
+    .schedule-import-modal .app-modal-actions { display: grid; grid-template-columns: 1fr; }
+    .schedule-import-modal .app-modal-actions button { width: 100%; }
+}
+
+/* Course rows omit the checkbox used by dashboard rows, so they use three columns. */
+.course-planner-panel .compact-task-row:not(.bulk-selecting) {
+    grid-template-columns: 5px minmax(0, 1fr) auto;
+}
+
+@media (max-width: 500px) {
+    .compact-task-row strong { white-space: normal; overflow-wrap: anywhere; }
+    .course-planner-panel .compact-task-row:not(.bulk-selecting) .compact-task-actions { grid-column: 2; }
+}
+
+@media (max-width: 390px) {
+    body .today-compact-copy strong { white-space: normal; overflow-wrap: anywhere; }
+}
