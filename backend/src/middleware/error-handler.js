@@ -11,6 +11,14 @@ function errorHandler(error, req, res, next) {
             error.code = "FILE_TOO_LARGE";
             error.message = "The uploaded file exceeds the size limit.";
             error.expose = true;
+        } else if (
+            error.code === "LIMIT_FILE_COUNT" ||
+            (error.code === "LIMIT_UNEXPECTED_FILE" && error.field === "files")
+        ) {
+            error.status = 400;
+            error.code = "TOO_MANY_FILES";
+            error.message = "A batch can contain up to 10 files.";
+            error.expose = true;
         } else {
             error.status = 400;
             error.code = "UPLOAD_ERROR";

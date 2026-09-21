@@ -30,13 +30,13 @@ function createLocalFileStorage({ uploadDirectory }) {
             fs.mkdirSync(uploadDirectory, { recursive: true });
         },
 
-        createUploadMiddleware({ maxFileSize, allowedExtensions }) {
+        createUploadMiddleware({ maxFileSize, allowedExtensions, maxFiles = 10 }) {
             const allowed = new Set(allowedExtensions);
             return multer({
                 storage: multer.memoryStorage(),
                 limits: {
                     fileSize: maxFileSize,
-                    files: 1
+                    files: maxFiles
                 },
                 fileFilter(req, file, callback) {
                     const extension = path.extname(file.originalname).toLowerCase();

@@ -988,6 +988,87 @@ test("course, unit, and material management works through the UI", async ({ page
     await expect(page.locator(".course-card", { hasText: "BIO 111" })).toHaveCount(0);
 });
 
+test("multi-material upload queues, removes, and saves files to one unit", async ({ page }) => {
+    await signup(page, "BatchMaterials");
+    const courseId = await createCourse(page, {
+        name: "Regression Analysis",
+        code: "ECON 378"
+    });
+    await createUnit(page, "Regression");
+
+    await page.getByRole("link", { name: "+ Add Materials" }).click();
+    await expect(page.locator("#upload-modal")).toHaveClass(/active/);
+    await page.locator("#upload-unit-modal").selectOption({ label: "Unit 1 — Regression" });
+    await page.locator("#file-input").setInputFiles([
+        {
+            name: "Lecture 8 - a very long regression analysis filename for mobile.txt",
+            mimeType: "text/plain",
+            buffer: Buffer.from("Lecture eight covers regression coefficients and model fit.")
+        },
+        {
+            name: "Remove Me.txt",
+            mimeType: "text/plain",
+            buffer: Buffer.from("This selected file should be removed before upload.")
+        },
+        {
+            name: "Practice Problems.txt",
+            mimeType: "text/plain",
+            buffer: Buffer.from("Practice problems cover residuals, inference, and prediction.")
+        }
+    ]);
+
+    await expect(page.locator(".selected-file-row")).toHaveCount(3);
+    await expect(page.locator("#selected-file-count")).toHaveText("3 files selected");
+    await page.locator(".selected-file-row", { hasText: "Remove Me.txt" })
+        .getByRole("button", { name: "Remove" }).click();
+    await expect(page.locator(".selected-file-row")).toHaveCount(2);
+    await expect(page.locator("#confirm-upload")).toHaveText("Upload 2 Materials");
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobileLayout = await page.locator("#upload-modal").evaluate(overlay => {
+        const upload = overlay.querySelector("#confirm-upload").getBoundingClientRect();
+        const removes = [...overlay.querySelectorAll(".selected-file-remove")]
+            .map(button => button.getBoundingClientRect());
+        return {
+            scrollWidth: document.documentElement.scrollWidth,
+            viewportWidth: window.innerWidth,
+            uploadLeft: upload.left,
+            uploadRight: upload.right,
+            uploadBottom: upload.bottom,
+            viewportHeight: window.innerHeight,
+            removesInside: removes.every(box => box.left >= 0 && box.right <= window.innerWidth)
+        };
+    });
+    expect(mobileLayout.scrollWidth).toBeLessThanOrEqual(mobileLayout.viewportWidth);
+    expect(mobileLayout.uploadLeft).toBeGreaterThanOrEqual(0);
+    expect(mobileLayout.uploadRight).toBeLessThanOrEqual(mobileLayout.viewportWidth);
+    expect(mobileLayout.uploadBottom).toBeLessThanOrEqual(mobileLayout.viewportHeight);
+    expect(mobileLayout.removesInside).toBe(true);
+
+    let batchRequests = 0;
+    await page.route("**/api/courses/*/materials/batch", async route => {
+        batchRequests += 1;
+        await new Promise(resolve => setTimeout(resolve, 200));
+        await route.continue();
+    });
+    await page.locator("#confirm-upload").click();
+    await expect(page.locator("#confirm-upload")).toBeDisabled();
+    await expect(page.locator("#batch-upload-summary")).toContainText("Processing 2 files");
+    await page.evaluate(() => document.querySelector("#confirm-upload").click());
+    await expect(page.locator("#batch-upload-summary")).toHaveText("2 materials added to Unit 1.");
+    expect(batchRequests).toBe(1);
+    await expect(page.locator(".selected-file-status.success")).toHaveCount(2);
+    await page.getByRole("button", { name: "Done" }).click();
+
+    await expect(page.locator(".material-card", {
+        hasText: "Lecture 8 - a very long regression analysis filename for mobile.txt"
+    })).toBeVisible();
+    await expect(page.locator(".material-card", { hasText: "Practice Problems.txt" })).toBeVisible();
+    await expect(page.locator(".material-card", { hasText: "Remove Me.txt" })).toHaveCount(0);
+    await expect(page.locator("#unit-filter")).toHaveValue(/\d+/);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
 test("study guides generate explicitly, preserve origins, reopen without AI, and delete", async ({ page }) => {
     await signup(page, "Guide");
     const courseId = await createCourse(page, { code: "GUIDE 101" });

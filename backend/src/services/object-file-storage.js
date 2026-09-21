@@ -44,11 +44,11 @@ function createObjectFileStorage({
     return {
         driver: "s3",
         ensureReady() {},
-        createUploadMiddleware({ maxFileSize, allowedExtensions }) {
+        createUploadMiddleware({ maxFileSize, allowedExtensions, maxFiles = 10 }) {
             const allowed = new Set(allowedExtensions);
             return multer({
                 storage: multer.memoryStorage(),
-                limits: { fileSize: maxFileSize, files: 1 },
+                limits: { fileSize: maxFileSize, files: maxFiles },
                 fileFilter(req, file, callback) {
                     const extension = path.extname(file.originalname).toLowerCase();
                     if (!allowed.has(extension)) {

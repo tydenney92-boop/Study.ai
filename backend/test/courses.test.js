@@ -228,7 +228,8 @@ test("course deletion cascades data and journals failed storage cleanup", async 
             driver: "test",
             ensureReady() {},
             createUploadMiddleware() {
-                return { single() { return (req, res, next) => next(); } };
+                const passThrough = () => (req, res, next) => next();
+                return { single: passThrough, array: passThrough };
             },
             async remove() { if (!storageAvailable) throw new Error("Storage unavailable"); },
             async healthCheck() { return true; }

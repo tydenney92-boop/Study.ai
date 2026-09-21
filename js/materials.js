@@ -7,11 +7,18 @@ const unitFilter = document.querySelector("#unit-filter");
 const typeFilter = document.querySelector("#type-filter");
 const modal = document.querySelector("#upload-modal");
 const fileInput = document.querySelector("#file-input");
-const selectedFileLabel = document.querySelector("#selected-file");
+const selectedFilesPanel = document.querySelector("#selected-file");
+const selectedFileCount = document.querySelector("#selected-file-count");
+const selectedFileList = document.querySelector("#selected-file-list");
 const uploadUnit = document.querySelector("#upload-unit-modal");
 const uploadRole = document.querySelector("#upload-role-modal");
 const uploadError = document.querySelector("#upload-error");
 const confirmUpload = document.querySelector("#confirm-upload");
+const batchUploadStatus = document.querySelector("#batch-upload-status");
+const batchUploadSummary = document.querySelector("#batch-upload-summary");
+const cancelUpload = document.querySelector("#cancel-upload");
+const closeUploadButton = document.querySelector("#close-upload-modal");
+const modalFileButton = document.querySelector("#modal-file-button");
 const emptyTitle = document.querySelector("#empty-materials-title");
 const emptyMessage = document.querySelector("#empty-materials-message");
 const emptyAction = document.querySelector("#empty-materials-action");
@@ -19,9 +26,12 @@ const emptyAction = document.querySelector("#empty-materials-action");
 let course = null;
 let units = [];
 let materials = [];
-let selectedFile = null;
+let selectedFiles = [];
+let isUploading = false;
+let uploadComplete = false;
 let searchTimer = null;
 let searchRequest = 0;
+const maxBatchFiles = 10;
 
 if (!courseId) {
     StudyAI.courseContext.goToMyCourses("Choose a course to view its materials.");
@@ -218,7 +228,7 @@ async function loadPage() {
         document.querySelector("#materials-course-name").textContent =
             `${course.courseCode} · ${course.courseName}`;
         document.querySelector("#upload-course-description").textContent =
-            `Add a file to ${course.courseCode} — ${course.courseName}.`;
+            `Add files to ${course.courseCode} — ${course.courseName}. All files use the same unit and material role.`;
         const courseLink = document.querySelector("#materials-course-link");
         courseLink.textContent = `← ${course.courseCode}`;
         courseLink.href = StudyAI.courseContext.url("course.html", { courseId });
@@ -235,6 +245,84 @@ async function loadPage() {
     }
 }
 
+function uploadButtonLabel() {
+    if (selectedFiles.length > 1) return `Upload ${selectedFiles.length} Materials`;
+    return uploadRole.value === "syllabus" ? "Upload Syllabus" : "Upload Material";
+}
+
+function renderSelectedFiles(statuses = []) {
+    selectedFilesPanel.hidden = selectedFiles.length === 0;
+    selectedFileCount.textContent = selectedFiles.length
+        ? `${selectedFiles.length} file${selectedFiles.length === 1 ? "" : "s"} selected`
+        : "";
+    selectedFileList.innerHTML = "";
+
+    selectedFiles.forEach((file, index) => {
+        const item = document.createElement("li");
+        item.className = "selected-file-row";
+
+        const copy = document.createElement("div");
+        copy.className = "selected-file-copy";
+        const name = document.createElement("span");
+        name.className = "selected-file-name";
+        name.textContent = file.name;
+        const details = document.createElement("small");
+        details.textContent = formatSize(file.size);
+        copy.append(name, details);
+
+        const status = statuses[index];
+        if (status) {
+            const statusLabel = document.createElement("span");
+            statusLabel.className = `selected-file-status ${status.status}`;
+            statusLabel.textContent = status.status === "success"
+                ? "✓ Added"
+                : `✕ ${status.error?.message || "Upload failed"}`;
+            copy.appendChild(statusLabel);
+        }
+
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "selected-file-remove";
+        removeButton.textContent = "Remove";
+        removeButton.dataset.fileIndex = String(index);
+        removeButton.disabled = isUploading || uploadComplete;
+        removeButton.setAttribute("aria-label", `Remove ${file.name}`);
+        item.append(copy, removeButton);
+        selectedFileList.appendChild(item);
+    });
+
+    if (!isUploading && !uploadComplete) confirmUpload.textContent = uploadButtonLabel();
+}
+
+function selectFiles(fileList) {
+    const files = Array.from(fileList || []);
+    uploadError.textContent = "";
+    batchUploadStatus.hidden = true;
+    batchUploadStatus.classList.remove("has-failures");
+    if (files.length > maxBatchFiles) {
+        selectedFiles = [];
+        renderSelectedFiles();
+        uploadError.textContent = `Choose up to ${maxBatchFiles} files at a time.`;
+        fileInput.value = "";
+        return;
+    }
+    selectedFiles = files;
+    renderSelectedFiles();
+}
+
+function setUploadControlsDisabled(disabled) {
+    fileInput.disabled = disabled;
+    modalFileButton.disabled = disabled;
+    uploadUnit.disabled = disabled;
+    uploadRole.disabled = disabled;
+    closeUploadButton.disabled = disabled;
+    cancelUpload.disabled = disabled;
+    confirmUpload.disabled = disabled;
+    selectedFileList.querySelectorAll("button").forEach(button => {
+        button.disabled = disabled;
+    });
+}
+
 function openModal() {
     if (!courseId) return;
     modal.classList.add("active");
@@ -245,15 +333,22 @@ function openModal() {
     }
     const syllabusUpload = uploadRole.value === "syllabus";
     document.querySelector("#upload-modal-title").textContent = syllabusUpload ? "Upload Syllabus" : "Upload Material";
-    confirmUpload.textContent = syllabusUpload ? "Upload Syllabus" : "Upload Material";
+    confirmUpload.textContent = uploadButtonLabel();
 }
 
 function closeModal() {
+    if (isUploading) return;
     modal.classList.remove("active");
-    selectedFile = null;
-    selectedFileLabel.textContent = "";
+    selectedFiles = [];
+    uploadComplete = false;
+    renderSelectedFiles();
     fileInput.value = "";
     uploadError.textContent = "";
+    batchUploadStatus.hidden = true;
+    batchUploadSummary.textContent = "";
+    cancelUpload.textContent = "Cancel";
+    confirmUpload.hidden = false;
+    setUploadControlsDisabled(false);
 }
 
 modal.addEventListener("studyai:modal-close", closeModal);
@@ -270,17 +365,20 @@ emptyAction.addEventListener("click", () => {
         openModal();
     }
 });
-document.querySelector("#close-upload-modal").addEventListener("click", closeModal);
-document.querySelector("#cancel-upload").addEventListener("click", closeModal);
-document.querySelector("#modal-file-button").addEventListener("click", () => fileInput.click());
+closeUploadButton.addEventListener("click", closeModal);
+cancelUpload.addEventListener("click", closeModal);
+modalFileButton.addEventListener("click", () => fileInput.click());
 document.querySelector("#file-drop-zone").addEventListener("click", event => {
-    if (event.target.id !== "modal-file-button") fileInput.click();
+    if (!event.target.closest("button") && !isUploading) fileInput.click();
 });
-fileInput.addEventListener("change", () => {
-    selectedFile = fileInput.files[0] || null;
-    selectedFileLabel.textContent = selectedFile
-        ? `${selectedFile.name} · ${formatSize(selectedFile.size)}`
-        : "";
+fileInput.addEventListener("change", () => selectFiles(fileInput.files));
+
+selectedFileList.addEventListener("click", event => {
+    const removeButton = event.target.closest("[data-file-index]");
+    if (!removeButton || isUploading || uploadComplete) return;
+    selectedFiles.splice(Number(removeButton.dataset.fileIndex), 1);
+    fileInput.value = "";
+    renderSelectedFiles();
 });
 
 const fileDropZone = document.querySelector("#file-drop-zone");
@@ -297,32 +395,71 @@ const fileDropZone = document.querySelector("#file-drop-zone");
     });
 });
 fileDropZone.addEventListener("drop", event => {
-    selectedFile = event.dataTransfer.files[0] || null;
-    selectedFileLabel.textContent = selectedFile
-        ? `${selectedFile.name} · ${formatSize(selectedFile.size)}`
-        : "";
+    if (!isUploading) selectFiles(event.dataTransfer.files);
 });
 
 confirmUpload.addEventListener("click", async () => {
-    if (!selectedFile) {
-        uploadError.textContent = "Choose a file first.";
+    if (isUploading || uploadComplete) return;
+    if (!selectedFiles.length) {
+        uploadError.textContent = "Choose at least one file first.";
         return;
     }
 
+    const filesToUpload = [...selectedFiles];
     const formData = new FormData();
-    formData.append("file", selectedFile);
+    const isBatch = filesToUpload.length > 1;
+    filesToUpload.forEach(file => formData.append(isBatch ? "files" : "file", file));
     if (uploadUnit.value) formData.append("unitId", uploadUnit.value);
     formData.append("materialRole", uploadRole.value);
-    confirmUpload.disabled = true;
-    confirmUpload.textContent = "Uploading…";
+    isUploading = true;
+    setUploadControlsDisabled(true);
+    confirmUpload.textContent = isBatch
+        ? `Processing ${filesToUpload.length} files…`
+        : "Processing…";
     uploadError.textContent = "";
+    batchUploadStatus.hidden = false;
+    batchUploadSummary.textContent = isBatch
+        ? `Processing ${filesToUpload.length} files…`
+        : "Processing file…";
 
     try {
-        const material = await StudyAI.api.upload(
-            `/api/courses/${courseId}/materials`,
+        const response = await StudyAI.api.upload(
+            `/api/courses/${courseId}/materials${isBatch ? "/batch" : ""}`,
             formData,
-            { timeoutMs: 120000 }
+            { timeoutMs: 120000 * filesToUpload.length }
         );
+        if (isBatch) {
+            isUploading = false;
+            uploadComplete = true;
+            renderSelectedFiles(response.results);
+            const selectedUnit = uploadUnit.value;
+            const unit = units.find(value => String(value.id) === selectedUnit);
+            const destination = unit ? `Unit ${unit.unitNumber}` : "this course";
+            const successNoun = response.succeeded === 1 ? "material" : "materials";
+            const failureSummary = response.failed
+                ? ` ${response.failed} file${response.failed === 1 ? "" : "s"} failed.`
+                : "";
+            batchUploadSummary.textContent =
+                `${response.succeeded} ${successNoun} added to ${destination}.${failureSummary}`;
+            batchUploadStatus.classList.toggle("has-failures", response.failed > 0);
+            confirmUpload.hidden = true;
+            cancelUpload.textContent = "Done";
+            cancelUpload.disabled = false;
+            closeUploadButton.disabled = false;
+            try {
+                materials = await StudyAI.api.get(`/api/courses/${courseId}/materials`);
+                unitFilter.value = selectedUnit || "none";
+                searchInput.value = "";
+                typeFilter.value = "all";
+                renderMaterials();
+            } catch (refreshError) {
+                uploadError.textContent =
+                    "The files were processed, but the materials list could not refresh. Reload this page to see the latest materials.";
+            }
+            return;
+        }
+
+        const material = response;
         const onboardingRole = new URLSearchParams(window.location.search).get("role");
         window.location.href = StudyAI.courseContext.url("material.html", {
             courseId,
@@ -333,14 +470,16 @@ confirmUpload.addEventListener("click", async () => {
         });
     } catch (error) {
         uploadError.textContent = error.message;
-        confirmUpload.disabled = false;
-        confirmUpload.textContent = "Upload Material";
+        isUploading = false;
+        batchUploadStatus.hidden = true;
+        setUploadControlsDisabled(false);
+        renderSelectedFiles();
     }
 });
 uploadRole.addEventListener("change", () => {
     const syllabusUpload = uploadRole.value === "syllabus";
     document.querySelector("#upload-modal-title").textContent = syllabusUpload ? "Upload Syllabus" : "Upload Material";
-    confirmUpload.textContent = syllabusUpload ? "Upload Syllabus" : "Upload Material";
+    confirmUpload.textContent = uploadButtonLabel();
 });
 
 searchInput.addEventListener("input", () => {

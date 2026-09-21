@@ -1,4 +1,5 @@
 const express = require("express");
+const { AppError } = require("../utils/app-error");
 const { asyncHandler } = require("../utils/async-handler");
 const {
     positiveInteger,
@@ -7,6 +8,17 @@ const {
     stringField,
     validationError
 } = require("../utils/validation");
+
+const MAX_BATCH_FILES = 10;
+const MATERIAL_ROLES = ["general", "syllabus", "exam_review", "study_guide"];
+
+function materialRole(body) {
+    const role = body.materialRole || "general";
+    if (!MATERIAL_ROLES.includes(role)) {
+        throw validationError("materialRole is invalid.", { field: "materialRole" });
+    }
+    return role;
+}
 
 function materialChanges(body) {
     requestObject(body);
@@ -99,19 +111,76 @@ function createCourseMaterialsRouter({ materialService, upload }) {
         "/",
         upload.single("file"),
         asyncHandler(async function(req, res) {
-            const materialRole = req.body.materialRole || "general";
-            if (!["general", "syllabus", "exam_review", "study_guide"].includes(materialRole)) {
-                throw validationError("materialRole is invalid.", { field: "materialRole" });
-            }
+            const role = materialRole(req.body);
             const material = await materialService.createFromUpload({
                 courseId: req.courseId,
                 userId: req.user.id,
                 unitId: req.body.unitId,
-                materialRole,
+                materialRole: role,
                 file: req.file
             });
 
             res.status(201).json(material);
+        })
+    );
+
+    router.post(
+        "/batch",
+        upload.array("files", MAX_BATCH_FILES),
+        asyncHandler(async function(req, res) {
+            const files = req.files || [];
+            if (files.length === 0) {
+                throw new AppError({
+                    code: "FILES_REQUIRED",
+                    message: "At least one file is required.",
+                    status: 400
+                });
+            }
+
+            const role = materialRole(req.body);
+            const context = materialService.requireUploadContext({
+                courseId: req.courseId,
+                userId: req.user.id,
+                unitId: req.body.unitId
+            });
+            const results = [];
+
+            for (const file of files) {
+                try {
+                    const material = await materialService.createFromUpload({
+                        courseId: req.courseId,
+                        userId: req.user.id,
+                        unitId: context.unitId,
+                        materialRole: role,
+                        file
+                    });
+                    results.push({
+                        filename: file.originalname,
+                        status: "success",
+                        material
+                    });
+                } catch (error) {
+                    results.push({
+                        filename: file.originalname,
+                        status: "failed",
+                        error: {
+                            code: error.code || "MATERIAL_UPLOAD_FAILED",
+                            message: error.expose
+                                ? error.message
+                                : "This file could not be processed."
+                        }
+                    });
+                }
+            }
+
+            const succeeded = results.filter(result => result.status === "success").length;
+            const failed = results.length - succeeded;
+            res.status(failed > 0 ? 207 : 201).json({
+                processed: results.length,
+                succeeded,
+                failed,
+                results
+            });
         })
     );
 

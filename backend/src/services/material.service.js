@@ -42,6 +42,26 @@ function createMaterialService({
         }
     }
 
+    function requireUploadContext({ courseId, userId, unitId }) {
+        coursesService.requireOwned(courseId, userId);
+        const parsedUnitId = unitId === undefined || unitId === null || unitId === ""
+            ? null
+            : positiveInteger(unitId, "unitId");
+
+        if (
+            parsedUnitId !== null &&
+            !unitsRepository.findOwned(parsedUnitId, courseId, userId)
+        ) {
+            throw new AppError({
+                code: "UNIT_NOT_FOUND",
+                message: "Unit not found in this course.",
+                status: 404
+            });
+        }
+
+        return { unitId: parsedUnitId };
+    }
+
     async function createFromUpload({ courseId, userId, unitId, materialRole = "general", file }) {
         if (!file) {
             throw new AppError({
@@ -53,7 +73,7 @@ function createMaterialService({
 
         let storedFilename = null;
         try {
-            coursesService.requireOwned(courseId, userId);
+            const context = requireUploadContext({ courseId, userId, unitId });
 
             if (
                 typeof file.originalname !== "string" ||
@@ -64,21 +84,6 @@ function createMaterialService({
                     code: "INVALID_ORIGINAL_FILENAME",
                     message: "The original filename must be between 1 and 255 characters.",
                     status: 400
-                });
-            }
-
-            const parsedUnitId = unitId === undefined || unitId === null || unitId === ""
-                ? null
-                : positiveInteger(unitId, "unitId");
-
-            if (
-                parsedUnitId !== null &&
-                !unitsRepository.findOwned(parsedUnitId, courseId, userId)
-            ) {
-                throw new AppError({
-                    code: "UNIT_NOT_FOUND",
-                    message: "Unit not found in this course.",
-                    status: 404
                 });
             }
 
@@ -104,7 +109,7 @@ function createMaterialService({
 
             const materialId = materialsRepository.create({
                 courseId,
-                unitId: parsedUnitId,
+                unitId: context.unitId,
                 displayName: file.originalname,
                 originalFilename: file.originalname,
                 storedFilename,
@@ -171,6 +176,7 @@ function createMaterialService({
         },
 
         createFromUpload,
+        requireUploadContext,
 
         update(materialId, courseId, userId, changes) {
             this.get(materialId, courseId, userId);

@@ -4,6 +4,10 @@ const fs = require("fs");
 const path = require("path");
 const { authenticatedRequest: request } = require("./helpers/test-app");
 const { createTestApp } = require("./helpers/test-app");
+const { PNG_FIXTURE } = require("./helpers/image-fixtures");
+const { docxFixture } = require("./helpers/office-fixtures");
+const { textPdf } = require("./helpers/pdf-fixtures");
+const { AppError } = require("../src/utils/app-error");
 
 async function createCourse(app, code) {
     const response = await request(app)
@@ -76,6 +80,168 @@ test("course-aware materials can be uploaded, listed, retrieved, and read", asyn
         extractionMethod: "native",
         extractionError: "This material does not contain enough extractable text."
     });
+});
+
+test("batch upload saves mixed material types to one shared course and unit", async t => {
+    const context = createTestApp({
+        textExtractionService: {
+            async extract({ originalFilename }) {
+                return {
+                    text: `Extracted content for ${originalFilename}`,
+                    status: "extracted",
+                    method: originalFilename.endsWith(".png") ? "ocr" : "native",
+                    error: null
+                };
+            }
+        }
+    });
+    t.after(context.cleanup);
+    const course = await createCourse(context.app, "BATCH 101");
+    const unit = await createUnit(context.app, course.id, 4);
+    const docx = await docxFixture(["Regression notes for the batch upload test."]);
+
+    const response = await request(context.app)
+        .post(`/api/courses/${course.id}/materials/batch`)
+        .field("unitId", String(unit.id))
+        .field("materialRole", "study_guide")
+        .attach("files", Buffer.from("Plain text notes with enough useful content."), {
+            filename: "notes.txt",
+            contentType: "text/plain"
+        })
+        .attach("files", textPdf(["Lecture PDF content for regression analysis."]), {
+            filename: "lecture.pdf",
+            contentType: "application/pdf"
+        })
+        .attach("files", docx, {
+            filename: "regression.docx",
+            contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        })
+        .attach("files", PNG_FIXTURE, {
+            filename: "whiteboard.png",
+            contentType: "image/png"
+        })
+        .expect(201);
+
+    assert.deepEqual(
+        { processed: response.body.processed, succeeded: response.body.succeeded, failed: response.body.failed },
+        { processed: 4, succeeded: 4, failed: 0 }
+    );
+    assert.deepEqual(response.body.results.map(result => result.status), [
+        "success", "success", "success", "success"
+    ]);
+    assert.deepEqual(response.body.results.map(result => result.material.materialType), [
+        "notes", "pdf", "notes", "image"
+    ]);
+    response.body.results.forEach(result => {
+        assert.equal(result.material.courseId, course.id);
+        assert.equal(result.material.unitId, unit.id);
+        assert.equal(result.material.materialRole, "study_guide");
+    });
+    assert.equal(uploadFiles(context).length, 4);
+});
+
+test("batch upload validates course ownership and the shared unit before saving files", async t => {
+    const context = createTestApp();
+    t.after(context.cleanup);
+    const ownedCourse = await createCourse(context.app, "OWNED BATCH");
+    const otherCourse = await createCourse(context.app, "OTHER BATCH");
+    const otherUnit = await createUnit(context.app, otherCourse.id);
+    const otherUserId = Number(context.database.prepare(`
+        INSERT INTO users (name, email) VALUES ('Batch Owner', 'batch-owner@example.com')
+    `).run().lastInsertRowid);
+    const privateCourseId = Number(context.database.prepare(`
+        INSERT INTO courses (user_id, course_name, course_code, semester)
+        VALUES (?, 'Private Batch', 'PRIVATE BATCH', 'Fall 2026')
+    `).run(otherUserId).lastInsertRowid);
+
+    await request(context.app)
+        .post(`/api/courses/${privateCourseId}/materials/batch`)
+        .attach("files", Buffer.from("private"), "private.txt")
+        .expect(404);
+
+    const invalidUnit = await request(context.app)
+        .post(`/api/courses/${ownedCourse.id}/materials/batch`)
+        .field("unitId", String(otherUnit.id))
+        .attach("files", Buffer.from("wrong unit"), "wrong-unit.txt")
+        .expect(404);
+    assert.equal(invalidUnit.body.error.code, "UNIT_NOT_FOUND");
+    assert.deepEqual(uploadFiles(context), []);
+    assert.equal(context.database.prepare("SELECT COUNT(*) AS count FROM materials").get().count, 0);
+});
+
+test("batch upload reports a failed file while preserving successful files", async t => {
+    const context = createTestApp({
+        textExtractionService: {
+            async extract({ originalFilename }) {
+                if (originalFilename === "broken.png") {
+                    throw new AppError({
+                        code: "OCR_FAILED",
+                        message: "OCR failed for this image.",
+                        status: 422
+                    });
+                }
+                return {
+                    text: `Extracted content for ${originalFilename}`,
+                    status: "extracted",
+                    method: "native",
+                    error: null
+                };
+            }
+        }
+    });
+    t.after(context.cleanup);
+    const course = await createCourse(context.app, "PARTIAL 101");
+    const unit = await createUnit(context.app, course.id);
+
+    const response = await request(context.app)
+        .post(`/api/courses/${course.id}/materials/batch`)
+        .field("unitId", String(unit.id))
+        .attach("files", Buffer.from("first successful material"), "first.txt")
+        .attach("files", PNG_FIXTURE, { filename: "broken.png", contentType: "image/png" })
+        .attach("files", Buffer.from("second successful material"), "second.txt")
+        .expect(207);
+
+    assert.deepEqual(
+        { processed: response.body.processed, succeeded: response.body.succeeded, failed: response.body.failed },
+        { processed: 3, succeeded: 2, failed: 1 }
+    );
+    assert.deepEqual(response.body.results.map(result => result.status), [
+        "success", "failed", "success"
+    ]);
+    assert.deepEqual(response.body.results[1].error, {
+        code: "OCR_FAILED",
+        message: "OCR failed for this image."
+    });
+    assert.deepEqual(
+        context.database.prepare("SELECT original_filename FROM materials ORDER BY id").all()
+            .map(row => row.original_filename),
+        ["first.txt", "second.txt"]
+    );
+    assert.equal(uploadFiles(context).length, 2);
+});
+
+test("batch upload rejects an empty batch and more than ten files", async t => {
+    const context = createTestApp();
+    t.after(context.cleanup);
+    const course = await createCourse(context.app, "LIMIT 101");
+
+    const empty = await request(context.app)
+        .post(`/api/courses/${course.id}/materials/batch`)
+        .expect(400);
+    assert.equal(empty.body.error.code, "FILES_REQUIRED");
+
+    let oversized = request(context.app)
+        .post(`/api/courses/${course.id}/materials/batch`);
+    for (let index = 1; index <= 11; index += 1) {
+        oversized = oversized.attach(
+            "files",
+            Buffer.from(`batch file ${index}`),
+            `batch-${index}.txt`
+        );
+    }
+    const tooMany = await oversized.expect(400);
+    assert.equal(tooMany.body.error.code, "TOO_MANY_FILES");
+    assert.deepEqual(uploadFiles(context), []);
 });
 
 test("materials can be renamed, moved, searched by text, and securely downloaded", async t => {
@@ -272,7 +438,8 @@ test("material deletion journals failed storage cleanup and reconciles determini
             driver: "test",
             ensureReady() {},
             createUploadMiddleware() {
-                return { single() { return (req, res, next) => next(); } };
+                const passThrough = () => (req, res, next) => next();
+                return { single: passThrough, array: passThrough };
             },
             async remove() { if (!storageAvailable) throw new Error("Storage unavailable"); },
             async healthCheck() { return true; }

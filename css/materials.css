@@ -168,6 +168,10 @@
 
     gap: 13px;
 
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+
     min-height: 92px;
 
     background: white;
@@ -271,6 +275,8 @@
 
 .material-info h3 {
     font-size: 12px;
+
+    max-width: 100%;
 
     white-space: nowrap;
 
@@ -555,7 +561,7 @@
 
     width: 100%;
 
-    max-width: 520px;
+    max-width: 620px;
     max-height: calc(100dvh - 40px);
 
     background: white;
@@ -700,16 +706,115 @@
 }
 
 
-.selected-file {
-
+.selected-files {
     margin-top: 12px;
+    padding: 12px;
+    border: 1px solid #e5e9ef;
+    border-radius: 10px;
+    background: #fff;
+}
 
-    font-size: 13px;
+.selected-files[hidden] {
+    display: none;
+}
 
-    font-weight: 600;
-
+.selected-files > p {
+    margin-bottom: 8px;
     color: #374151;
+    font-size: 13px;
+    font-weight: 700;
+}
 
+#selected-file-list {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.selected-file-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 9px 10px;
+    border-radius: 8px;
+    background: #f7f8fa;
+    text-align: left;
+}
+
+.selected-file-copy {
+    min-width: 0;
+}
+
+.selected-file-name,
+.selected-file-copy small,
+.selected-file-status {
+    display: block;
+    min-width: 0;
+}
+
+.selected-file-name {
+    overflow-wrap: anywhere;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.selected-file-copy small {
+    margin-top: 3px;
+    color: #8a93a3;
+    font-size: 11px;
+}
+
+.selected-file-remove {
+    min-height: 36px;
+    padding: 7px 9px;
+    border: 1px solid #d8dee8;
+    border-radius: 7px;
+    background: #fff;
+    color: #536074;
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.selected-file-remove:hover {
+    border-color: #b9c2cf;
+}
+
+.selected-file-status {
+    margin-top: 5px;
+    color: #027a48;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.selected-file-status.failed {
+    color: #b42318;
+}
+
+.batch-upload-status {
+    margin-top: 16px;
+    padding: 11px 12px;
+    border-radius: 8px;
+    background: #ecfdf3;
+    color: #027a48;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.batch-upload-status[hidden] {
+    display: none;
+}
+
+.batch-upload-status.has-failures {
+    background: #fff7ed;
+    color: #9a3412;
 }
 
 
@@ -756,6 +861,38 @@
 
     background: #f5f7ff;
 
+}
+
+@media (max-width: 420px) {
+    .upload-modal-overlay {
+        align-items: flex-start;
+        padding: 10px;
+    }
+
+    .upload-modal {
+        max-height: calc(100dvh - 20px);
+        padding: 20px 16px;
+        border-radius: 12px;
+    }
+
+    .file-drop-zone {
+        padding: 20px 12px;
+    }
+
+    .selected-files {
+        padding: 9px;
+    }
+
+    .upload-modal-actions {
+        bottom: -20px;
+        margin-top: 20px;
+        padding-bottom: 0;
+    }
+
+    .upload-modal-actions button {
+        flex: 1;
+        min-width: 0;
+    }
 }
 
 /* Polished control states */
