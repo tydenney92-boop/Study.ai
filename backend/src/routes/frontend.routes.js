@@ -1,6 +1,11 @@
 const express = require("express");
 const path = require("path");
 
+const KATEX_DIRECTORY = path.join(
+    path.dirname(require.resolve("katex/package.json")),
+    "dist"
+);
+
 const FRONTEND_PAGES = [
     "index.html", "login.html", "signup.html", "course.html", "materials.html",
     "material.html", "study-guide.html", "quiz.html", "flashcards.html",
@@ -26,6 +31,7 @@ function registerFrontendRoutes(app, { frontendDirectory }) {
 
     app.use("/css", express.static(path.join(frontendDirectory, "css"), staticOptions));
     app.use("/js", express.static(path.join(frontendDirectory, "js"), staticOptions));
+    app.use("/vendor/katex", express.static(KATEX_DIRECTORY, staticOptions));
     app.get("/", sendPage("index.html"));
     for (const page of FRONTEND_PAGES) {
         app.get(`/${page}`, sendPage(page));

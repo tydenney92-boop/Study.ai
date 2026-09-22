@@ -353,6 +353,10 @@ test("Express serves allowlisted frontend assets without exposing backend files"
     await request(context.app).get("/js/course-colors.js").expect(200)
         .expect("Cache-Control", "public, max-age=0, must-revalidate")
         .expect(/StudySignalCourseColors/);
+    await request(context.app).get("/vendor/katex/katex.min.js").expect(200)
+        .expect("Content-Type", /javascript/);
+    await request(context.app).get("/vendor/katex/katex.min.css").expect(200)
+        .expect("Content-Type", /css/);
     await request(context.app).get("/backend/package.json").expect(404);
 });
 

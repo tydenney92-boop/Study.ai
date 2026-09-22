@@ -215,16 +215,7 @@ function displayStudyGuide(guide, metadata = null) {
     }
 
 
-    /*
-       Remove markdown formatting that
-       Ollama may add.
-    */
-
-    text =
-        text.replace(
-            /\*\*/g,
-            ""
-        );
+    text = normalizeLegacyGuideMath(text);
 
 
 
@@ -287,9 +278,10 @@ function displayStudyGuide(guide, metadata = null) {
     keyConcepts.innerHTML =
         "";
 
-    addTextAsList(
+    renderGuideContent(
         keyConcepts,
-        concepts
+        concepts,
+        "Key Concepts"
     );
 
 
@@ -301,9 +293,10 @@ function displayStudyGuide(guide, metadata = null) {
     importantTopics.innerHTML =
         "";
 
-    addTextAsList(
+    renderGuideContent(
         importantTopics,
-        definitions
+        definitions,
+        "Definitions"
     );
 
 
@@ -413,90 +406,161 @@ function extractSection(
 
 
 /* =========================================
-   ADD TEXT AS LIST
+   SAFE MARKDOWN + MATH RENDERING
 ========================================= */
 
-function addTextAsList(
-    container,
-    text
-) {
+function normalizeLegacyGuideMath(text) {
+    let insideDisplayMath = false;
+    const normalized = String(text || "").split("\n").map(line => {
+        const trimmed = line.trim();
+        const withoutListMarker = trimmed.replace(/^(?:[-*]|\d+\.)\s+/, "");
 
-    if (!text) {
+        if (/^\\\[$/.test(withoutListMarker)) {
+            insideDisplayMath = true;
+            return "\\[";
+        }
+        if (/^\\\]$/.test(withoutListMarker)) {
+            insideDisplayMath = false;
+            return "\\]";
+        }
+        if (insideDisplayMath) return withoutListMarker;
+        return line;
+    }).join("\n");
 
-        const li =
-            document.createElement(
-                "li"
-            );
+    return normalized
+        .replace(/\\\(([\s\S]*?)\\\)/g, (match, math) =>
+            `\\(${math.replace(/\\_/g, "_")}\\)`)
+        .replace(/\\\[([\s\S]*?)\\\]/g, (match, math) =>
+            `\\[${math.replace(/\\_/g, "_")}\\]`);
+}
 
-        li.textContent =
-            "No information was generated.";
+function appendMath(container, expression, displayMode) {
+    const math = document.createElement(displayMode ? "div" : "span");
+    math.className = displayMode ? "guide-math-display" : "guide-math-inline";
+    const normalizedExpression = expression.trim().replace(/\\_/g, "_");
 
-        container.appendChild(
-            li
-        );
+    if (window.katex?.render) {
+        window.katex.render(normalizedExpression, math, {
+            displayMode,
+            throwOnError: false,
+            strict: false,
+            trust: false,
+            output: "htmlAndMathml"
+        });
+    } else {
+        math.textContent = normalizedExpression;
+    }
+    container.appendChild(math);
+}
 
+function appendInlineFormatting(container, text) {
+    const pattern = /(\\\([\s\S]*?\\\)|\*\*[\s\S]+?\*\*)/g;
+    let cursor = 0;
+
+    for (const match of text.matchAll(pattern)) {
+        if (match.index > cursor) {
+            container.appendChild(document.createTextNode(text.slice(cursor, match.index)));
+        }
+        const token = match[0];
+        if (token.startsWith("\\(")) {
+            appendMath(container, token.slice(2, -2), false);
+        } else {
+            const strong = document.createElement("strong");
+            strong.textContent = token.slice(2, -2);
+            container.appendChild(strong);
+        }
+        cursor = match.index + token.length;
+    }
+    if (cursor < text.length) {
+        container.appendChild(document.createTextNode(text.slice(cursor)));
+    }
+}
+
+function guideEntries(text) {
+    const entries = [];
+    let current = null;
+    let insideDisplayMath = false;
+
+    normalizeLegacyGuideMath(text).split("\n").forEach(rawLine => {
+        const line = rawLine.trim();
+        if (line.startsWith("\\[")) insideDisplayMath = true;
+        const numbered = !insideDisplayMath && /^(\d+)\.\s+(.*)$/.exec(line);
+        if (numbered) {
+            current = { number: numbered[1], lines: [numbered[2]] };
+            entries.push(current);
+        } else {
+            if (!current) {
+                current = { number: null, lines: [] };
+                entries.push(current);
+            }
+            current.lines.push(line);
+        }
+        if (line.endsWith("\\]")) insideDisplayMath = false;
+    });
+
+    return entries.filter(entry => entry.lines.some(Boolean));
+}
+
+function renderEntryLines(entry, lines) {
+    for (let index = 0; index < lines.length; index += 1) {
+        let line = lines[index];
+        if (!line) continue;
+
+        if (line.startsWith("\\[")) {
+            const equation = [line.slice(2)];
+            while (!equation[equation.length - 1].includes("\\]") && index + 1 < lines.length) {
+                equation.push(lines[++index]);
+            }
+            const joined = equation.join(" ");
+            const closingIndex = joined.lastIndexOf("\\]");
+            appendMath(entry, closingIndex >= 0 ? joined.slice(0, closingIndex) : joined, true);
+            continue;
+        }
+
+        let className = "guide-entry-copy";
+        if (/^[-*]\s+/.test(line)) {
+            className += " guide-entry-subitem";
+            line = line.replace(/^[-*]\s+/, "");
+        }
+        const heading = /^#{1,4}\s+(.*)$/.exec(line);
+        const element = document.createElement(heading ? "h4" : "p");
+        element.className = heading ? "guide-entry-title" : className;
+        appendInlineFormatting(element, heading ? heading[1] : line);
+        entry.appendChild(element);
+    }
+}
+
+function renderGuideContent(container, text, sectionTitle) {
+    container.innerHTML = "";
+    container.className = `guide-content guide-content-${sectionTitle.toLowerCase().replace(/\s+/g, "-")}`;
+    const entries = guideEntries(text);
+
+    if (!entries.length) {
+        const empty = document.createElement("p");
+        empty.className = "guide-entry-copy";
+        empty.textContent = "No information was generated.";
+        container.appendChild(empty);
         return;
-
     }
 
-
-    const lines =
-        text
-            .split("\n")
-            .map(
-                function(line) {
-
-                    return line
-                        .trim();
-
-                }
-            )
-            .filter(
-                function(line) {
-
-                    return (
-                        line.length > 0
-                    );
-
-                }
-            );
-
-
-    lines.forEach(
-        function(line) {
-
-            /*
-               Remove numbering such as:
-
-               1.
-               2.
-               3.
-            */
-
-            line =
-                line.replace(
-                    /^\d+\.\s*/,
-                    ""
-                );
-
-
-            const li =
-                document.createElement(
-                    "li"
-                );
-
-
-            li.textContent =
-                line;
-
-
-            container.appendChild(
-                li
-            );
-
+    entries.forEach(({ number, lines }) => {
+        const entry = document.createElement("article");
+        entry.className = "guide-entry";
+        if (number) {
+            const marker = document.createElement("span");
+            marker.className = "guide-entry-number";
+            marker.textContent = number;
+            marker.setAttribute("aria-hidden", "true");
+            entry.appendChild(marker);
+        } else {
+            entry.classList.add("unnumbered");
         }
-    );
-
+        const body = document.createElement("div");
+        body.className = "guide-entry-body";
+        renderEntryLines(body, lines);
+        entry.appendChild(body);
+        container.appendChild(entry);
+    });
 }
 
 
@@ -595,71 +659,9 @@ function addExtraGuideSection(
     );
 
 
-    /*
-       Convert the AI text into
-       individual list items.
-    */
-
-    const list =
-        document.createElement(
-            "ul"
-        );
-
-
-    list.className =
-        "guide-list";
-
-
-    const lines =
-        content
-            .split("\n")
-            .map(
-                function(line) {
-
-                    return line.trim();
-
-                }
-            )
-            .filter(
-                function(line) {
-
-                    return line.length > 0;
-
-                }
-            );
-
-
-    lines.forEach(
-        function(line) {
-
-            line =
-                line.replace(
-                    /^\d+\.\s*/,
-                    ""
-                );
-
-
-            const li =
-                document.createElement(
-                    "li"
-                );
-
-
-            li.textContent =
-                line;
-
-
-            list.appendChild(
-                li
-            );
-
-        }
-    );
-
-
-    section.appendChild(
-        list
-    );
+    const renderedContent = document.createElement("div");
+    renderGuideContent(renderedContent, content, title);
+    section.appendChild(renderedContent);
 
 
     const studyGuide =

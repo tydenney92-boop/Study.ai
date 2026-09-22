@@ -38,6 +38,17 @@ test("study guides require ordered, nonempty sections", () => {
     assert.throws(() => validateStudyGuide(valid.replace("DEFINITIONS\n1. Two\nFORMULAS", "FORMULAS\n1. Three\nDEFINITIONS")), /out of order/);
 });
 
+test("study guide prompts require structured economics math and scannable sections", () => {
+    const prompt = buildStudyGuidePrompt("economics source");
+    assert.match(prompt, /\*\*Marginal Rate of Substitution \(MRS\)\*\*/);
+    assert.match(prompt, /\\\(p_X\^W\\\)/);
+    assert.match(prompt, /\\\[ \.\.\. \\\]/);
+    assert.match(prompt, /Never put \\\[, an equation, or \\\] on bullet/);
+    assert.match(prompt, /\*\*Mistake:\*\* and \*\*Correct rule:\*\*/);
+    assert.match(prompt, /FORMULAS: give each numbered formula a bold name/);
+    assert.match(prompt, /Do not use Markdown tables or arbitrary HTML/);
+});
+
 test("quiz and flashcard validation reject normalized duplicates", () => {
     const questions = Array.from({ length: 5 }, (_, index) => ({
         question: `Question ${index + 1}?`,

@@ -18,9 +18,38 @@ COMMON MISTAKES
 EXAM QUESTIONS
 ADDITIONAL TIPS
 
-Use numbered lists with at least one substantive item inside every section. Keep the
-headings in the specified order. If a section is unsupported, include one numbered
-item saying the selected material does not provide enough information.
+Keep the headings in the specified order. Begin each substantive entry with a number
+so the guide remains easy to validate. If a section is unsupported, include one
+numbered item saying the selected material does not provide enough information.
+
+MARKDOWN AND MATH FORMAT:
+- Make important terms scannable with selective bold labels, for example
+  **Marginal Rate of Substitution (MRS)** or **Comparative Advantage**.
+- Format definitions as **Term** — concise explanation. Do not bold whole paragraphs.
+- Use valid LaTeX delimiters for every mathematical expression. Use \\( ... \\) for short
+  inline notation in prose and \\[ ... \\] for important equations, fractions,
+  derivations, systems, and worked calculations.
+- Write subscripts, superscripts, fractions, and Greek symbols as LaTeX inside math
+  delimiters, for example \\(p_X^W\\), \\(X^P > X^C\\), and \\(\\alpha\\).
+- Never escape underscores inside a math delimiter. Never expose math as a raw
+  backslash string outside a math delimiter.
+- Never put \\[, an equation, or \\] on bullet or numbered-list lines. A display equation
+  must be a standalone block beneath its numbered concept or formula name.
+- Do not use Markdown tables or arbitrary HTML.
+
+SECTION FORMAT:
+- KEY CONCEPTS: each numbered entry starts with a bold concept name, followed by a
+  short explanation and any standalone display equation.
+- DEFINITIONS: use numbered **Term** — explanation entries.
+- FORMULAS: give each numbered formula a bold name, then a standalone equation, then
+  one short sentence explaining what it means or when to use it. Do not make one
+  uninterrupted formula list.
+- COMMON MISTAKES: use compact numbered blocks with **Mistake:** and **Correct rule:**
+  labels. Put mathematical work on its own line when needed.
+- EXAM QUESTIONS: separate **Question:**, subparts, and **Answer:** or explanation.
+  Keep mathematical work on separate lines instead of one deeply nested bullet list.
+- For worked examples, present **Given:**, vertically stacked **Step 1:** / **Step 2:**
+  reasoning, and **Result:**. Preserve every supported mathematical fact from the source.
 
 UNTRUSTED SOURCE DOCUMENTS:
 ${courseContent}

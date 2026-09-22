@@ -1082,10 +1082,41 @@ test("study guides generate explicitly, preserve origins, reopen without AI, and
     await expect(page.locator("#guide-summary")).toContainText("when you are ready");
     await page.locator("#generate-guide-button").click();
     await expect(page.locator("#key-concepts")).toContainText("Supply and demand");
+    await expect(page.locator("#key-concepts")).toContainText("Marginal Rate of Substitution (MRS)");
+    await expect(page.locator(".guide-math-inline .katex").first()).toBeVisible();
+    await expect(page.locator(".guide-math-display .katex")).toHaveCount(4);
+    await expect(page.locator(".guide-math-display .mfrac").first()).toBeVisible();
+    await expect(page.locator(".guide-math-display .msupsub").first()).toBeVisible();
+    await expect(page.locator("#formulas .guide-entry")).toHaveCount(3);
+    expect(await page.locator(".guide-math-display").first().evaluate(node => node.closest("li") === null)).toBe(true);
+    const renderedGuideText = await page.locator(".study-guide").innerText();
+    expect(renderedGuideText).not.toContain("\\[");
+    expect(renderedGuideText).not.toContain("\\(");
     await expect(page.locator("#source-material")).toHaveText("market-notes.txt");
     await expect(page.getByRole("heading", { name: "Additional Tips" })).toBeVisible();
     expect((await aiCounts(page)).studyGuide).toBe(1);
     await expect(page.locator("#guide-back-link")).toHaveAttribute("href", new RegExp(`materialId=${materialId}`));
+
+    for (const viewport of [
+        { width: 1440, height: 900 },
+        { width: 390, height: 844 },
+        { width: 320, height: 700 }
+    ]) {
+        await page.setViewportSize(viewport);
+        const layout = await page.locator(".study-guide").evaluate(guide => {
+            const box = guide.getBoundingClientRect();
+            return {
+                documentWidth: document.documentElement.scrollWidth,
+                viewportWidth: window.innerWidth,
+                left: box.left,
+                right: box.right
+            };
+        });
+        expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
+        expect(layout.left).toBeGreaterThanOrEqual(0);
+        expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth);
+    }
+    await page.setViewportSize({ width: 1440, height: 900 });
 
     await page.goto(`/study-guide.html?courseId=${courseId}`);
     await page.locator(".material-choice", { hasText: "market-notes.txt" }).locator("input").check();
@@ -1103,6 +1134,33 @@ test("study guides generate explicitly, preserve origins, reopen without AI, and
     await page.locator("#guide-history .history-item").first().getByRole("button", { name: "Delete" }).click();
     await page.locator("#history-delete-confirm").click();
     await expect(page.locator("#guide-history .history-item")).toHaveCount(1);
+});
+
+test("saved study guides normalize legacy bullet-wrapped display math", async ({ page }) => {
+    await signup(page, "LegacyGuide");
+    const courseId = await createCourse(page, { code: "ECON 379" });
+    await createUnit(page, "Trade");
+    const materialId = await uploadTextMaterial(page, courseId, {
+        unitLabel: "Unit 1 — Trade",
+        filename: "legacy-economics.txt",
+        content: "LEGACY_MATH_FIXTURE comparative advantage and terms of trade source content."
+    });
+    const generated = await api(page, "POST", `/api/courses/${courseId}/study-guides`, {
+        materialIds: [materialId]
+    });
+    expect(generated.status).toBe(201);
+
+    await page.goto(`/study-guide.html?courseId=${courseId}&guideId=${generated.body.id}`);
+    await expect(page.locator("#guide-summary")).toContainText("Saved");
+    await expect(page.locator("#formulas .guide-math-display .katex")).toHaveCount(1);
+    await expect(page.locator("#formulas .mfrac")).toBeVisible();
+    expect(await page.locator("#formulas .guide-math-display").evaluate(node => node.closest("li") === null)).toBe(true);
+    const formulaText = await page.locator("#formulas").innerText();
+    expect(formulaText).not.toContain("\\[");
+    expect(formulaText).not.toContain("\\]");
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
 test("quizzes persist attempts, retake without generation, update progress, and cascade delete", async ({ page }) => {

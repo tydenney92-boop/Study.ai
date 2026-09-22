@@ -61,12 +61,22 @@ function createFakeAiClient() {
                 });
             }
             counts.studyGuide++;
+            if (prompt.includes("LEGACY_MATH_FIXTURE")) {
+                return [
+                    "KEY CONCEPTS\n1. **Comparative Advantage**\nSpecialize where opportunity cost is lower.",
+                    "DEFINITIONS\n1. **Terms of Trade** — the rate at which goods exchange.",
+                    "FORMULAS\n1. **Legacy relative price**\n- \\\[\n- \\frac{p_X^W}{p_Y^W}\n- \\\]",
+                    "COMMON MISTAKES\n1. **Mistake:** Reading the equation as three bullets.\n**Correct rule:** Treat it as one display equation.",
+                    "EXAM QUESTIONS\n1. **Question:** Identify the relative price.\n**Answer:** Use the displayed ratio.",
+                    "ADDITIONAL TIPS\n1. Practice translating notation into words."
+                ].join("\n");
+            }
             return [
-                "KEY CONCEPTS\n1. Supply and demand interact in markets.",
-                "DEFINITIONS\n1. Demand is willingness and ability to buy.",
-                "FORMULAS\n1. The selected notes provide no formula.",
-                "COMMON MISTAKES\n1. Do not confuse a shift with movement along a curve.",
-                "EXAM QUESTIONS\n1. What factors shift demand?",
+                "KEY CONCEPTS\n1. **Marginal Rate of Substitution (MRS)**\nSupply and demand interact in markets. Home produces good \\(X\\), and consumer equilibrium requires \\(MRS = MRT\\).",
+                "DEFINITIONS\n1. **Comparative Advantage** — the ability to produce at a lower opportunity cost.\n2. **Terms of Trade** — the world relative price \\(\\frac{p_X^W}{p_Y^W}\\).",
+                "FORMULAS\n1. **Consumer Equilibrium**\n\\[\nMRS=\\frac{MU_X}{MU_Y}=\\frac{p_X}{p_Y}\n\\]\nUse this at an interior optimum.\n2. **Production Possibility Frontier**\n\\[\nMRT=-\\frac{dY}{dX}\n\\]\nThis is the opportunity cost at the production margin.\n3. **Cobb-Douglas Utility**\n\\[\nU=X^\\gamma Y^{1-\\gamma}\n\\]",
+                "COMMON MISTAKES\n1. **Mistake:** Using \\(MRS=MRT\\) under free trade.\n**Correct rule:** Production uses \\(MRT=p^W\\), while consumption uses \\(MRS=p^W\\).",
+                "EXAM QUESTIONS\n1. **Question:** If \\(X^P>X^C\\), what does the economy export?\n**Answer:** It exports good \\(X\\).\n2. **Worked Example — Guyana Autarky**\n**Given:** \\(U=X^{0.2}Y^{0.8}\\) and \\(4X^2+Y^2=80\\).\n**Step 1:** Find MRT.\n\\[MRT=\\frac{4X}{Y}\\]\n**Step 2:** Set MRS equal to MRT.\n**Result:** \\(X=2\\), \\(Y=8\\).",
                 "ADDITIONAL TIPS\n1. Practice explaining each curve shift."
             ].join("\n");
         }

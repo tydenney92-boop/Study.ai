@@ -69,7 +69,13 @@ test("stabilized frontend uses explicit study-guide generation and accurate stat
 
     assert.match(guideHtml, />\s*Definitions\s*</);
     assert.match(guideHtml, /id="quick-review"/);
+    assert.match(guideHtml, /vendor\/katex\/katex\.min\.css/);
+    assert.match(guideHtml, /vendor\/katex\/katex\.min\.js/);
     assert.match(guideScript, /"Additional Tips"/);
+    assert.match(guideScript, /normalizeLegacyGuideMath/);
+    assert.match(guideScript, /window\.katex\.render|window\.katex\?\.render/);
+    assert.match(guideScript, /trust:\s*false/);
+    assert.match(guideScript, /document\.createTextNode/);
     assert.doesNotMatch(guideScript, /else if \(courseId && materialId\)[\s\S]{0,180}generateStudyGuide\(\)/);
     assert.match(dashboard, /\/api\/courses\/summary/);
     assert.match(dashboard, /readyMaterialCount/);
