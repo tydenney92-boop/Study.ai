@@ -31,6 +31,10 @@ function registerFrontendRoutes(app, { frontendDirectory }) {
 
     app.use("/css", express.static(path.join(frontendDirectory, "css"), staticOptions));
     app.use("/js", express.static(path.join(frontendDirectory, "js"), staticOptions));
+    app.use("/assets/icons", express.static(path.join(frontendDirectory, "assets/icons"), staticOptions));
+    app.get("/favicon.ico", (req, res) => {
+        res.sendFile(path.join(frontendDirectory, "assets/icons/favicon.ico"), staticOptions);
+    });
     app.use("/vendor/katex", express.static(KATEX_DIRECTORY, staticOptions));
     app.get("/", sendPage("index.html"));
     for (const page of FRONTEND_PAGES) {

@@ -13,6 +13,7 @@ RUN npm ci --omit=dev
 COPY backend ./
 COPY css /app/css
 COPY js /app/js
+COPY assets/icons /app/assets/icons
 COPY *.html /app/
 
 EXPOSE 3000

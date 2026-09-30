@@ -80,7 +80,7 @@ async function loadCourse() {
             StudyAI.api.get(`/api/courses/${courseId}/materials`),
             StudyAI.api.get(`/api/courses/${courseId}/tasks?status=incomplete`)
         ]);
-        document.title = `${loadedCourse.courseCode} | Study Signal`;
+        document.title = "Study AI";
         document.querySelector("#course-code-title").textContent = loadedCourse.courseCode;
         document.querySelector("#course-name-subtitle").textContent = loadedCourse.courseName;
         document.querySelector("#course-semester").textContent = loadedCourse.semester || "No semester";

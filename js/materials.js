@@ -224,7 +224,7 @@ async function loadPage() {
         document.querySelector("#upload-file-help").textContent =
             `PDF, TXT, DOCX, PPTX, PNG, or JPEG · max ${limit}` +
             (clientConfig.ocrEnabled ? " · image text recognition enabled" : " · image text recognition unavailable");
-        document.title = `${course.courseCode} Materials | Study Signal`;
+        document.title = "Study AI";
         document.querySelector("#materials-course-name").textContent =
             `${course.courseCode} · ${course.courseName}`;
         document.querySelector("#upload-course-description").textContent =

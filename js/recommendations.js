@@ -152,7 +152,7 @@ async function initializeRecommendations() {
             StudyAI.api.get(`/api/courses/${recommendationCourseId}/exam-plan`),
             StudyAI.api.get(`/api/courses/${recommendationCourseId}/tasks?status=incomplete`)
         ]);
-        document.title = `What to Study · ${course.courseCode} | Study Signal`;
+        document.title = "Study AI";
         document.querySelector("#recommendations-title").textContent = `What to Study for ${course.courseCode}`;
         back.textContent = `← Back to ${course.courseCode}`;
         renderExamPlan(plan); renderRecommendations(recommendations);

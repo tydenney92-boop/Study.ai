@@ -88,7 +88,7 @@ async function initialize() {
             StudyAI.api.get(`/api/courses/${flashcardCourseId}`),
             StudyAI.api.get(`/api/courses/${flashcardCourseId}/materials`)
         ]);
-        document.title = `${course.courseCode} Flashcards | Study Signal`;
+        document.title = "Study AI";
         document.querySelector("#flashcards-title").textContent = `${course.courseCode} Flashcards`;
         materials.forEach(material => {
             const option = document.createElement("option");

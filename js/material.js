@@ -81,7 +81,7 @@ async function loadMaterial() {
         loadedMaterial = material;
         courseUnits = units;
         setLinks(course);
-        document.title = `${material.displayName} | Study Signal`;
+        document.title = "Study AI";
         title.textContent = material.displayName;
         subtitle.textContent = `${course.courseCode} · ${material.unitName || "No unit"}`;
         document.querySelector("#material-type").textContent =
