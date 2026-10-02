@@ -402,7 +402,8 @@ const authService = createAuthService({
 });
 const demoService = createDemoService({
     database: db,
-    usersRepository: repositories.users
+    usersRepository: repositories.users,
+    materialIndexingService
 });
 const requireAuthentication = createRequireAuthentication({
     usersRepository: repositories.users

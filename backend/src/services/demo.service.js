@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { demoCourses } = require("./demo-courses");
 
 function relativeIso(days, hour = 17, minute = 0) {
     const value = new Date();
@@ -7,7 +8,7 @@ function relativeIso(days, hour = 17, minute = 0) {
     return value.toISOString();
 }
 
-function createDemoService({ database, usersRepository }) {
+function createDemoService({ database, usersRepository, materialIndexingService }) {
     const seed = database.transaction(userId => {
         const insertCourse = database.prepare(`
             INSERT INTO courses (user_id, course_name, course_code, semester)
@@ -25,27 +26,35 @@ function createDemoService({ database, usersRepository }) {
                 priority, unit_id, material_id, estimated_minutes)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
-        const econId = Number(insertCourse.run(userId, "Applied Econometrics", "ECON 378").lastInsertRowid);
-        const stratId = Number(insertCourse.run(userId, "Competitive Strategy", "STRAT 401").lastInsertRowid);
-        const regressionUnit = Number(insertUnit.run(econId, "Regression and inference", 1).lastInsertRowid);
-        const competitionUnit = Number(insertUnit.run(stratId, "Competitive advantage", 1).lastInsertRowid);
-        const regressionMaterial = Number(insertMaterial.run(
-            econId, regressionUnit, "Regression review notes", "regression-review-notes.txt",
-            "demo-regression-review.txt",
-            "Regression estimates the relationship between an outcome and explanatory variables. The midterm exam covers linear regression, coefficient interpretation, confidence intervals, and omitted-variable bias.",
-            2800, "exam_review"
-        ).lastInsertRowid);
-        const syllabusMaterial = Number(insertMaterial.run(
-            econId, null, "ECON 378 course syllabus", "econ-378-syllabus.txt", "demo-econ-syllabus.txt",
-            "ECON 378 schedule and policies. Regression problem set due date is listed in the Planner. The course includes an econometrics midterm.",
-            1200, "syllabus"
-        ).lastInsertRowid);
-        const caseMaterial = Number(insertMaterial.run(
-            stratId, competitionUnit, "Porter five forces case notes", "porter-five-forces-case-notes.txt",
-            "demo-strategy-case-notes.txt",
-            "Use supplier power, buyer power, rivalry, substitutes, and barriers to entry to analyze the airline industry case.",
-            1900, "general"
-        ).lastInsertRowid);
+        const seededCourses = demoCourses.map(course => {
+            const id = Number(insertCourse.run(userId, course.name, course.code).lastInsertRowid);
+            const units = course.units.map((unit, index) => {
+                const unitId = Number(insertUnit.run(id, unit.name, index + 1).lastInsertRowid);
+                const materials = unit.materials.map(material => {
+                    const materialId = Number(insertMaterial.run(
+                        id, unitId, material.title, material.filename, material.filename,
+                        material.text, Buffer.byteLength(material.text, "utf8"), material.role
+                    ).lastInsertRowid);
+                    materialIndexingService.rebuildMaterial({
+                        id: materialId, courseId: id,
+                        extractedText: material.text, extractionStatus: "extracted"
+                    });
+                    return materialId;
+                });
+                return { id: unitId, materials };
+            });
+            return { id, units };
+        });
+        const [econ, strategy, biology, psychology] = seededCourses;
+        const econId = econ.id;
+        const stratId = strategy.id;
+        const regressionUnit = econ.units[0].id;
+        const competitionUnit = strategy.units[0].id;
+        const regressionMaterial = econ.units[0].materials[0];
+        const syllabusMaterial = econ.units[0].materials[2];
+        const caseMaterial = strategy.units[0].materials[0];
+        insertTask.run(biology.id, "Cell transport review", "assignment", "Explain diffusion, osmosis, and active transport.", relativeIso(2, 17), null, "normal", biology.units[0].id, biology.units[0].materials[0], 30);
+        insertTask.run(psychology.id, "Memory retrieval practice", "reading", "Compare spaced practice with rereading.", relativeIso(3, 17), null, "normal", psychology.units[1].id, psychology.units[1].materials[0], 20);
 
         const regressionTaskId = Number(insertTask.run(econId, "Regression problem set", "assignment", "Interpret coefficients and confidence intervals.", relativeIso(1, 23, 59), null, "high", regressionUnit, regressionMaterial, 60).lastInsertRowid);
         insertTask.run(econId, "Econometrics midterm", "exam", "Covers regression and inference.", relativeIso(5, 10), null, "high", regressionUnit, regressionMaterial, 120);
@@ -77,8 +86,8 @@ function createDemoService({ database, usersRepository }) {
         database.prepare("INSERT INTO quiz_materials (quiz_id, material_id) VALUES (?, ?)").run(quizId, regressionMaterial);
         database.prepare("INSERT INTO quiz_sources (quiz_id, source_order, material_id, material_name) VALUES (?, 0, ?, 'Regression review notes')").run(quizId, regressionMaterial);
         const attempts = [
-            { score: 60, correct: [false, true, false] },
-            { score: 67, correct: [true, false, false] }
+            { score: 33, correct: [false, true, false] },
+            { score: 67, correct: [true, true, false] }
         ];
         const insertAttempt = database.prepare("INSERT INTO quiz_attempts (user_id, quiz_id, score, answers_json, results_json, created_at) VALUES (?, ?, ?, ?, ?, ?)");
         attempts.forEach((attempt, index) => insertAttempt.run(userId, quizId, attempt.score,

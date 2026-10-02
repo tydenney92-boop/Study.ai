@@ -1,3 +1,4 @@
+const { demoMaterialFiles } = require("./demo-courses");
 const { AppError } = require("../utils/app-error");
 const { positiveInteger } = require("../utils/validation");
 const { materialTypeFor, validateMaterialUpload } = require("./material-type");
@@ -208,7 +209,10 @@ function createMaterialService({
             try {
                 return {
                     material,
-                    content: await fileStorage.read(material.storedFilename)
+                    // Bundled samples have no uploaded file; ownership is checked by get above.
+                    content: demoMaterialFiles.has(material.storedFilename)
+                        ? Buffer.from(demoMaterialFiles.get(material.storedFilename), "utf8")
+                        : await fileStorage.read(material.storedFilename)
                 };
             } catch (error) {
                 throw new AppError({

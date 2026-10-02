@@ -105,6 +105,12 @@ if (typeof window !== "undefined" && typeof document !== "undefined") (function(
     function renderDemoMode(user) {
         if (!user.isDemo || document.querySelector("#demo-mode-banner")) return;
         document.body.classList.add("demo-mode");
+        if (document.querySelector("#course-list")) {
+            document.querySelector(".topbar h1").textContent = "Explore your study workspace.";
+            document.querySelector(".topbar .subtitle").textContent =
+                "Explore four sample courses, open a unit, and try the study tools with ready-to-use notes and review sheets.";
+            document.querySelector(".topbar .eyebrow").textContent = "STUDY AI DEMO";
+        }
         const banner = document.createElement("aside");
         banner.id = "demo-mode-banner";
         banner.className = "demo-mode-banner";

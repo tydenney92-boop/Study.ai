@@ -113,8 +113,21 @@ test("demo mode provides a populated product tour and exits without retaining th
     await expect(page.locator("#demo-mode-banner")).toContainText("Demo Mode");
     await expect(page.locator("#course-list")).toContainText("ECON 378");
     await expect(page.locator("#course-list")).toContainText("STRAT 401");
+    await expect(page.locator("#course-list")).toContainText("BIO 101");
+    await expect(page.locator("#course-list")).toContainText("PSYCH 101");
+    await expect(page.locator(".topbar h1")).toHaveText("Explore your study workspace.");
+    await expect(page.locator("#unit-count")).toHaveText("12");
+    await expect(page.locator("#material-count")).toHaveText("25");
     const courses = (await api(page, "GET", "/api/courses")).body;
     const econ = courses.find(course => course.courseCode === "ECON 378");
+    for (const course of courses) {
+        await page.goto(`/course.html?courseId=${course.id}`);
+        const units = (await api(page, "GET", `/api/courses/${course.id}/units`)).body;
+        for (const unit of units) await expect(page.getByText(unit.name, { exact: true }).first()).toBeVisible();
+        const materials = (await api(page, "GET", `/api/courses/${course.id}/materials`)).body;
+        await page.goto(`/material.html?courseId=${course.id}&materialId=${materials[0].id}`);
+        await expect(page.locator("#material-content")).toContainText("Sample");
+    }
 
     await page.goto("/today.html");
     await expect(page.locator("#today-plan")).toContainText("Regression");
@@ -127,6 +140,8 @@ test("demo mode provides a populated product tour and exits without retaining th
     await expect(page.locator("#focus-first-list")).toContainText("regression");
 
     await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/course.html?courseId=${econ.id}`);
+    await expect(page.getByRole("heading", { name: "Regression and inference", exact: true })).toBeVisible();
     await expect(page.locator("#demo-mode-banner")).toBeVisible();
     const viewport = await page.evaluate(() => ({ width: document.documentElement.clientWidth, scrollWidth: document.documentElement.scrollWidth }));
     expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.width);

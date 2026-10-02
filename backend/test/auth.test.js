@@ -95,7 +95,29 @@ test("demo mode seeds isolated normal product data and removes it on exit", asyn
     assert.equal(response.body.user.name, "Demo Student");
     const userId = response.body.user.id;
     const courses = await demo.get("/api/courses").expect(200);
-    assert.deepEqual(courses.body.map(course => course.courseCode).sort(), ["ECON 378", "STRAT 401"]);
+    assert.deepEqual(courses.body.map(course => course.courseCode).sort(), ["BIO 101", "ECON 378", "PSYCH 101", "STRAT 401"]);
+    const outsider = request.agent(context.app);
+    await register(outsider, alice);
+    for (const course of courses.body) {
+        const units = await demo.get(`/api/courses/${course.id}/units`).expect(200);
+        const samples = await demo.get(`/api/courses/${course.id}/materials`).expect(200);
+        assert.equal(units.body.length, 3);
+        for (const unit of units.body) {
+            assert.ok(samples.body.filter(material => material.unitId === unit.id).length >= 2);
+        }
+        for (const material of samples.body) {
+            assert.ok(units.body.some(unit => unit.id === material.unitId));
+            assert.ok(context.database.prepare("SELECT COUNT(*) AS count FROM material_chunks WHERE material_id = ?")
+                .get(material.id).count > 0, "Demo notes must be searchable immediately");
+            const text = await demo.get(`/api/courses/${course.id}/materials/${material.id}/text`).expect(200);
+            assert.ok(text.body.extractedText.includes("Sample"));
+            const file = await demo.get(`/api/courses/${course.id}/materials/${material.id}/file?download=1`)
+                .expect(200).expect("Content-Type", /text\/plain/).expect("Content-Disposition", /attachment/);
+            assert.equal(file.text, text.body.extractedText);
+            assert.equal(Number(file.headers["content-length"]), Buffer.byteLength(file.text));
+            await outsider.get(`/api/courses/${course.id}/materials/${material.id}/file`).expect(404);
+        }
+    }
     const econ = courses.body.find(course => course.courseCode === "ECON 378");
     const tasks = await demo.get(`/api/courses/${econ.id}/tasks`).expect(200);
     const materials = await demo.get(`/api/courses/${econ.id}/materials`).expect(200);
